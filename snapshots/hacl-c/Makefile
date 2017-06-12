@@ -86,6 +86,13 @@ perf-test-curve: test-curve.exe
 unit-test-curve: test-curve.exe
 	./test-curve.exe unit-test
 
+test-precomp.exe: Ed25519_precomp.c test-precomp.c
+	$(CC) $(CFLAGS) \
+	  $(TWEETNACL_HOME)/tweetnacl.c \
+	  kremlib.c testlib.c $^ -o test-precomp.exe \
+	  $(OPENSSL_HOME)/libcrypto.a $(OPENSSL_HOME)/libssl.a -lsodium -lpthread -ldl
+	./test-precomp.exe
+
 test-ed25519.exe: Ed25519.c test-ed25519.c
 	$(CC) $(CFLAGS) \
 	  $(TWEETNACL_HOME)/tweetnacl.c SHA2_512.c \
