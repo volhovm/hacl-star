@@ -1,8 +1,9 @@
 FSTAR_HOME?=../../../dependencies/FStar
 KREMLIN_HOME?=$(FSTAR_HOME)/../kremlin
-HACL_HOME?=../..
 include ../../Makefile.include
+HACL_HOME=../../..
 
+INCLUDE_DIRS=$(HACL_HOME)/code/bignum $(HACL_HOME)/code/lib/kremlin $(KREMLIN_HOME)/kremlib $(HACL_HOME)/specs
 
 FSTAR_LIB_FILES= \
 	FStar.Mul.fst \
@@ -69,10 +70,11 @@ POLY1305_SPECIFIC= \
 	Hacl.Bignum.Parameters.fst \
 	Hacl.Spec.Bignum.Modulo.fst \
 	Hacl.Bignum.Modulo.fst \
-	Hacl.Spec.Bignum.AddAndMultiply.fst \
 	Hacl.Bignum.AddAndMultiply.fst \
-	Hacl.Spec.MAC.Poly1305_64.fst \
-	Hacl.MAC.Poly1305_64.fst
+	Hacl.MAC.Poly1305_32.fst \
+	Poly1305_32.fst
+#	Hacl.Spec.Bignum.AddAndMultiply.fst \
+	Hacl.Spec.MAC.Poly1305_32.fst \
 
 POLY1305_MODULES= \
 	Hacl.Bignum.Parameters \
@@ -103,20 +105,27 @@ verify: $(addsuffix -verify, $(POLY1305_FILES))
 hints: $(addsuffix -hints, $(POLY1305_SPECIFIC))
 
 
-extract-c:
-	mkdir -p poly-c
-	$(KREMLIN_HOME)/krml -I $(FSTAR_HOME)/ulib/hyperstack -tmpdir poly-c -verbose \
-		-I ../../bignum -I ../../lib/kremlin -I $(FSTAR_HOME)/../kremlin/kremlib \
-		Hacl.Test.Poly1305_32.fst \
-		-drop FStar -drop Hacl.Spec -drop Prims -drop Hacl.Cast -drop Hacl.UInt8 -drop Hacl.UInt32 -drop Hacl.UInt64 \
-		-drop Hacl.UInt128  -drop Hacl.Bignum.Constants -drop Hacl.Bignum.Parameters -drop Hacl.Bignum.Limb -drop Hacl.Bignum.Wide \
-		-bundle "Hacl.Spec.\*" -bundle "Poly1305_32=Poly1305_32,Hacl.Bignum.\*,Hacl.MAC.\*" \
-		-add-include '"testlib.h"' $(KREMLIN_HOME)/kremlib/testlib.c \
-		-ccopt "-D_GNU_SOURCE" \
-		-ccopt -Wno-error=pointer-sign -ccopt -Wno-error=incompatible-pointer-types \
-                -ccopt -Wno-error=format= -no-prefix Hacl.Test.Poly1305_32 -ccopt -flto -ccopt -march=native -o poly1305.exe
-	./poly1305.exe
+# By default, KreMLin drops a bunch of spec-related module that are not meant to
+# extract.
+INCLUDES=$(addprefix -I , $(INCLUDE_DIRS))
+CFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable
+KRML_BIN=$(KREMLIN_HOME)/_build/src/Kremlin.native
+KRML=$(KRML_BIN) $(KREMLIN_ARGS) $(INCLUDES) -tmpdir poly-c \
+  -bundle 'Hacl.Spec.\*' -bundle 'Hacl.Spe.\*' -fparentheses \
+  -add-include '"testlib.h"' \
+  -drop Combinators,Hacl.Endianness,Spec.*,Hacl.Bignum.Parameters,Hacl.Endianness,Hacl.Spec,Hacl.Spe,Hacl.Cast,Hacl.UInt8,Hacl.UInt16,Hacl.UInt32,Hacl.UInt64,Hacl.UInt128,Prims,FStar,Seq.*
 
+poly-c/Poly1305_32.c: $(POLY1305_SPECIFIC)
+	$(KRML) $^ Hacl.Test.Poly1305_32.fst \
+		-no-prefix Hacl.Test.Poly1305_32 \
+		-bundle "Hacl.Spec.\*" -bundle "Poly1305_32=Poly1305_32,Hacl.Bignum.\*,Hacl.MAC.\*" \
+		-skip-compilation
+
+extract-c: poly-c/Poly1305_32.c
+
+poly1305.exe: poly-c/Poly1305_32.c poly-c/Hacl_Test_Poly1305_32.c $(KREMLIN_HOME)/kremlib/kremlib.c $(KREMLIN_HOME)/kremlib/testlib.c
+	$(CC) $(INCLUDES) $(CFLAGS) $^ -o $@
+	./$@
 
 include $(FSTAR_HOME)/src/gmake/fstar.mk
 include $(FSTAR_HOME)/ulib/ml/Makefile.include

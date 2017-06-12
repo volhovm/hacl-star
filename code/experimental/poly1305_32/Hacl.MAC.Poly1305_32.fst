@@ -7,6 +7,8 @@ open FStar.Seq
 open FStar.Buffer
 open FStar.HyperStack
 
+open Hacl.Endianness
+
 open Hacl.Cast
 open Hacl.Bignum.Parameters
 open Hacl.Spec.Bignum.Bigint
@@ -35,49 +37,49 @@ noeq type poly1305_state = | MkState: r:bigint -> h:bigint -> poly1305_state
 
 #reset-options "--initial_fuel 0 --max_fuel 0 --z3rlimit 20"
 
-val load32_le:
-  b:uint8_p{length b = 8} ->
-  Stack limb
-    (requires (fun h -> live h b))
-    (ensures  (fun h0 r h1 -> h0 == h1 /\ live h0 b
-      (* /\ r == load64_le_spec (as_seq h1 b) *)
-      ))
-let load32_le b =
-  assert_norm (pow2 32 = 0x100000000);
-  let h = ST.get() in
-  let b0 = b.(0ul) in
-  let b1 = b.(1ul) in
-  let b2 = b.(2ul) in
-  let b3 = b.(3ul) in
-  Limb.(
-    sint8_to_sint32 b0
-    |^ (sint8_to_sint32 b1 <<^ 8ul)
-    |^ (sint8_to_sint32 b2 <<^ 16ul)
-    |^ (sint8_to_sint32 b3 <<^ 24ul)
-  )
+// val load32_le:
+//   b:uint8_p{length b = 8} ->
+//   Stack limb
+//     (requires (fun h -> live h b))
+//     (ensures  (fun h0 r h1 -> h0 == h1 /\ live h0 b /\ 
+//       (* /\ r == load64_le_spec (as_seq h1 b) *)
+//       ))
+// let load32_le b =
+//   assert_norm (pow2 32 = 0x100000000);
+//   let h = ST.get() in
+//   let b0 = b.(0ul) in
+//   let b1 = b.(1ul) in
+//   let b2 = b.(2ul) in
+//   let b3 = b.(3ul) in
+//   Limb.(
+//     sint8_to_sint32 b0
+//     |^ (sint8_to_sint32 b1 <<^ 8ul)
+//     |^ (sint8_to_sint32 b2 <<^ 16ul)
+//     |^ (sint8_to_sint32 b3 <<^ 24ul)
+//   )
 
 
-#reset-options "--initial_fuel 0 --max_fuel 0 --z3rlimit 100"
+// #reset-options "--initial_fuel 0 --max_fuel 0 --z3rlimit 100"
 
-val store32_le:
-  b:uint8_p{length b = 8} ->
-  z:Limb.t ->
-  Stack unit
-    (requires (fun h -> live h b))
-    (ensures  (fun h0 _ h1 -> modifies_1 b h0 h1 /\ live h1 b
-      (* /\ as_seq h1 b == store64_le_spec z *)
-      ))
-let store32_le b z =
-  assert_norm (pow2 32 = 0x100000000);
-  let open Hacl.Bignum.Limb in
-  let b0 = sint32_to_sint8 z in
-  let b1 = sint32_to_sint8 (z >>^ 8ul) in
-  let b2 = sint32_to_sint8 (z >>^ 16ul) in
-  let b3 = sint32_to_sint8 (z >>^ 24ul) in
-  b.(0ul) <- b0;
-  b.(1ul) <- b1;
-  b.(2ul) <- b2;
-  b.(3ul) <- b3
+// val store32_le:
+//   b:uint8_p{length b = 8} ->
+//   z:Limb.t ->
+//   Stack unit
+//     (requires (fun h -> live h b))
+//     (ensures  (fun h0 _ h1 -> modifies_1 b h0 h1 /\ live h1 b
+//       (* /\ as_seq h1 b == store64_le_spec z *)
+//       ))
+// let store32_le b z =
+//   assert_norm (pow2 32 = 0x100000000);
+//   let open Hacl.Bignum.Limb in
+//   let b0 = sint32_to_sint8 z in
+//   let b1 = sint32_to_sint8 (z >>^ 8ul) in
+//   let b2 = sint32_to_sint8 (z >>^ 16ul) in
+//   let b3 = sint32_to_sint8 (z >>^ 24ul) in
+//   b.(0ul) <- b0;
+//   b.(1ul) <- b1;
+//   b.(2ul) <- b2;
+//   b.(3ul) <- b3
 
 
 #reset-options "--initial_fuel 0 --max_fuel 0 --z3rlimit 5"
