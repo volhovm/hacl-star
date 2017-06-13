@@ -18,12 +18,17 @@ inline_for_extraction let p27 : p:pos{p = 0x8000000} = assert_norm (pow2 27 = 0x
   pow2 27
 inline_for_extraction let p28 : p:pos{p = 0x10000000} = assert_norm (pow2 28 = 0x10000000);
   pow2 28
+inline_for_extraction let 29 : p:pos{p = 0x20000000} = assert_norm (pow2 29 = 0x20000000);
+  pow2 29
 
 let red_26 (s:seqelem) =
   v (Seq.index s 0) < p26 /\ v (Seq.index s 1) < p26 /\ v (Seq.index s 2) < p26 /\ v (Seq.index s 3) < p26 /\ v (Seq.index s 4) < p26
 
 let red_27 (s:seqelem) =
   v (Seq.index s 0) < p27 /\ v (Seq.index s 1) < p27 /\ v (Seq.index s 2) < p27 /\ v (Seq.index s 3) < p27 /\ v (Seq.index s 4) < p27
+
+let red_28 (s:seqelem) =
+  v (Seq.index s 0) < p28 /\ v (Seq.index s 1) < p28 /\ v (Seq.index s 2) < p28 /\ v (Seq.index s 3) < p28 /\ v (Seq.index s 4) < p28
 
 #reset-options "--z3rlimit 10 --max_fuel 0"
 
@@ -130,10 +135,10 @@ let lemma_mul_shift_reduce_pre (input:seqelem) (input2:seqelem) : Lemma
     let input4 = shift_reduce_spec input3 in
     lemma_mul_shift_reduce_pre_2 output4 input4 input2;
     let output5 = sum_scalar_multiplication_spec output4 input4 (Seq.index input2 2) in
-    let input5 = shift_reduce_spec input3 in
+    let input5 = shift_reduce_spec input4 in
     lemma_mul_shift_reduce_pre_1 output5 input5 input2;
     let output6 = sum_scalar_multiplication_spec output5 input5 (Seq.index input2 3) in
-    let input6 = shift_reduce_spec input3 in
+    let input6 = shift_reduce_spec input5 in
     lemma_mul_shift_reduce_pre_0 output6 input6 input2;
     let output7 = sum_scalar_multiplication_spec output6 input6 (Seq.index input2 4) in
     ()
@@ -191,12 +196,15 @@ private let mul_shift_reduce_unrolled__ input input2 =
   sum_scalar_multiplication_spec output4 input4 (Seq.index input2 4)
 
 
-let bounds (s:seqelem) (s0:nat) (s1:nat) (s2:nat) : GTot Type0 =
+let bounds (s:seqelem) (s0:nat) (s1:nat) (s2:nat) (s3:nat) (s4:nat) : GTot Type0 =
   v (Seq.index s 0) < s0 /\ v (Seq.index s 1) < s1 /\ v (Seq.index s 2) < s2
+  /\ v (Seq.index s 3) < s3 /\ v (Seq.index s 4) < s4
 
-let bounds' (s:seqelem_wide) (s0:nat) (s1:nat) (s2:nat) : GTot Type0 =
+let bounds' (s:seqelem_wide) (s0:nat) (s1:nat) (s2:nat) (s3:nat) (s4:nat) : GTot Type0 =
   w (Seq.index s 0) < s0 /\ w (Seq.index s 1) < s1 /\ w (Seq.index s 2) < s2
+  /\ w (Seq.index s 3) < s3 /\ w (Seq.index s 4) < s4
 
+#reset-options "--max_fuel 0 --z3rlimit 20"
 
 private let sum_scalar_multiplication_pre_' (sw:seqelem_wide) (s:seqelem) (scalar:limb) =
   w (Seq.index sw 0) + (v (Seq.index s 0) * v scalar) < pow2 wide_n
@@ -222,41 +230,39 @@ let lemma_mul_ineq a b c d = ()
 
 val lemma_reduce_spec_: s:seqelem{reduce_pre s} -> Lemma
   (let s' = reduce_spec s in
-    v (Seq.index s' 0) = 20 * v (Seq.index s 0)
+    v (Seq.index s' 0) = 5 * v (Seq.index s 0)
     /\ v (Seq.index s' 1) = v (Seq.index s 1)
     /\ v (Seq.index s' 2) = v (Seq.index s 2)
     /\ v (Seq.index s' 3) = v (Seq.index s 3)
     /\ v (Seq.index s' 4) = v (Seq.index s 4) )
 let lemma_reduce_spec_ s =
-  assert_norm(pow2 4 = 16);
   assert_norm(pow2 2 = 4);
   let open Hacl.Bignum.Limb in
   let s0 = Seq.index s 0 in
-  let s0_16 = s0 <<^ 4ul in
-  Math.Lemmas.modulo_lemma (v s0 * 16) (pow2 64);
   let s0_4 = s0 <<^ 2ul in
-  Math.Lemmas.modulo_lemma (v s0 * 4) (pow2 64);
-  let s0_20 = s0_16 +^ s0_4 in
-  let s' = Seq.upd s 0 s0_20 in
+  Math.Lemmas.modulo_lemma (v s0 * 4) (pow2 32);
+  let s0_5 = s0_4 +^ s0 in
+  let s' = Seq.upd s 0 s0_5 in
   cut (s' == reduce_spec s);
   cut (Seq.index s 1 == Seq.index s' 1);
   cut (Seq.index s 2 == Seq.index s' 2);
   cut (Seq.index s 3 == Seq.index s' 3);
-  cut (Seq.index s 4 == Seq.index s' 4);
-  Math.Lemmas.modulo_lemma (v s0 * 16) (pow2 64);
-  Math.Lemmas.modulo_lemma (v s0 * 4) (pow2 64)
-
+  cut (Seq.index s 4 == Seq.index s' 4)
 
 val lemma_shift_reduce_spec_: s:seqelem{shift_reduce_pre s} -> Lemma
   (let s' = shift_reduce_spec s in
-    v (Seq.index s' 0) = 20 * v (Seq.index s 2)
+    v (Seq.index s' 0) = 5 * v (Seq.index s 4)
     /\ v (Seq.index s' 1) = v (Seq.index s 0)
-    /\ v (Seq.index s' 2) = v (Seq.index s 1) )
+    /\ v (Seq.index s' 2) = v (Seq.index s 1)
+    /\ v (Seq.index s' 3) = v (Seq.index s 2)
+    /\ v (Seq.index s' 4) = v (Seq.index s 3) )
 let lemma_shift_reduce_spec_ s =
-  let s0 = Seq.index s 2 in
+  let s0 = Seq.index s 4 in
   let s' = shift_spec s in
   let s'' = reduce_spec s' in
-  cut (v (Seq.index s 2) = v (Seq.index s' 0));
+  cut (v (Seq.index s 4) = v (Seq.index s' 0));
+  cut (v (Seq.index s 3) = v (Seq.index s' 4));
+  cut (v (Seq.index s 2) = v (Seq.index s' 3));
   cut (v (Seq.index s 1) = v (Seq.index s' 2));
   cut (v (Seq.index s 0) = v (Seq.index s' 1));
   lemma_reduce_spec_ s'
@@ -268,81 +274,141 @@ val lemma_sum_scalar_muitiplication_spec_: sw:seqelem_wide -> s:seqelem -> sc:li
           /\ (let sw' = sum_scalar_multiplication_spec sw s sc in
              w (Seq.index sw' 0) = w (Seq.index sw 0) + (v (Seq.index s 0) * v sc)
              /\ w (Seq.index sw' 1) = w (Seq.index sw 1) + (v (Seq.index s 1) * v sc)
-             /\ w (Seq.index sw' 2) = w (Seq.index sw 2) + (v (Seq.index s 2) * v sc)) ))
+             /\ w (Seq.index sw' 2) = w (Seq.index sw 2) + (v (Seq.index s 2) * v sc)
+             /\ w (Seq.index sw' 3) = w (Seq.index sw 3) + (v (Seq.index s 3) * v sc)
+             /\ w (Seq.index sw' 4) = w (Seq.index sw 4) + (v (Seq.index s 4) * v sc)) ))
 let lemma_sum_scalar_muitiplication_spec_ sw s sc = ()
 
-inline_for_extraction let p90 : p:pos{p = 0x40000000000000000000000} = assert_norm(pow2 90 = 0x40000000000000000000000); pow2 90
+inline_for_extraction let p55 : p:pos{p = 0x80000000000000} = assert_norm(pow2 55 = 0x80000000000000); pow2 55
 
 val lemma_shift_reduce_then_carry_wide_0:
-  s1:seqelem{red_46 s1} ->
-  s2:seqelem{red_44 s2} ->
+  s1:seqelem{red_28 s1} ->
+  s2:seqelem{red_27 s2} ->
   Lemma (sum_scalar_multiplication_pre_ (Seq.create len wide_zero) s1 (Seq.index s2 0) len
     /\ shift_reduce_pre s1
-    /\ bounds (shift_reduce_spec s1) (20 * p46) p46 p46
+    /\ bounds (shift_reduce_spec s1) (5 * p28) p28 p28 p28 p28
     /\ bounds' (sum_scalar_multiplication_spec (Seq.create len wide_zero) s1 (Seq.index s2 0))
-              p90 p90 p90)
+              p55 p55 p55 p55 p55)
 let lemma_shift_reduce_then_carry_wide_0 s1 s2 =
+  assert_norm (pow2 32 = 0x100000000);
   assert_norm (pow2 64 = 0x10000000000000000);
-  assert_norm (pow2 wide_n = 0x100000000000000000000000000000000);
   let bla = Seq.create len wide_zero in
   cut (w (Seq.index bla 0) = 0); cut (w (Seq.index bla 1) = 0); cut (w (Seq.index bla 2) = 0);
-  lemma_mul_ineq (v (Seq.index s1 0)) (v (Seq.index s2 0)) p46 p44;
-  lemma_mul_ineq (v (Seq.index s1 1)) (v (Seq.index s2 0)) p46 p44;
-  lemma_mul_ineq (v (Seq.index s1 2)) (v (Seq.index s2 0)) p46 p44;
-  assert_norm(p90 = p46 * p44);
+  cut (w (Seq.index bla 3) = 0); cut (w (Seq.index bla 4) = 0);
+  lemma_mul_ineq (v (Seq.index s1 0)) (v (Seq.index s2 0)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 1)) (v (Seq.index s2 0)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 2)) (v (Seq.index s2 0)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 3)) (v (Seq.index s2 0)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 4)) (v (Seq.index s2 0)) p28 p27;
+  assert_norm(p55 = p28 * p27);
   cut (sum_scalar_multiplication_pre_' bla s1 (Seq.index s2 0));
   lemma_sum_scalar_muitiplication_pre_ bla s1 (Seq.index s2 0);
   lemma_shift_reduce_spec_ s1;
   let s1' = shift_reduce_spec s1 in
-  Math.Lemmas.pow2_plus 46 44
+  Math.Lemmas.pow2_plus 28 27
 
 
 val lemma_shift_reduce_then_carry_wide_1:
-  o:seqelem_wide{bounds' o p90 p90 p90} ->
-  s1:seqelem{bounds s1 (20*p46) p46 p46} ->
-  s2:seqelem{red_44 s2} ->
+  o:seqelem_wide{bounds' o p55 p55 p55 p55 p55} ->
+  s1:seqelem{bounds s1 (5*p28) p28 p28 p28 p28} ->
+  s2:seqelem{red_27 s2} ->
   Lemma (sum_scalar_multiplication_pre_ o s1 (Seq.index s2 1) len
     /\ shift_reduce_pre s1
-    /\ bounds (shift_reduce_spec s1) (20 * p46) (20 * p46) p46
+    /\ bounds (shift_reduce_spec s1) (5 * p28) (5 * p28) p28 p28 p28
     /\ bounds' (sum_scalar_multiplication_spec o s1 (Seq.index s2 1))
-              (21 * p90) (2*p90) (2*p90) )
+              (6 * p55) (2*p55) (2*p55) (2*p55) (2*p55))
 let lemma_shift_reduce_then_carry_wide_1 o s1 s2 =
   assert_norm (pow2 64 = 0x10000000000000000);
-  assert_norm (pow2 wide_n = 0x100000000000000000000000000000000);
-  lemma_mul_ineq (v (Seq.index s1 0)) (v (Seq.index s2 1)) (20 * p46) p44;
-  lemma_mul_ineq (v (Seq.index s1 1)) (v (Seq.index s2 1)) p46 p44;
-  lemma_mul_ineq (v (Seq.index s1 2)) (v (Seq.index s2 1)) p46 p44;
+  assert_norm (pow2 32 = 0x100000000);
+  lemma_mul_ineq (v (Seq.index s1 0)) (v (Seq.index s2 1)) (5 * p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 1)) (v (Seq.index s2 1)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 2)) (v (Seq.index s2 1)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 3)) (v (Seq.index s2 1)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 4)) (v (Seq.index s2 1)) p28 p27;
   cut (sum_scalar_multiplication_pre_' o s1 (Seq.index s2 1));
   lemma_sum_scalar_muitiplication_pre_ o s1 (Seq.index s2 1);
   lemma_shift_reduce_spec_ s1;
   let s1' = shift_reduce_spec s1 in
-  Math.Lemmas.pow2_plus 46 44
+  Math.Lemmas.pow2_plus 28 27
 
-#set-options "--z3rlimit 20"
+#reset-options "--z3rlimit 20 --max_fuel 0"
 
 val lemma_shift_reduce_then_carry_wide_2:
-  o:seqelem_wide{bounds' o (21*p90) (2*p90) (2*p90)} ->
-  s1:seqelem{bounds s1 (20*p46) (20*p46) p46} ->
-  s2:seqelem{red_44 s2} ->
+  o:seqelem_wide{bounds' o (6*p55) (2*p55) (2*p55) (2*p55) (2*p55)} ->
+  s1:seqelem{bounds s1 (5*p28) (5*p28) p28 p28 p28} ->
+  s2:seqelem{red_27 s2} ->
   Lemma (sum_scalar_multiplication_pre_ o s1 (Seq.index s2 2) len
     /\ shift_reduce_pre s1
-    /\ bounds (shift_reduce_spec s1) (20 * p46) (20 *p46) (20*p46)
+    /\ bounds (shift_reduce_spec s1) (5 * p28) (5 *p28) (5*p28) p28 p28
     /\ bounds' (sum_scalar_multiplication_spec o s1 (Seq.index s2 2))
-              (41 * p90) (22*p90) (3*p90) )
+              (11 * p55) (7*p55) (3*p55) (3*p55) (3*p55))
 let lemma_shift_reduce_then_carry_wide_2 o s1 s2 =
   assert_norm (pow2 64 = 0x10000000000000000);
-  assert_norm (pow2 wide_n = 0x100000000000000000000000000000000);
-  lemma_mul_ineq (v (Seq.index s1 0)) (v (Seq.index s2 2)) (20*p46) p44;
-  lemma_mul_ineq (v (Seq.index s1 1)) (v (Seq.index s2 2)) (20*p46) p44;
-  lemma_mul_ineq (v (Seq.index s1 2)) (v (Seq.index s2 2)) p46 p44;
+  assert_norm (pow2 32 = 0x100000000);
+  lemma_mul_ineq (v (Seq.index s1 0)) (v (Seq.index s2 2)) (5*p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 1)) (v (Seq.index s2 2)) (5*p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 2)) (v (Seq.index s2 2)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 3)) (v (Seq.index s2 2)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 4)) (v (Seq.index s2 2)) p28 p27;
   cut (sum_scalar_multiplication_pre_' o s1 (Seq.index s2 2));
   lemma_sum_scalar_muitiplication_pre_ o s1 (Seq.index s2 2);
   lemma_shift_reduce_spec_ s1;
   let s1' = shift_reduce_spec s1 in
-  Math.Lemmas.pow2_plus 46 44
+  Math.Lemmas.pow2_plus 28 27
+
+#reset-options "--z3rlimit 20 --max_fuel 0"
+
+val lemma_shift_reduce_then_carry_wide_3:
+  o:seqelem_wide{bounds' o (11*p55) (7*p55) (3*p55) (3*p55) (3*p55)} ->
+  s1:seqelem{bounds s1 (5*p28) (5*p28) (5*p28) p28 p28} ->
+  s2:seqelem{red_27 s2} ->
+  Lemma (sum_scalar_multiplication_pre_ o s1 (Seq.index s2 3) len
+    /\ shift_reduce_pre s1
+    /\ bounds (shift_reduce_spec s1) (5 * p28) (5 *p28) (5*p28) (5*p28) p28
+    /\ bounds' (sum_scalar_multiplication_spec o s1 (Seq.index s2 3))
+              (16 * p55) (12*p55) (8*p55) (4*p55) (4*p55))
+let lemma_shift_reduce_then_carry_wide_3 o s1 s2 =
+  assert_norm (pow2 64 = 0x10000000000000000);
+  assert_norm (pow2 32 = 0x100000000);
+  lemma_mul_ineq (v (Seq.index s1 0)) (v (Seq.index s2 3)) (5*p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 1)) (v (Seq.index s2 3)) (5*p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 2)) (v (Seq.index s2 3)) (5*p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 3)) (v (Seq.index s2 3)) p28 p27;
+  lemma_mul_ineq (v (Seq.index s1 4)) (v (Seq.index s2 3)) p28 p27;
+  cut (sum_scalar_multiplication_pre_' o s1 (Seq.index s2 3));
+  lemma_sum_scalar_muitiplication_pre_ o s1 (Seq.index s2 3);
+  lemma_shift_reduce_spec_ s1;
+  let s1' = shift_reduce_spec s1 in
+  Math.Lemmas.pow2_plus 28 27
 
 
-#set-options "--z3rlimit 10 --initial_fuel 2 --max_fuel 2"
+#reset-options "--z3rlimit 20 --max_fuel 0"
+
+val lemma_shift_reduce_then_carry_wide_4:
+  o:seqelem_wide{bounds' o (16*p55) (12*p55) (8*p55) (4*p55) (4*p55)} ->
+  s1:seqelem{bounds s1 (5*p28) (5*p28) (5*p28) (5*p28) p28} ->
+  s2:seqelem{red_27 s2} ->
+  Lemma (sum_scalar_multiplication_pre_ o s1 (Seq.index s2 4) len
+    /\ shift_reduce_pre s1
+    /\ bounds (shift_reduce_spec s1) (5 * p28) (5 *p28) (5*p28) (5*p28) (5*p28)
+    /\ bounds' (sum_scalar_multiplication_spec o s1 (Seq.index s2 4))
+              (21 * p55) (17*p55) (13*p55) (9*p55) (5*p55))
+let lemma_shift_reduce_then_carry_wide_4 o s1 s2 =
+  assert_norm (pow2 64 = 0x10000000000000000);
+  assert_norm (pow2 32 = 0x100000000);
+  lemma_mul_ineq (v (Seq.index s1 0)) (v (Seq.index s2 4)) (5*p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 1)) (v (Seq.index s2 4)) (5*p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 2)) (v (Seq.index s2 4)) (5*p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 3)) (v (Seq.index s2 4)) (5*p28) p27;
+  lemma_mul_ineq (v (Seq.index s1 4)) (v (Seq.index s2 4)) p28 p27;
+  cut (sum_scalar_multiplication_pre_' o s1 (Seq.index s2 4));
+  lemma_sum_scalar_muitiplication_pre_ o s1 (Seq.index s2 4);
+  lemma_shift_reduce_spec_ s1;
+  let s1' = shift_reduce_spec s1 in
+  Math.Lemmas.pow2_plus 28 27
+
+
+#reset-options "--z3rlimit 10 --max_fuel 0"
 
 private 
 val mul_shift_reduce_unrolled_0:
@@ -350,13 +416,30 @@ val mul_shift_reduce_unrolled_0:
   input_init:seqelem ->
   input:seqelem ->
   input2:seqelem{mul_shift_reduce_pre output input_init input input2 len} ->
-  (* Tot (s:seqelem_wide{s == mul_shift_reduce_spec_ output input_init input input2 1}) *)
-  Tot (t:tuple2 seqelem_wide seqelem{t == mul_shift_reduce_spec_ output input_init input input2 2})
+  Tot (t:tuple2 seqelem_wide seqelem{t == mul_shift_reduce_spec_ output input_init input input2 4})
 #reset-options "--z3rlimit 25 --initial_fuel 1 --max_fuel 1"
 let mul_shift_reduce_unrolled_0 output input_init input input2 =
   lemma_mul_shift_reduce_spec_def_0 output input_init input input2;
   lemma_mul_shift_reduce_spec_def output input_init input input2 2;
-  let ctr = 2 in
+  let ctr = 4 in
+  let i = ctr in
+  let j = len - i - 1 in
+  let input2j = Seq.index input2 j in
+  let output' = sum_scalar_multiplication_spec output input input2j in
+  lemma_sum_scalar_multiplication_ output input input2j len;
+  let input'  = shift_reduce_spec input in
+  output', input'
+
+private val mul_shift_reduce_unrolled_1:
+  output:seqelem_wide ->
+  input_init:seqelem ->
+  input:seqelem ->
+  input2:seqelem{mul_shift_reduce_pre output input_init input input2 len} ->
+  Tot (t:tuple2 seqelem_wide seqelem{t == mul_shift_reduce_spec_ output input_init input input2 3})
+let mul_shift_reduce_unrolled_1 output0 input_init input0 input2 =
+  let output, input = mul_shift_reduce_unrolled_0 output0 input_init input0 input2 in
+  let ctr = 3 in
+  lemma_mul_shift_reduce_spec_def output0 input_init input0 input2 ctr;
   let i = ctr in
   let j = len - i - 1 in
   let input2j = Seq.index input2 j in
@@ -366,14 +449,33 @@ let mul_shift_reduce_unrolled_0 output input_init input input2 =
   output', input'
 
 
-private val mul_shift_reduce_unrolled_1:
+private val mul_shift_reduce_unrolled_2:
+  output:seqelem_wide ->
+  input_init:seqelem ->
+  input:seqelem ->
+  input2:seqelem{mul_shift_reduce_pre output input_init input input2 len} ->
+  Tot (t:tuple2 seqelem_wide seqelem{t == mul_shift_reduce_spec_ output input_init input input2 2})
+let mul_shift_reduce_unrolled_2 output0 input_init input0 input2 =
+  let output, input = mul_shift_reduce_unrolled_1 output0 input_init input0 input2 in
+  let ctr = 2 in
+  lemma_mul_shift_reduce_spec_def output0 input_init input0 input2 ctr;
+  let i = ctr in
+  let j = len - i - 1 in
+  let input2j = Seq.index input2 j in
+  let output' = sum_scalar_multiplication_spec output input input2j in
+  lemma_sum_scalar_multiplication_ output input input2j len;
+  let input'  = shift_reduce_spec input in
+  output', input'
+
+
+private val mul_shift_reduce_unrolled_3:
   output:seqelem_wide ->
   input_init:seqelem ->
   input:seqelem ->
   input2:seqelem{mul_shift_reduce_pre output input_init input input2 len} ->
   Tot (t:tuple2 seqelem_wide seqelem{t == mul_shift_reduce_spec_ output input_init input input2 1})
-let mul_shift_reduce_unrolled_1 output0 input_init input0 input2 =
-  let output, input = mul_shift_reduce_unrolled_0 output0 input_init input0 input2 in
+let mul_shift_reduce_unrolled_3 output0 input_init input0 input2 =
+  let output, input = mul_shift_reduce_unrolled_2 output0 input_init input0 input2 in
   let ctr = 1 in
   lemma_mul_shift_reduce_spec_def output0 input_init input0 input2 ctr;
   let i = ctr in
@@ -394,7 +496,7 @@ val mul_shift_reduce_unrolled_:
   Tot (t:seqelem_wide{let x, _ = mul_shift_reduce_spec_ output input_init input input2 0 in
     t == x})
 let mul_shift_reduce_unrolled_ output0 input_init input0 input2 =
-  let output, input = mul_shift_reduce_unrolled_1 output0 input_init input0 input2 in
+  let output, input = mul_shift_reduce_unrolled_3 output0 input_init input0 input2 in
   let ctr = 0 in
   lemma_mul_shift_reduce_spec_def output0 input_init input0 input2 ctr;
   let i = ctr in
@@ -405,23 +507,6 @@ let mul_shift_reduce_unrolled_ output0 input_init input0 input2 =
   output'
 
 
-(* #set-options "--z3rlimit 10 --initial_fuel 2 --max_fuel 2" *)
-
-(* private val mul_shift_reduce_unrolled_: *)
-(*   output:seqelem_wide -> *)
-(*   input_init:seqelem -> *)
-(*   input:seqelem -> *)
-(*   input2:seqelem{mul_shift_reduce_pre output input_init input input2 3} -> *)
-(*   Tot (s:seqelem_wide{s == mul_shift_reduce_spec_ output input_init input input2 3}) *)
-(* private let mul_shift_reduce_unrolled_ output input_init input input2 = *)
-(*   let output1   = sum_scalar_multiplication_spec output input (Seq.index input2 0) in *)
-(*   lemma_sum_scalar_multiplication_ output input (Seq.index input2 0) len; *)
-(*   let input1    = shift_reduce_spec input in *)
-(*   lemma_shift_reduce_spec input; *)
-(*   lemma_mul_shift_reduce_spec_1 output1 output input_init input input1 input2 (v (Seq.index input2 0)) 3; *)
-(*   mul_shift_reduce_unrolled_1 output1 input_init input1 input2 *)
-
-
 private val shift_reduce_unrolled:
   input:seqelem ->
   input2:seqelem{mul_shift_reduce_pre (Seq.create len wide_zero) input input input2 len} ->
@@ -429,7 +514,7 @@ private val shift_reduce_unrolled:
 private let shift_reduce_unrolled input input2 =
   mul_shift_reduce_unrolled_ (Seq.create len wide_zero) input input input2
 
-#reset-options "--z3rlimit 50 --initial_fuel 0 --max_fuel 0"
+#reset-options "--z3rlimit 50 --max_fuel 0"
 
 val lemma_mul_shift_reduce_unrolled: input:seqelem -> input2:seqelem -> Lemma
   (requires (mul_shift_reduce_pre' input input2))
@@ -441,115 +526,134 @@ let lemma_mul_shift_reduce_unrolled input input2 =
   let s = shift_reduce_unrolled input input2 in
   cut (s == mul_shift_reduce_unrolled__ input input2)
 
+
+#reset-options "--z3rlimit 20 --max_fuel 0"
+
 val lemma_shift_reduce_then_carry_wide:
-  s1:seqelem{red_46 s1} -> s2:seqelem{red_44 s2} ->
+  s1:seqelem{red_28 s1} -> s2:seqelem{red_27 s2} ->
   Lemma (mul_shift_reduce_pre' s1 s2 /\
-    bounds' (mul_shift_reduce_unrolled__ s1 s2) (41 * p90) (22*p90) (3*p90) )
+    bounds' (mul_shift_reduce_unrolled__ s1 s2) (21 * p55) (17*p55) (13*p55) (9*p55) (5*p55))
 let lemma_shift_reduce_then_carry_wide s1 s2 =
   lemma_shift_reduce_then_carry_wide_0 s1 s2;
   let o1 = sum_scalar_multiplication_spec (Seq.create len wide_zero) s1 (Seq.index s2 0) in
   let s11 = shift_reduce_spec s1 in
   lemma_shift_reduce_then_carry_wide_1 o1 s11 s2;
-
   let o2 = sum_scalar_multiplication_spec o1 s11 (Seq.index s2 1) in
   let s12 = shift_reduce_spec s11 in
-  lemma_shift_reduce_then_carry_wide_2 o2 s12 s2
+  lemma_shift_reduce_then_carry_wide_2 o2 s12 s2;
+  let o3 = sum_scalar_multiplication_spec o2 s12 (Seq.index s2 2) in
+  let s13 = shift_reduce_spec s12 in
+  lemma_shift_reduce_then_carry_wide_3 o3 s13 s2;
+  let o4 = sum_scalar_multiplication_spec o3 s13 (Seq.index s2 3) in
+  let s14 = shift_reduce_spec s13 in
+  lemma_shift_reduce_then_carry_wide_4 o4 s14 s2;
+  let o5 = sum_scalar_multiplication_spec o4 s14 (Seq.index s2 4) in ()
 
 
 private val carry_wide_spec_unrolled:
   s:seqelem_wide{carry_wide_pre s 0} ->
-  Tot (s':seqelem_wide{w (Seq.index s' 2) < w (Seq.index s 2) + pow2 (2*word_size-limb_size)})
+  Tot (s':seqelem_wide{w (Seq.index s' 4) < w (Seq.index s 4) + pow2 (2*word_size-limb_size)})
 private let carry_wide_spec_unrolled s =
   let s1 = carry_wide_step s 0 in
   lemma_carry_wide_step s 0;
   let s2 = carry_wide_step s1 1 in
   lemma_carry_wide_step s1 1;
-  Math.Lemmas.lemma_div_lt (w (Seq.index s1 1)) (2*word_size) limb_size;
-  cut (w (Seq.index s2 2) < w (Seq.index s 2) + pow2 (2*word_size - limb_size));
-  s2
+  let s3 = carry_wide_step s2 2 in
+  lemma_carry_wide_step s2 2;
+  let s4 = carry_wide_step s3 3 in
+  lemma_carry_wide_step s3 3;
+  Math.Lemmas.lemma_div_lt (w (Seq.index s3 3)) (2*word_size) limb_size;
+  cut (w (Seq.index s4 4) < w (Seq.index s 4) + pow2 (2*word_size - limb_size));
+  s4
 
 
-#set-options "--z3rlimit 20 --initial_fuel 5 --max_fuel 5"
+#reset-options "--z3rlimit 20 --initial_fuel 5 --max_fuel 5"
 
 private val lemma_carry_wide_spec_unrolled:
   s:seqelem_wide{carry_wide_pre s 0} -> Lemma (carry_wide_spec_unrolled s == carry_wide_spec s)
 let lemma_carry_wide_spec_unrolled s = ()
 
-#set-options "--z3rlimit 20 --initial_fuel 0 --max_fuel 0"
+#set-options "--z3rlimit 20 --max_fuel 0"
 
-inline_for_extraction let p84 : p:pos{p = 0x1000000000000000000000} = assert_norm (pow2 84 = 0x1000000000000000000000); pow2 84
+inline_for_extraction let p38 : p:pos{p = 0x4000000000} = assert_norm (pow2 38 = 0x4000000000); pow2 38
 
-#set-options "--z3rlimit 20 --initial_fuel 0 --max_fuel 0"
+#reset-options "--z3rlimit 20 --max_fuel 0"
 
-val lemma_46_44_is_fine_to_carry:
-  s:seqelem_wide{bounds' s (41*p90) (22*p90) (3*p90)} ->
-  Lemma (carry_wide_pre s 0 /\ bounds' (carry_wide_spec s) p44 p44 (3*p90+p84))
+val lemma_28_27_is_fine_to_carry:
+  s:seqelem_wide{bounds' s (21*p55) (17*p55) (13*p55) (9*p55) (5*p55)} ->
+  Lemma (carry_wide_pre s 0 /\ bounds' (carry_wide_spec s) p26 p26 p26 p26 (5*p55+p38))
 let lemma_46_44_is_fine_to_carry s =
   assert_norm (pow2 64 = 0x10000000000000000);
-  assert_norm (pow2 wide_n = 0x100000000000000000000000000000000);
-  assert_norm (pow2 (wide_n-1) = 0x80000000000000000000000000000000);
+  assert_norm (pow2 32 = 0x100000000);
   lemma_carry_wide_spec_unrolled s
 
 
-#set-options "--z3rlimit 20 --initial_fuel 0 --max_fuel 0"
+#set-options "--z3rlimit 20 --max_fuel 0"
 
 val lemma_copy_then_carry: s:seqelem_wide -> Lemma
   ((copy_from_wide_pre s /\ (w (Seq.index s 0) < pow2 word_size /\ w (Seq.index s 1) < pow2 limb_size
-    /\ w (Seq.index s 2) < pow2 limb_size)) ==>
+    /\ w (Seq.index s 2) < pow2 limb_size /\ w (Seq.index s 3) < pow2 limb_size /\ w (Seq.index s 4) < pow2 limb_size)) ==>
      (carry_0_to_1_pre (copy_from_wide_spec s) ))
 let lemma_copy_then_carry s = ()
 
 
 val lemma_carry_top_wide_then_copy: s:seqelem_wide{carry_top_wide_pre s} -> Lemma
-  ((w (Seq.index s 0) + 5 * (w (Seq.index s 2) / p42) < pow2 word_size /\ w (Seq.index s 1) < pow2 word_size) ==> copy_from_wide_pre (carry_top_wide_spec s))
+  ((w (Seq.index s 0) + 5 * (w (Seq.index s 4) / p26) < pow2 word_size /\ w (Seq.index s 1) < pow2 word_size /\ w (Seq.index s 2) < pow2 word_size /\ w (Seq.index s 3) < pow2 word_size) ==> copy_from_wide_pre (carry_top_wide_spec s))
 let lemma_carry_top_wide_then_copy s =
   lemma_carry_top_wide_spec_ s;
-  assert_norm(pow2 64 > pow2 44);
-  assert_norm(pow2 64 > pow2 42)
+  assert_norm(pow2 32 > pow2 26);
+  assert_norm(pow2 32 > pow2 27);
+  assert_norm(pow2 32 > pow2 28)
 
-
-#set-options "--z3rlimit 50 --initial_fuel 0 --max_fuel 0"
+#set-options "--z3rlimit 50 --max_fuel 0"
 
 val lemma_carry_wide_then_carry_top: s:seqelem_wide{carry_wide_pre s 0} -> Lemma
-  (((w (Seq.index s 2) + pow2 (2*word_size - limb_size))/ pow2 42 < pow2 word_size
-    /\ 5 * (w (Seq.index s 2) + pow2 (2*word_size - limb_size) / pow2 42) + pow2 limb_size < pow2 word_size)
+  (((w (Seq.index s 4) + pow2 (2*word_size - limb_size))/ pow2 26 < pow2 word_size
+    /\ 5 * (w (Seq.index s 4) + pow2 (2*word_size - limb_size) / pow2 26) + pow2 limb_size < pow2 word_size)
     ==> carry_top_wide_pre (carry_wide_spec s) )
 let lemma_carry_wide_then_carry_top s =
   let s' = carry_wide_spec_unrolled s in
   lemma_carry_wide_spec_unrolled s;
-  cut (w (Seq.index s' 2) < w (Seq.index s 2) + pow2 (2*word_size-limb_size));
-  Math.Lemmas.nat_times_nat_is_nat 5 (w (Seq.index s 2) + pow2 (2*word_size-limb_size));
-  if ((w (Seq.index s 2) + pow2 (2*word_size - limb_size))/ pow2 42 < pow2 word_size
-    && 5 * (w (Seq.index s 2) + pow2 (2*word_size - limb_size) / pow2 42) + pow2 limb_size < pow2 word_size) then (
-    Math.Lemmas.lemma_div_le (w (Seq.index s' 2)) (w (Seq.index s 2) + pow2 (2*word_size-limb_size)) (pow2 42);
-    cut (w (Seq.index s' 2) / pow2 42 <= (w (Seq.index s 2) + pow2 (2*word_size-limb_size)) / pow2 42);
-    Math.Lemmas.nat_over_pos_is_nat (w (Seq.index s' 2)) (pow2 42);
-    Math.Lemmas.nat_over_pos_is_nat (((w (Seq.index s 2)+(pow2 (2*word_size-limb_size)))/pow2 42)) (pow2 42);
-    Math.Lemmas.multiplication_order_lemma (w (Seq.index s' 2) / pow2 42)
-                                           ((w (Seq.index s 2)+(pow2 (2*word_size-limb_size)))/pow2 42) 5;
-    cut (5 * (w (Seq.index s' 2) / pow2 42) <= 5 * ((w (Seq.index s 2) + pow2 (2*word_size-limb_size)) / pow2 42));
+  cut (w (Seq.index s' 4) < w (Seq.index s 4) + pow2 (2*word_size-limb_size));
+  Math.Lemmas.nat_times_nat_is_nat 5 (w (Seq.index s 4) + pow2 (2*word_size-limb_size));
+  if ((w (Seq.index s 4) + pow2 (2*word_size - limb_size))/ pow2 26 < pow2 word_size
+    && 5 * (w (Seq.index s 4) + pow2 (2*word_size - limb_size) / pow2 26) + pow2 limb_size < pow2 word_size) then (
+    Math.Lemmas.lemma_div_le (w (Seq.index s' 4)) (w (Seq.index s 4) + pow2 (2*word_size-limb_size)) (pow2 26);
+    cut (w (Seq.index s' 4) / pow2 26 <= (w (Seq.index s 4) + pow2 (2*word_size-limb_size)) / pow2 26);
+    Math.Lemmas.nat_over_pos_is_nat (w (Seq.index s' 4)) (pow2 26);
+    Math.Lemmas.nat_over_pos_is_nat (((w (Seq.index s 4)+(pow2 (2*word_size-limb_size)))/pow2 26)) (pow2 26);
+    Math.Lemmas.multiplication_order_lemma (w (Seq.index s' 4) / pow2 26)
+                                           ((w (Seq.index s 4)+(pow2 (2*word_size-limb_size)))/pow2 26) 5;
+    cut (5 * (w (Seq.index s' 4) / pow2 26) <= 5 * ((w (Seq.index s 4) + pow2 (2*word_size-limb_size)) / pow2 26));
     cut (w (Seq.index s' 0) < pow2 limb_size);
-    cut (5 * (w (Seq.index s' 2) / pow2 42) + w (Seq.index s' 0) < pow2 word_size);
+    cut (5 * (w (Seq.index s' 4) / pow2 26) + w (Seq.index s' 0) < pow2 word_size);
     Math.Lemmas.pow2_lt_compat (2*word_size) word_size
   )
   else ()
 
 
-
-val lemma_46_44_is_fine_to_carry_top:
-  s:seqelem_wide{bounds' s p44 p44 (3*p90+p84)} ->
-  Lemma (carry_top_wide_pre s /\ bounds' (carry_top_wide_spec s) (p44+5*((3*p90+p84)/p42)) p44 p42)
-let lemma_46_44_is_fine_to_carry_top s =
+val lemma_28_27_is_fine_to_carry_top:
+  s:seqelem_wide{bounds' s p26 p26 p26 p26 (5*p55+p38)} ->
+  Lemma (carry_top_wide_pre s /\ bounds' (carry_top_wide_spec s) (p26+5*((5*p55+p38)/p26)) p26 p26 p26 p26)
+let lemma_28_27_is_fine_to_carry_top s =
   assert_norm (pow2 64 = 0x10000000000000000);
-  assert_norm (pow2 wide_n = 0x100000000000000000000000000000000);
-  assert_norm (pow2 (wide_n-1) = 0x80000000000000000000000000000000);
+  assert_norm (pow2 32 = 0x100000000);
   lemma_carry_wide_then_carry_top s;
-  lemma_carry_top_wide_spec_ s
+  let s0 = w (Seq.index s 0) in
+  let s1 = w (Seq.index s 1) in
+  let s2 = w (Seq.index s 2) in
+  let s3 = w (Seq.index s 3) in
+  let s4 = w (Seq.index s 4) in
+  assert(s0 < pow2 32);
+  assert(5 * (s4 / pow2 26) < pow2 32); admit()
+  5 * (w (Seq.index s 4) / pow2 26) < pow2 32
+  /\ 5 * (w (Seq.index s 4) / pow2 26) + w (Seq.index s 0) < pow2 64
+  lemma_carry_top_wide_spec_ s; admit()
 
 
 val lemma_46_44_is_fine_to_copy:
-  s:seqelem_wide{bounds' (s) (p44+5*((3*p90+p84)/p42)) p44 p42} ->
-  Lemma (copy_from_wide_pre s /\ bounds (copy_from_wide_spec s) (p44+5*((3*p90+p84)/p42)) p44 p42)
+  s:seqelem_wide{bounds' (s) (p44+5*((3*p55+p84)/p42)) p44 p42} ->
+  Lemma (copy_from_wide_pre s /\ bounds (copy_from_wide_spec s) (p44+5*((3*p55+p84)/p42)) p44 p42)
 let lemma_46_44_is_fine_to_copy s =
   assert_norm (pow2 64 = 0x10000000000000000);
   assert_norm (pow2 wide_n = 0x100000000000000000000000000000000);
@@ -559,7 +663,7 @@ let lemma_46_44_is_fine_to_copy s =
 inline_for_extraction let p20 : p:pos{p = 0x100000} = assert_norm(pow2 20 = 0x100000); pow2 20
 
 val lemma_46_44_is_fine_to_carry_last:
-  s:seqelem{bounds (s) (p44+5*((3*p90+p84)/p42)) p44 p42} ->
+  s:seqelem{bounds (s) (p44+5*((3*p55+p84)/p42)) p44 p42} ->
   Lemma (carry_0_to_1_pre s /\ bounds (carry_0_to_1_spec s) p44 (p44+p20) p42)
 let lemma_46_44_is_fine_to_carry_last s =
   assert_norm (pow2 64 = 0x10000000000000000);
@@ -682,8 +786,7 @@ val lemma_carried_is_fine_to_carry_last:
 let lemma_carried_is_fine_to_carry_last s =
   assert_norm (pow2 64 = 0x10000000000000000)
 
-
-#reset-options "--initial_fuel 0 --max_fuel 0 --z3rlimit 20"
+#reset-options "--initial_fuel 0 --z3rlimit 20"
 
 val last_pass_is_fine:
   s:seqelem{red_45 s} ->
