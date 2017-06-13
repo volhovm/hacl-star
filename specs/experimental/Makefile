@@ -68,6 +68,12 @@ sha2_256.exe: Spec.SHA256.fst
 	$(OCAMLOPT) -I sha2-spec $(OCAML_INCLUDES) $(addprefix sha2-spec/, $(EXTRACTED)) sha2-spec/Spec_Loops.ml sha2-spec/Spec_Lib.ml sha2-spec/Seq_Create.ml sha2-spec/Spec_SHA256.ml -o sha2_256.exe
 	./sha2_256.exe
 
+smt-test:
+	fstar.exe $(addprefix --include , ../../code/lib/kremlin/ ../../../kremlin/kremlib) \
+		--lax --odir smt2 --codegen SMTLib Spec.Chacha20_.fst --no_location_info \
+		$(addprefix --no_extract , FStar.Pervasives FStar.StrongExcludedMiddle FStar.Classical FStar.List.Tot.Base FStar.List.Tot.Properties FStar.List.Tot FStar.Seq.Base FStar.Seq.Properties FStar.Seq FStar.Mul FStar.BitVector FStar.Math.Lib FStar.Math.Lemmas FStar.UInt FStar.UInt32 FStar.UInt8 Spec.StdLib)
+
+
 clean:
 	$(MAKE) -C $(HACL_HOME)/code/lib/ml clean
 	rm -rf *.cmi *.cmo *.cmx *.o *~ *.out *.exe chacha-spec-vec3 chacha-spec-vec256 chacha-spec-vec2 chacha-spec-vec sha2-spec ed25519-spec secretbox-spec
