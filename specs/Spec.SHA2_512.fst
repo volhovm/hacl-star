@@ -1,5 +1,7 @@
 module Spec.SHA2_512
 
+module ST = FStar.HyperStack.ST
+
 open FStar.Mul
 open FStar.Seq
 open FStar.UInt64
@@ -66,7 +68,7 @@ let word_add_mod = Word.add_mod
 
 
 
-let rotate_right (a:word) (s:UInt32.t{UInt32.v s < 64}) : Tot word =
+let rotate_right (a:word) (s:UInt32.t{0 < UInt32.v s /\ UInt32.v s < 64}) : Tot word =
   Word.((a >>^ s) |^ (a <<^ (UInt32.sub 64ul s)))
 
 val _Ch: x:word -> y:word -> z:word -> Tot word
@@ -168,7 +170,7 @@ let rec update_multi (hash:hash_w) (blocks:bytes{length blocks % size_block = 0}
 
 
 let pad0_length (len:nat) : Tot (n:nat{(len + 1 + n + size_len_8) % size_block = 0}) =
-  (size_block - (len + size_len_8 + 1)) % size_block
+  (2 * size_block - (len + size_len_8 + 1)) % size_block
 
 
 let pad (prevlen:nat{prevlen % size_block = 0}) (len:nat{prevlen + len < max_input_len_8}) : Tot (b:bytes{(length b + len) % size_block = 0}) =

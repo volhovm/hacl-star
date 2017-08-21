@@ -1,5 +1,7 @@
 module Spec.SHA2_256
 
+module ST = FStar.HyperStack.ST
+
 open FStar.Mul
 open FStar.Seq
 open FStar.UInt32
@@ -61,7 +63,7 @@ let word_shift_right = Word.shift_right
 
 
 
-let rotate_right (a:word) (s:word {v s<32}) : Tot word =
+let rotate_right (a:word) (s:word {0 < v s /\ v s<32}) : Tot word =
   ((a >>^ s) |^ (a <<^ (32ul -^ s)))
 
 (* [FIPS 180-4] section 4.1.2 *)
@@ -304,7 +306,7 @@ let lemma_hash_single_prepend_block block msg =
   Seq.lemma_eq_intro (msg_last') (msg_last);
   Seq.lemma_eq_intro (msg_blocks') (block @| msg_blocks)
 
-#set-options "--lax"
+
 
 //
 // Test 1

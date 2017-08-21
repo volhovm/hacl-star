@@ -1,5 +1,7 @@
 module Spec.SHA2_384
 
+module ST = FStar.HyperStack.ST
+
 open FStar.Mul
 open FStar.Seq
 open FStar.UInt64
@@ -67,7 +69,7 @@ let word_add_mod = Word.add_mod
 
 
 
-let rotate_right (a:word) (s:UInt32.t{UInt32.v s < 64}) : Tot word =
+let rotate_right (a:word) (s:UInt32.t{0 < UInt32.v s /\ UInt32.v s < 64}) : Tot word =
   Word.((a >>^ s) |^ (a <<^ (UInt32.sub 64ul s)))
 
 val _Ch: x:word -> y:word -> z:word -> Tot word

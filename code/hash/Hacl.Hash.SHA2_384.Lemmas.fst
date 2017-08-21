@@ -1,9 +1,13 @@
 module Hacl.Hash.SHA2_384.Lemmas
 
+open FStar.HyperStack.All
+
+module ST = FStar.HyperStack.ST
+
 open FStar.Mul
 open FStar.Ghost
 open FStar.HyperStack
-open FStar.ST
+open FStar.HyperStack.ST
 open FStar.Buffer
 
 open C.Loops
@@ -126,12 +130,29 @@ val lemma_ws_def_1: (b:Spec.block_w) -> (t:Spec.counter{16 <= t /\ t < 80}) -> L
 let lemma_ws_def_1 b t = ()
 
 
+#reset-options " --max_fuel 1 --z3rlimit 20"
+
+val lemma_spec_ws_def2:
+  b:Seq.seq UInt64.t{Seq.length b = Spec.size_block_w} ->
+  t:nat{16 <= t /\ t < 80} ->
+  Lemma(let t16 = Spec.ws b (t - 16) in
+        let t15 = Spec.ws b (t - 15) in
+        let t7  = Spec.ws b (t - 7) in
+        let t2  = Spec.ws b (t - 2) in
+        let s1 = Spec._sigma1 t2 in
+        let s0 = Spec._sigma0 t15 in
+        Spec.ws b t == FStar.UInt64.(s1 +%^ (t7 +%^ (s0 +%^ t16))))
+
+#reset-options " --max_fuel 1 --z3rlimit 20"
+
+let lemma_spec_ws_def2 b i = ()
+
+
 #reset-options "--max_fuel 0  --z3rlimit 200"
 
 let lemma_modifies_0_is_modifies_1 (#a:Type) (h:HyperStack.mem) (b:buffer a{live h b}) : Lemma
   (modifies_1 b h h) =
-  lemma_intro_modifies_1 b h h
-
+  lemma_modifies_sub_1 h h b
 
 let lemma_blit_slices_eq (#t:Type) (h0:HyperStack.mem) (h1:HyperStack.mem) (a:buffer t{live h1 a}) (b:buffer t{live h0 b}) (len:nat{len = length a /\ len = length b}): Lemma
   (requires (let slice_a = Seq.slice (as_seq h1 a) 0 len in
@@ -244,3 +265,56 @@ let seq_a = reveal_sbytes (as_seq h a) in
 let seq_b = reveal_sbytes (as_seq h b) in
 let seq_c = reveal_sbytes (as_seq h c) in
 lemma_pad_aux_seq n len seq_a seq_b seq_c
+
+#reset-options " --max_fuel 0 --z3rlimit 20"
+
+val lemma_spec_ws_def:
+  b:Seq.seq UInt64.t{Seq.length b = Spec.size_block_w} ->
+  i:nat{i < 16} ->
+  Lemma (Spec.ws b i == Seq.index b i)
+
+#reset-options " --max_fuel 1 --z3rlimit 20"
+
+let lemma_spec_ws_def b i = ()
+
+
+#reset-options "--max_fuel 0  --z3rlimit 50"
+
+val lemma_eq_state_k_sub_slice:
+  h: HyperStack.mem ->
+  state :uint64_p {length state = v size_state /\ live h state} ->
+  Lemma (as_seq h (Buffer.sub state pos_k_w size_k_w) == (Seq.slice (as_seq h state) (U32.v pos_k_w) (U32.(v pos_k_w + v size_k_w))))
+
+#reset-options "--max_fuel 0  --z3rlimit 150"
+
+let lemma_eq_state_k_sub_slice h state =
+  Seq.lemma_eq_intro (as_seq h (Buffer.sub state pos_k_w size_k_w))
+                      (Seq.slice (as_seq h state) (U32.v pos_k_w) (U32.(v pos_k_w + v size_k_w)))
+
+
+#reset-options "--max_fuel 0  --z3rlimit 50"
+
+val lemma_eq_state_counter_sub_slice:
+  h: HyperStack.mem ->
+  state :uint64_p {length state = v size_state /\ live h state} ->
+  Lemma (as_seq h (Buffer.sub state pos_count_w size_count_w) == (Seq.slice (as_seq h state) (U32.v pos_count_w) (U32.(v pos_count_w + v size_count_w))))
+
+#reset-options "--max_fuel 0  --z3rlimit 150"
+
+let lemma_eq_state_counter_sub_slice h state =
+  Seq.lemma_eq_intro (as_seq h (Buffer.sub state pos_count_w size_count_w))
+                      (Seq.slice (as_seq h state) (U32.v pos_count_w) (U32.(v pos_count_w + v size_count_w)))
+
+
+#reset-options "--max_fuel 0  --z3rlimit 50"
+
+val lemma_eq_state_hash_sub_slice:
+  h: HyperStack.mem ->
+  state :uint64_p {length state = v size_state /\ live h state} ->
+  Lemma (as_seq h (Buffer.sub state pos_whash_w size_whash_w) == (Seq.slice (as_seq h state) (U32.v pos_whash_w) (U32.(v pos_whash_w + v size_whash_w))))
+
+#reset-options "--max_fuel 0  --z3rlimit 150"
+
+let lemma_eq_state_hash_sub_slice h state =
+  Seq.lemma_eq_intro (as_seq h (Buffer.sub state pos_whash_w size_whash_w))
+                      (Seq.slice (as_seq h state) (U32.v pos_whash_w) (U32.(v pos_whash_w + v size_whash_w)))
