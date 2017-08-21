@@ -23,7 +23,7 @@ inline_for_extraction let wide : Type0 = wide
 inline_for_extraction let ctr  = FStar.UInt32.t
 
 (** Number of limbs of a bigint **)
-inline_for_extraction let len = len
+inline_for_extraction let len : pos = len
 inline_for_extraction val clen: l:FStar.UInt32.t{FStar.UInt32.v l = len}
 inline_for_extraction let clen = 5ul
 

@@ -36,17 +36,28 @@ FSTAR_INCLUDES+=--include$(HACL_HOME)/code/bignum
 	@echo $(OPTIONS) --hint_info \
 	$(FSTAR_INCLUDES)
 
-%.fst-verify: %.fst
-	$(FSTAR_HOME)/bin/fstar.exe \
-		--include ../lib --include ../../bignum $^ --use_hints
 
-verify: $(addsuffix -verify, $(POLY1305_FILES))
+ct: $(addsuffix -lax, $(POLY1305_FILES))
+	# Using the --verify_all argument to lift abstractions, typechecks all dependencies of Curve25519.fst
+	$(FSTAR) --lax --verify_all Poly1305_64.fst
 
-%.fst-hints: %.fst
-	$(FSTAR_HOME)/bin/fstar.exe \
-		--include ../lib --include ../../bignum $^ --record_hints
+bignum-ver: $(addsuffix -reloc-verify, $(BIGNUM))
+specific-ver: $(addsuffix -verify, $(POLY1305_SPECIFIC))
+verify: bignum-ver specific-ver
+all-ver: verify
+all-ct: ct
 
-hints: $(addsuffix -hints, $(POLY1305_SPECIFIC))
+# Hints regeneration                                                          
+bignum-hints: $(addsuffix .reloc.hints, $(BIGNUM))
+specific-hints: $(addsuffix .hints, $(POLY1305_SPECIFIC))
+hints: bignum-hints specific-hints
+all-hints: hints
+
+# For CI, all modules restricted from incomplete or slow ones
+bignum-ci: $(addsuffix -reloc-verify, $(filter-out $(SLOW) $(TODO), $(BIGNUM)))
+specific-ci: $(addsuffix -verify, $(filter-out $(SLOW) $(TODO), $(POLY1305_SPECIFIC)))
+all-ci: bignum-ci specific-ci
+
 
 # By default, KreMLin drops a bunch of spec-related module that are not meant to
 # extract.

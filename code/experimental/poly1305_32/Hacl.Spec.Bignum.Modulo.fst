@@ -167,12 +167,17 @@ private let lemma_mod_0 a b c =
   Math.Lemmas.lemma_mod_plus_distr_l ((b % prime) * c) a prime
 
 
+#reset-options "--max_fuel 0 --z3rlimit 100 --smtencoding.l_arith_repr native --smtencoding.nl_arith_repr native"
+
 private let lemma_0 (a:nat) (b:nat) : Lemma
   ( (a + pow2 104 * (b % pow2 26) + pow2 130 * (b / pow2 26)) % prime
     = (a + pow2 104 * b) % prime)
-  = Math.Lemmas.pow2_plus 104 26;
+  = 
+  Math.Lemmas.pow2_plus 104 26;
   Math.Lemmas.lemma_div_mod (b) (pow2 26);
   Math.Lemmas.distributivity_add_right (pow2 104) (b % pow2 26) (pow2 26 * (b / pow2 26))
+
+#reset-options "--max_fuel 0 --z3rlimit 20"
 
 val carry_top_wide_pre: seqelem_wide -> GTot Type0
 let carry_top_wide_pre s =
