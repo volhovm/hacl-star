@@ -259,3 +259,24 @@ let lemma_carry_top_wide_spec s =
   lemma_mod_0 (w (Seq.index s 0)  + pow2 26 * w (Seq.index s 1) + pow2 52 * w (Seq.index s 2) + pow2 78 * w (Seq.index s 3) + pow2 104 * (w (Seq.index s 4) % pow2 26)) (pow2 130) (w (Seq.index s 4) / pow2 26);
   cut (z0 % prime = (w (Seq.index s 0) + pow2 26 * w (Seq.index s 1) + pow2 52 * w (Seq.index s 2) + pow2 78 * w (Seq.index s 3) + pow2 104 * (w (Seq.index s 4) % pow2 26) + pow2 130 * (w (Seq.index s 4) / pow2 26)) % prime);
   lemma_0 (w (Seq.index s 0) + pow2 26 * w (Seq.index s 1) + pow2 52 * w (Seq.index s 2) + pow2 78 * w (Seq.index s 3)) (w (Seq.index s 4))
+
+
+val lemma_carry_top_spec: s:seqelem{carry_top_pre s} -> Lemma
+  (seval (carry_top_spec s) % prime = seval s % prime)
+let lemma_carry_top_spec s =
+  let s' = carry_top_spec s in
+  lemma_carry_top_spec_ s;
+  assert_norm(pow2 130 % (pow2 130 - 5) = 5);
+  lemma_seval_5 s;
+  lemma_seval_5 s';
+  Math.Lemmas.nat_times_nat_is_nat (pow2 26) (v (Seq.index s 1));
+  Math.Lemmas.nat_times_nat_is_nat (pow2 52) (v (Seq.index s 2));
+  Math.Lemmas.nat_times_nat_is_nat (pow2 78) (v (Seq.index s 3));
+  Math.Lemmas.nat_times_nat_is_nat (pow2 104) (v (Seq.index s 4));
+  let s' = carry_top_spec s in
+  let z0 = seval (carry_top_spec s) in
+  cut (z0 = v (Seq.index s' 0) + pow2 26 * v (Seq.index s' 1) + pow2 52 * v (Seq.index s' 2) + pow2 78 * v (Seq.index s' 3) + pow2 104 * v (Seq.index s' 4) );
+  cut (z0 = v (Seq.index s 0) + 5 * (v (Seq.index s 4) / pow2 26) + pow2 26 * v (Seq.index s 1) + pow2 52 * v (Seq.index s 2) + pow2 78 * v (Seq.index s 3) + pow2 104 * (v (Seq.index s 4) % pow2 26) );
+  lemma_mod_0 (v (Seq.index s 0)  + pow2 26 * v (Seq.index s 1) + pow2 52 * v (Seq.index s 2) + pow2 78 * v (Seq.index s 3) + pow2 104 * (v (Seq.index s 4) % pow2 26)) (pow2 130) (v (Seq.index s 4) / pow2 26);
+  cut (z0 % prime = (v (Seq.index s 0) + pow2 26 * v (Seq.index s 1) + pow2 52 * v (Seq.index s 2) + pow2 78 * v (Seq.index s 3) + pow2 104 * (v (Seq.index s 4) % pow2 26) + pow2 130 * (v (Seq.index s 4) / pow2 26)) % prime);
+  lemma_0 (v (Seq.index s 0) + pow2 26 * v (Seq.index s 1) + pow2 52 * v (Seq.index s 2) + pow2 78 * v (Seq.index s 3)) (v (Seq.index s 4))
