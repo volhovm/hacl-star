@@ -672,7 +672,7 @@ let lemma_46_44_is_fine_to_carry_last s =
   ()
 
 
-#reset-options "--max_fuel 0 --z3rlimit 10"
+#reset-options "--max_fuel 0 --z3rlimit 100"
 
 val fmul_x_26_is_fine:
   s1:seqelem{red_x s1} -> s2:seqelem{red_26 s2} ->
@@ -750,7 +750,7 @@ private let carry_spec_unrolled s =
   assert (v (Seq.index s4 4) < v (Seq.index s 4) + pow2 (word_size - limb_size));
   s4
 
-#reset-options "--z3rlimit 10 --initial_fuel 5 --max_fuel 5"
+#reset-options "--z3rlimit 100 --initial_fuel 5 --max_fuel 5"
 
 private val lemma_carry_spec_unrolled:
   s:seqelem{carry_limb_pre s 0} -> Lemma (carry_spec_unrolled s == carry_limb_spec s)
