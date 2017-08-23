@@ -178,13 +178,14 @@ val toField_plus_2_128:
 let toField_plus_2_128 b m =
   let h0 = ST.get() in
   toField b m;
-  let b2 = b.(2ul) in
+  let b4 = b.(4ul) in
   let open Hacl.Bignum.Limb in
-  assert_norm (pow2 40 = 0x10000000000);
-  UInt.logor_disjoint (0x10000000000) (v b2) 40;
-  assert_norm (pow2 40 + pow2 40 < pow2 44);
-  let b2' = uint64_to_limb 0x10000000000uL |^ b2 in
-  b.(2ul) <- b2'
+  assert_norm (pow2 24 = 0x1000000);
+  assert_norm (0 = 0x1000000 % pow2 24);
+  UInt.logor_disjoint (0x1000000) (v b4) 24;
+  assert_norm (pow2 24 + pow2 24 < pow2 26);
+  let b4' = uint32_to_limb 0x1000000ul |^ b4 in
+  b.(4ul) <- b4'
 
 
 [@"substitute"]
@@ -447,45 +448,78 @@ let poly1305_last_pass_ acc =
   let a4' = a4 -^ (p26m1 &^ mask) in
   upd_5 acc a0' a1' a2' a3' a4'
 
+#reset-options "--max_fuel 0 --z3rlimit 100"
+
+private let lemma_div_26 (a:nat{a <= pow2 26}) : Lemma (a / pow2 26 = 1 ==> (a = pow2 26 /\ a % pow2 26 = 0)) = assert_norm((pow2 26 - 1) / pow2 26 = 0); assert_norm(pow2 26 % pow2 26 = 0)
+
+#reset-options "--max_fuel 0 --z3rlimit 1000"
+
+[@"substitute"]
+val fcontract_first_carry_pass:
+  acc:felem ->
+  Stack unit
+    (requires (fun h -> live h acc /\ red_y (as_seq h acc)))
+    (ensures (fun h0 _ h1 -> live h0 acc /\ red_y (as_seq h0 acc)
+      /\ live h1 acc /\ modifies_1 acc h0 h1
+      /\ as_seq h1 acc == Hacl.Spec.Poly1305_32.fcontract_first_carry_pass (as_seq h0 acc)))
+[@"substitute"]
+let fcontract_first_carry_pass acc =
+  let open Hacl.UInt32 in
+  assert_norm(pow2 26 + pow2 13 = 0x4002000);
+  assert_norm(pow2 26 = 0x4000000);
+  assert_norm(pow2 0 = 1);
+  let t0 = acc.(0ul) in
+  let t1 = acc.(1ul) in
+  let t2 = acc.(2ul) in
+  let t3 = acc.(3ul) in
+  let t4 = acc.(4ul) in
+  // Hacl.Spec.Bignum.Modulo.lemma_seval_5 s;
+  let t1' = t1 +^ (t0 >>^ 26ul) in
+  let mask_26 = Hacl.Spec.Poly1305_32.mask_26 in
+  let t0' = t0 &^ mask_26 in
+  UInt.logand_mask (v t0) 26;
+  // lemma_carry_local (v t0) (v t1) 0;
+  // cut (v t0' + pow2 26 * v t1' + pow2 52 * v t2 + pow2 78 * v t3 + pow2 104 * v t4 = Hacl.Spec.Bignum.Bigint.seval s);
+  let t2' = t2 +^ (t1' >>^ 26ul) in
+  let t1'' = t1' &^ mask_26 in
+  UInt.logand_mask (v t1') 26;
+  // lemma_carry_local (v t1') (v t2) 26;
+  // cut (v t0' + pow2 26 * v t1'' + pow2 52 * v t2' + pow2 78 * v t3 + pow2 104 * v t4
+  //      = v t0' + pow2 26 * v t1' + pow2 52 * v t2 + pow2 78 * v t3 + pow2 104 * v t4);
+  let t3' = t3 +^ (t2' >>^ 26ul) in
+  let t2'' = t2' &^ mask_26 in
+  UInt.logand_mask (v t2') 26;
+  // lemma_carry_local (v t2') (v t3) 52;
+  // cut (v t0' + pow2 26 * v t1'' + pow2 52 * v t2'' + pow2 78 * v t3' + pow2 104 * v t4
+  //      = v t0' + pow2 26 * v t1'' + pow2 52 * v t2' + pow2 78 * v t3 + pow2 104 * v t4);
+  let t4' = t4 +^ (t3' >>^ 26ul) in
+  let t3'' = t3' &^ mask_26 in
+  UInt.logand_mask (v t3') 26;
+  // lemma_carry_local (v t3') (v t4) 78;
+  // cut (v t0' + pow2 26 * v t1'' + pow2 52 * v t2'' + pow2 78 * v t3' + pow2 104 * v t4
+  //      = v t0' + pow2 26 * v t1'' + pow2 52 * v t2'' + pow2 78 * v t3'' + pow2 104 * v t4');
+  upd_5 acc t0' t1'' t2'' t3'' t4';
+  // Hacl.Spec.Bignum.Modulo.lemma_seval_5 s';
+  // s'
+  ()
+
 
 [@"substitute"]
 val fcontract_first_carry_full:
   acc:felem ->
   Stack unit
     (requires (fun h -> live h acc /\ red_y (as_seq h acc)))
-    (ensures (fun h0 _ h1 -> live h0 acc /\ bounds (as_seq h0 acc) (pow2 27) p26 p26 p26 p26
+    (ensures (fun h0 _ h1 -> live h0 acc /\ red_y (as_seq h0 acc)
       /\ live h1 acc /\ modifies_1 acc h0 h1
       /\ as_seq h1 acc == Hacl.Spec.Poly1305_32.fcontract_first_carry_full (as_seq h0 acc)))
 [@"substitute"]
 let fcontract_first_carry_full acc =
-  let t0 = acc.(0ul) in
-  let t1 = acc.(1ul) in
-  let t2 = acc.(2ul) in
-  let t3 = acc.(3ul) in
-  let t4 = acc.(4ul) in
-  let open Hacl.Bignum.Limb in
-  let open Hacl.Spec.Poly1305_32 in
-  let t1' = t1 +^ (t0 >>^ 26ul) in
-  let t0' = t0 &^ mask_26 in
-  UInt.logand_mask (v t0) 26;
-  let t2' = t2 +^ (t1' >>^ 26ul) in
-  let t1'' = t1' &^ mask_26 in
-  UInt.logand_mask (v t1') 26;
-  let t3' = t3 +^ (t2' >>^ 26ul) in
-  let t2'' = t2' &^ mask_26 in
-  UInt.logand_mask (v t2') 26;
-  let t4' = t4 +^ (t3' >>^ 26ul) in
-  let t3'' = t3' &^ mask_26 in
-  UInt.logand_mask (v t3') 26;
-  let h0 = ST.get() in
-  upd_5 acc t0' t1' t2' t3' t4';
-  let h1 = ST.get() in
+  fcontract_first_carry_pass acc;
+  let h = ST.get() in
   assert_norm(5 * (pow2 32 / pow2 26) + pow2 26 < pow2 27);
-  Hacl.Spec.Bignum.Modulo.lemma_carry_top_spec_ (as_seq h1 acc);
-  Hacl.Spec.Bignum.Modulo.lemma_carry_top_spec (as_seq h1 acc);
-  Hacl.Bignum.Modulo.carry_top acc;
-  let h2 = ST.get() in
-  ()
+  Hacl.Spec.Bignum.Modulo.lemma_carry_top_spec_ (as_seq h acc);
+  Hacl.Spec.Bignum.Modulo.lemma_carry_top_spec (as_seq h acc);
+  Hacl.Bignum.Modulo.carry_top acc
 
 
 #reset-options "--z3rlimit 100 --max_fuel 0"
@@ -501,8 +535,6 @@ val fcontract_second_carry_pass_full:
       /\ live h1 acc /\ bounds (as_seq h1 acc) p26 p26 p26 p26 p26
       /\ modifies_1 acc h0 h1
       /\ as_seq h1 acc == Hacl.Spec.Poly1305_32.fcontract_second_carry_full (as_seq h0 acc)))
-
-private let lemma_div_26 (a:nat{a <= pow2 26}) : Lemma (a / pow2 26 = 1 ==> (a = pow2 26 /\ a % pow2 26 = 0)) = assert_norm((pow2 26 - 1) / pow2 26 = 0); assert_norm(pow2 26 % pow2 26 = 0)
 
 [@"substitute"]
 let fcontract_second_carry_pass_full acc =

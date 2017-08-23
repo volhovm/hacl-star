@@ -1,5 +1,9 @@
 module Poly1305_32
 
+open FStar.HyperStack.All
+
+module ST = FStar.HyperStack.ST
+
 open FStar.Mul
 open FStar.Endianness
 open FStar.Buffer
@@ -7,10 +11,13 @@ open FStar.UInt64
 
 open Hacl.Spec.Endianness
 
+#reset-options "--max_fuel 0 --z3rlimit 100"
+
 (* Type Aliases *)
 let uint8_p = Buffer.buffer Hacl.UInt8.t
 let uint64_t = FStar.UInt64.t
 let op_String_Access h (b:uint8_p{live h b}) = reveal_sbytes (as_seq h b)
+
 
 val crypto_onetimeauth:
   mac:uint8_p{length mac = 16} ->

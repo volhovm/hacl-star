@@ -16,12 +16,15 @@ POLY1305_SPECIFIC= \
 	Hacl.Bignum.Constants.fst \
 	Hacl.Bignum.Parameters.fst \
 	Hacl.Spec.Bignum.Modulo.fst \
+	Hacl.Spec.Bignum.AddAndMultiply.fst \
 	Hacl.Bignum.Modulo.fst \
 	Hacl.Bignum.AddAndMultiply.fst \
-	Hacl.MAC.Poly1305_32.fst \
-	Poly1305_32.fst
-#	Hacl.Spec.Bignum.AddAndMultiply.fst \
-	Hacl.Spec.MAC.Poly1305_32.fst \
+	Hacl.Spec.Poly1305_32.Lemmas.fst \
+	Hacl.Spec.Poly1305_32.fst \
+	Hacl.Spe.Poly1305_32.fst \
+	Hacl.Impl.Poly1305_32.fst \
+	Hacl.Standalone.Poly1305_32.fst \
+	Poly1305_32.fst \
 
 SLOW=
 
@@ -72,13 +75,13 @@ poly-c/out.krml: $(POLY1305_FILES) Hacl.Test.Poly1305_32.fst
 
 poly-c/Poly1305_32.c: poly-c/out.krml
 	$(KREMLIN) $(KREMLIN_ARGS) $^ \
-		-bundle "Hacl.Spec.\*" -bundle "Poly1305_32=Poly1305_32,Hacl.Bignum.\*,Hacl.MAC.\*" \
+		-bundle 'Poly1305_32=Hacl.Bignum.*,Hacl.Impl.*,Hacl.Standalone.*,Poly1305_32' \
 		-skip-compilation
 
 poly1305.exe: poly-c/out.krml
 	$(KREMLIN) $(KREMLIN_ARGS) \
-		-no-prefix Hacl.Test.Poly1305_32 \
-		-bundle "Hacl.Spec.\*" -bundle "Poly1305_32=Poly1305_32,Hacl.Bignum.\*,Hacl.MAC.\*" \
+		-drop AEAD_Poly1305_64 -no-prefix Hacl.Test.Poly1305_32 \
+		-bundle 'Poly1305_32=Hacl.Bignum.*,Hacl.Impl.*,Hacl.Standalone.*,Poly1305_32' \
 		$^ -o $@
 	./$@
 
