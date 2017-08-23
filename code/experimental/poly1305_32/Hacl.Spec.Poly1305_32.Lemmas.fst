@@ -223,3 +223,18 @@ let lemma_fexpand k =
   small_modulo_lemma_1 (little_endian k) (pow2 128);
   assert( lk = i0 + pow2 26 * i1 + pow2 52 * i2 + pow2 78 * i3 + pow2 104 * i4);
   assert( i4 < pow2 24)
+
+
+val lemma_seval_mod_128:
+  h0:nat{h0 < pow2 26} -> h1:nat{h1 < pow2 26} -> h2:nat{h2 < pow2 26} ->  h3:nat{h3 < pow2 26} -> h4:nat{h4 < pow2 26} ->
+  Lemma ((h0 + pow2 26 * h1 + pow2 52 * h2 + pow2 78 * h3 + pow2 104 * h4) % pow2 128
+         = h0 + pow2 26 * h1 + pow2 52 * h2 + pow2 78 * h3 + pow2 104 * (h4 % pow2 24))
+let lemma_seval_mod_128 h0 h1 h2 h3 h4 =
+  assert_norm(pow2 24 = 0x1000000);
+  assert_norm(pow2 26 = 0x4000000);
+  assert_norm(pow2 52 = 0x10000000000000);
+  assert_norm(pow2 78 = 0x40000000000000000000);
+  assert_norm(pow2 104 = 0x100000000000000000000000000);
+  lemma_mod_plus_distr_l (pow2 104 * h4) (h0 + pow2 26 * h1 + pow2 52 * h2 + pow2 78 * h3) (pow2 128);
+  Math.Lemmas.pow2_multiplication_modulo_lemma_2 h4 128 104;
+  small_modulo_lemma_1 (h0 + pow2 26 * h1 + pow2 52 * h2 + pow2 78 * h3 + pow2 104 * (h4 % pow2 24)) (pow2 128)

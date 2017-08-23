@@ -42,35 +42,69 @@ val lemma_bignum_to_128:
 let lemma_bignum_to_128 h0 h1 h2 h3 h4 =
   Hacl.Spec.Poly1305_32.Lemmas.lemma_bignum_to_128 (v h0) (v h1) (v h2) (v h3) (v h4)
 
-#reset-options "--max_fuel 0 --z3rlimit 20"
+#reset-options "--z3rlimit 50 --max_fuel 0 --smtencoding.nl_arith_repr native --smtencoding.l_arith_repr native"
+
+inline_for_extraction
+let shift_left_128 (h:Hacl.UInt32.t{v h < pow2 26}) (s:UInt32.t{UInt32.v s <= 78}) :
+  Tot (z:Hacl.UInt128.t{Hacl.UInt128.v z = pow2 (UInt32.v s) * v h})
+  = Math.Lemmas.pow2_le_compat 78 (UInt32.v s);
+    Math.Lemmas.pow2_plus 78 26;
+    assert(pow2 (UInt32.v s) * v h < pow2 104);
+    Math.Lemmas.pow2_lt_compat 128 104;
+    Math.Lemmas.small_modulo_lemma_1 (pow2 (UInt32.v s) * v h) (pow2 128);
+    let z = Hacl.UInt128.(sint32_to_sint128 h <<^ s) in
+    z
+
+inline_for_extraction
+let shift_left_128' (h:Hacl.UInt32.t{v h < pow2 26}) :
+  Tot (z:Hacl.UInt128.t{Hacl.UInt128.v z = pow2 104 * (v h % pow2 24)})
+  = Math.Lemmas.pow2_multiplication_modulo_lemma_2 (v h) 128 104;
+    Hacl.UInt128.(sint32_to_sint128 h <<^ 104ul)
+
+inline_for_extraction
+let add_limbs (h0:Hacl.UInt128.t{Hacl.UInt128.v h0 < pow2 26})
+              (h1:Hacl.UInt128.t{Hacl.UInt128.v h1 % pow2 26 = 0 /\ Hacl.UInt128.v h1 < pow2 52})
+              (h2:Hacl.UInt128.t{Hacl.UInt128.v h2 % pow2 52 = 0 /\ Hacl.UInt128.v h2 < pow2 78})
+              (h3:Hacl.UInt128.t{Hacl.UInt128.v h3 % pow2 78 = 0 /\ Hacl.UInt128.v h3 < pow2 104})
+              (h4:Hacl.UInt128.t{Hacl.UInt128.v h4 % pow2 104 = 0})
+              : Tot (h:Hacl.UInt128.t{Hacl.UInt128.v h = Hacl.UInt128.v h0 + Hacl.UInt128.v h1
+                                                         + Hacl.UInt128.v h2 + Hacl.UInt128.v h3
+                                                         + Hacl.UInt128.v h4})
+  = assert_norm(pow2 24 = 0x1000000);
+    assert_norm(pow2 26 = 0x4000000);
+    assert_norm(pow2 52 = 0x10000000000000);
+    assert_norm(pow2 78 = 0x40000000000000000000);
+    assert_norm(pow2 104 = 0x100000000000000000000000000);
+    UInt.logor_disjoint (Hacl.UInt128.v h1) (Hacl.UInt128.v h0) 26;
+    UInt.logor_disjoint (Hacl.UInt128.v h2) (Hacl.UInt128.v h1 + Hacl.UInt128.v h0) 52;
+    UInt.logor_disjoint (Hacl.UInt128.v h3) (Hacl.UInt128.v h2 + Hacl.UInt128.v h1 + Hacl.UInt128.v h0) 78;
+    UInt.logor_disjoint (Hacl.UInt128.v h4) (Hacl.UInt128.v h3 + Hacl.UInt128.v h2 + Hacl.UInt128.v h1 + Hacl.UInt128.v h0) 104;
+    Hacl.UInt128.(h4 |^ (h3 |^ (h2 |^ (h1 |^ h0))))
+
+
+#reset-options "--z3rlimit 20 --max_fuel 0"
 
 val bignum_to_128: s:seqelem{bounds s p26 p26 p26 p26 p26} -> Tot (acc:Hacl.UInt128.t{Hacl.UInt128.v acc = seval s % pow2 128})
 let bignum_to_128 s =
-  admit();
+  assert_norm(pow2 24 = 0x1000000);
+  assert_norm(pow2 26 = 0x4000000);
+  assert_norm(pow2 52 = 0x10000000000000);
+  assert_norm(pow2 78 = 0x40000000000000000000);
+  assert_norm(pow2 104 = 0x100000000000000000000000000);
   let h0 = Seq.index s 0 in
   let h1 = Seq.index s 1 in
   let h2 = Seq.index s 2 in
   let h3 = Seq.index s 3 in
   let h4 = Seq.index s 4 in
-  let open Hacl.UInt64 in
-  // let accl = (h1 <<^ 44ul) |^ h0 in
-  let accl = (sint32_to_sint64 h2 <<^ 52ul) |^ (sint32_to_sint64 h1 <<^ 26ul) |^ sint32_to_sint64 h0 in
-  // UInt.logor_disjoint (v (h1 <<^ 44ul)) (v h0) 44;
-  // cut (v accl = ((v h1 * pow2 44) % pow2 64) + v h0);
-  // let acch = (h2 <<^ 24ul) |^ (h1 >>^ 20ul) in
-  let acch = (sint32_to_sint64 h4 <<^ 40ul) |^ (sint32_to_sint64 h3 <<^ 14ul) |^ (sint32_to_sint64 h2 >>^ 12ul) in
-  // Math.Lemmas.lemma_div_lt (v h1) 44 20;
-  // Math.Lemmas.pow2_multiplication_modulo_lemma_2 (v h2) 64 24;
-  // Math.Lemmas.lemma_mod_plus 0 (v h2 % pow2 40) (pow2 24);
-  // UInt.logor_disjoint (v (h2 <<^ 24ul)) (v (h1 >>^ 20ul)) 24;
-  // cut (v acch = (v h2 * (pow2 24)) % pow2 64 + v h1 / pow2 20);
-  // Math.Lemmas.multiple_modulo_lemma (v acch) (pow2 64);
-  let open Hacl.UInt128 in
-  let acc' = (uint64_to_uint128 acch <<^ 64ul) |^ uint64_to_uint128 accl in
-  // UInt.logor_disjoint #128 (v (limb_to_wide acch <<^ 64ul)) (v (limb_to_wide accl)) 64;
-  // lemma_bignum_to_128 h0 h1 h2 h3 h4;
-  // Hacl.Spec.Bignum.Modulo.lemma_seval_5 s;
-  acc'
+  let x0 = sint32_to_sint128 h0 in
+  let x1 = shift_left_128 h1 26ul in
+  let x2 = shift_left_128 h2 52ul in
+  let x3 = shift_left_128 h3 78ul in
+  let x4 = shift_left_128' h4 in
+  let h  = add_limbs x0 x1 x2 x3 x4 in
+  Hacl.Spec.Poly1305_32.Lemmas.lemma_seval_mod_128 (v h0) (v h1) (v h2) (v h3) (v h4);
+  Hacl.Spec.Bignum.Modulo.lemma_seval_5 s;
+  h
 
 
 #reset-options "--z3rlimit 20 --max_fuel 0"
@@ -186,21 +220,6 @@ let fexpand_spec input =
   s
 
 
-// val toField_spec: m:word_16 -> GTot (s':seqelem{red_26 s' /\ v (Seq.index s' 4) < pow2 24 /\ seval s' == hlittle_endian m})
-// let toField_spec m =
-//   let open Hacl.UInt32 in
-//   let m0 = load32_le_spec (Seq.slice m  0  4) in
-//   let m1 = load32_le_spec (Seq.slice m  4  8) in
-//   let m2 = load32_le_spec (Seq.slice m  8 12) in
-//   let m3 = load32_le_spec (Seq.slice m 12 16) in
-//   let x0 = m0 &^ mask_26 in
-//   let x1 = (m1 <<^  6ul) |^ (m0 >>^ 26ul) in
-//   let x2 = (m2 <<^ 12ul) |^ (m1 >>^ 20ul) in
-//   let x3 = (m3 <<^ 18ul) |^ (m2 >>^ 14ul) in
-//   let x4 =                  (m3 >>^  8ul) in
-//   create_5 x0 x1 x2 x3 x4
-
-
 #reset-options "--z3rlimit 20 --max_fuel 0 --z3refresh"
 
 inline_for_extraction
@@ -219,10 +238,16 @@ let shift_mask' (k:Hacl.UInt128.t) : Tot (z:Hacl.UInt32.t{v z = (Hacl.UInt128.v 
   assert(v z = Hacl.UInt128.v k % pow2 32);
   Limb.(z &^ mask_26)
 
+
+#reset-options "--z3rlimit 200 --max_fuel 0 --smtencoding.nl_arith_repr native --smtencoding.l_arith_repr native"
+
 val poly1305_encode_r_spec: key:Seq.seq H8.t{Seq.length key = 16} -> GTot (s':seqelem{red_26 s'
   /\ seval s' = UInt.logand #128 (hlittle_endian key) 0x0ffffffc0ffffffc0ffffffc0fffffff})
 let poly1305_encode_r_spec key =
-  admit();
+  assert_norm(pow2 26 = 0x4000000);
+  assert_norm(pow2 52 = 0x10000000000000);
+  assert_norm(pow2 78 = 0x40000000000000000000);
+  assert_norm(pow2 104 = 0x100000000000000000000000000);
   let k = load128_le_spec key in
   let k_clamped = Hacl.UInt128.(k &^ clamp_mask) in
   let r0 = shift_mask' k_clamped in
@@ -232,8 +257,23 @@ let poly1305_encode_r_spec key =
   let r4 = shift_mask k_clamped 104ul in
   Math.Lemmas.lemma_div_lt (Hacl.UInt128.v k_clamped) 128 104;
   Math.Lemmas.pow2_le_compat 26 24;
-  Math.Lemmas.small_modulo_lemma_1 (v r4) 26;
+  Math.Lemmas.small_modulo_lemma_1 (Hacl.UInt128.v k_clamped / pow2 104) (pow2 26);
   Hacl.Spec.Poly1305_32.Lemmas.lemma_k (Hacl.UInt128.v k_clamped);
+  assert(Hacl.UInt128.v k_clamped = ((Hacl.UInt128.v k_clamped) % pow2 26)
+                                    + pow2 26 * ((Hacl.UInt128.v k_clamped / pow2 26) % pow2 26)
+                                    + pow2 52 * ((Hacl.UInt128.v k_clamped / pow2 52) % pow2 26)
+                                    + pow2 78 * ((Hacl.UInt128.v k_clamped / pow2 78) % pow2 26)
+                                    + pow2 104 * ((Hacl.UInt128.v k_clamped / pow2 104)));
+  assert(v r0 = (Hacl.UInt128.v k_clamped) % pow2 26);
+  assert(v r1 = ((Hacl.UInt128.v k_clamped / pow2 26) % pow2 26));
+  assert(v r2 = ((Hacl.UInt128.v k_clamped / pow2 52) % pow2 26));
+  assert(v r3 = ((Hacl.UInt128.v k_clamped / pow2 78) % pow2 26));
+  assert(v r4 = ((Hacl.UInt128.v k_clamped / pow2 104)));
+  assert(Hacl.UInt128.v k_clamped = v r0
+                                    + pow2 26 * v r1
+                                    + pow2 52 * v r2
+                                    + pow2 78 * v r3
+                                    + pow2 104 * v r4);
   let s = create_5 r0 r1 r2 r3 r4 in
   Hacl.Spec.Bignum.Modulo.lemma_seval_5 s;
   s
@@ -243,7 +283,7 @@ let poly1305_encode_r_spec key =
 
 val toField_plus_2_128_spec: m:word_16 -> GTot (s:seqelem{red_26 s /\ seval s = hlittle_endian m + pow2 128})
 let toField_plus_2_128_spec m =
-  let b = toField_spec m in
+  let b  = fexpand_spec m in
   let b4 = Seq.index b 4 in
   cut (v b4 < pow2 24);
   let open Hacl.Bignum.Limb in
@@ -317,7 +357,7 @@ let poly1305_update_spec st m =
 
 private val lemma_append_one_to_zeros_: unit -> Lemma
   (hlittle_endian (Seq.create 1 (uint8_to_sint8 1uy)) = 1)
-private let lemma_append_one_to_zeros_ () = 
+private let lemma_append_one_to_zeros_ () =
   little_endian_singleton (1uy)
 
 
@@ -376,7 +416,7 @@ let poly1305_process_last_block_spec st m rem' =
   let m' = Seq.append m (Seq.create (16 - U64.v rem') (uint8_to_sint8 0uy)) in
   let m'' = Seq.upd m' (U64.v rem') (uint8_to_sint8 1uy) in
   lemma_seq_append_little_endian m;
-  let block = toField_spec m'' in
+  let block  = fexpand_spec m'' in
   let acc = MkState?.h st in
   let r = MkState?.r st in
   let log = Seq.append (Seq.create 1 (reveal_sbytes m)) (MkState?.log st) in
@@ -391,18 +431,6 @@ inline_for_extraction let p26m5 : p:limb{v p = pow2 26 - 5} =
 
 inline_for_extraction let p26m1 : p:limb{v p = pow2 26 - 1} =
   assert_norm(pow2 26 - 1 = 0x3ffffff); uint32_to_sint32 0x3fffffful
-
-
-#reset-options "--max_fuel 0 --z3rlimit 20"
-
-// val seq_upd_3: a0:limb -> a1:limb -> a2:limb -> Tot (s:seqelem{Seq.index s 0 == a0
-//   /\ Seq.index s 1 == a1 /\ Seq.index s 2 == a2})
-// let seq_upd_3 a0 a1 a2 =
-//   let s = Seq.create 3 limb_zero in
-//   let s = Seq.upd s 0 a0 in
-//   let s = Seq.upd s 1 a1 in
-//   let s = Seq.upd s 2 a2 in
-//   s
 
 
 #reset-options "--max_fuel 0 --z3rlimit 20"
