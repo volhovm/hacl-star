@@ -1,4 +1,4 @@
-module Curve25519
+module Curve25519_115
 
 open FStar.Mul
 open FStar.HyperStack

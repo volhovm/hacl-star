@@ -51,7 +51,7 @@ let main () =
     ] in
   Hacl.EC.crypto_scalarmult result scalar1 input1;
   TestLib.compare_and_print (C.string_of_literal "Curve25519") expected1 result keysize;
-  Hacl.EC.crypto_scalarmult result scalar2 input2;
+  Curve25519_115.crypto_scalarmult result scalar2 input2;
   TestLib.compare_and_print (C.string_of_literal "Curve25519") expected2 result keysize;
   pop_frame();
   C.exit_success

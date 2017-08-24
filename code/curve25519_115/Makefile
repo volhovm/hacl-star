@@ -40,7 +40,7 @@ X25519_SPECIFIC= \
 	Hacl.EC.Ladder.fst \
 	Hacl.Spec.EC.fst \
 	Hacl.EC.fst \
-	Curve25519.fst
+	Curve25519_115.fst
 
 # Files that are too slow and for which verification speed must improve
 SLOW=Hacl.Spec.Bignum.Fsquare.fst
@@ -95,12 +95,12 @@ x25519-c/out.krml: $(X25519_FILES) Hacl.Test.X25519.fst
 
 x25519-c/Curve25519.c x25519-c/Hacl_Test_X25519.c: x25519-c/out.krml
 	$(KREMLIN) $(KREMLIN_ARGS) -no-prefix Hacl.Test.X25519 \
-	 	-bundle 'Curve25519=Hacl.Bignum,Hacl.Bignum.*,Hacl.EC,Hacl.EC.*,Hacl.UInt115' \
+	 	-bundle 'Curve25519_115=Hacl.Bignum,Hacl.Bignum.*,Hacl.EC,Hacl.EC.*,Hacl.UInt115' \
 		-skip-compilation $^ -o $@
 
 x25519.exe: x25519-c/out.krml
 	$(KREMLIN) $(KREMLIN_ARGS) -no-prefix Hacl.Test.X25519 \
-	 	-bundle 'Curve25519=Hacl.Bignum,Hacl.Bignum.*,Hacl.EC,Hacl.EC.*,Hacl.UInt115' \
+	 	-bundle 'Curve25519_115=Hacl.Bignum,Hacl.Bignum.*,Hacl.EC,Hacl.EC.*,Hacl.UInt115' \
 		$^ -o $@
 	./$@
 
