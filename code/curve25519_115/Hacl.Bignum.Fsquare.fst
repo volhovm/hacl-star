@@ -1,5 +1,8 @@
 module Hacl.Bignum.Fsquare
 
+module ST = FStar.HyperStack.ST
+
+open FStar.HyperStack.All
 
 open FStar.HyperStack
 open FStar.Buffer
@@ -57,7 +60,7 @@ private let fsquare__ tmp output =
   let d2 = r2 *^ (uint64_to_limb 2uL) *^ (uint64_to_limb 19uL) in
   let d419 = r4 *^ (uint64_to_limb 19uL) in
   let d4 = d419 *^ (uint64_to_limb 2uL) in
-  let open Hacl.UInt128 in
+  let open Hacl.UInt115 in
   let s0 = computation_1 r0 r1 r2 r3 r4 d4 d2 in
   let s1 =  computation_2 r0 r1 r2 r3 r4 d4 d0 in
   let s2 =  computation_3 r0 r1 r2 r3 r4 d4 d0 in

@@ -1,5 +1,8 @@
 module Hacl.Bignum.Fproduct
 
+module ST = FStar.HyperStack.ST
+
+open FStar.HyperStack.All
 
 open FStar.HyperStack
 open FStar.Buffer
