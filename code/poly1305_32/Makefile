@@ -1,4 +1,4 @@
-include ../../Makefile.include
+include ../Makefile.include
 
 BIGNUM= \
 	$(HACL_HOME)/code/bignum/Hacl.Spec.Bignum.Field.fst \
@@ -17,14 +17,16 @@ POLY1305_SPECIFIC= \
 	Hacl.Bignum.Parameters.fst \
 	Hacl.Spec.Bignum.Modulo.fst \
 	Hacl.Spec.Bignum.AddAndMultiply.fst \
-	Hacl.Bignum.Modulo.fst \
-	Hacl.Bignum.AddAndMultiply.fst \
+	Hacl.Spec.Poly1305_32.State.fst \
 	Hacl.Spec.Poly1305_32.Lemmas.fst \
 	Hacl.Spec.Poly1305_32.fst \
 	Hacl.Spe.Poly1305_32.fst \
+	Hacl.Bignum.Modulo.fst \
+	Hacl.Bignum.AddAndMultiply.fst \
+	Hacl.Impl.Poly1305_32.State.fst \
 	Hacl.Impl.Poly1305_32.fst \
 	Hacl.Standalone.Poly1305_32.fst \
-	Poly1305_32.fst \
+	Poly1305_32.fst
 
 SLOW=
 
@@ -32,7 +34,7 @@ TODO=
 
 POLY1305_FILES=$(BIGNUM) $(POLY1305_SPECIFIC)
 
-FSTAR_INCLUDES+=--include$(HACL_HOME)/code/bignum
+FSTAR_INCLUDES+=--include $(HACL_HOME)/code/bignum
 
 # Parameter for interactive mode
 %.fst-in:
@@ -61,11 +63,10 @@ bignum-ci: $(addsuffix -reloc-verify, $(filter-out $(SLOW) $(TODO), $(BIGNUM)))
 specific-ci: $(addsuffix -verify, $(filter-out $(SLOW) $(TODO), $(POLY1305_SPECIFIC)))
 all-ci: bignum-ci specific-ci
 
-
 # By default, KreMLin drops a bunch of spec-related module that are not meant to
 # extract.
 CFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable
-KREMLIN_ARGS+=-I $(HACL_HOME)/code/bignum -tmpdir poly-c \
+KREMLIN_ARGS+=-I $(HACL_HOME)/code/bignum -tmpdir poly-c -fnouint128 -fparentheses -ccopt -Wno-parentheses \
 	-bundle 'Hacl.Spec.*,Hacl.Spe.*' -fparentheses \
 	-drop Combinators,Hacl.Endianness,Spec.*,Hacl.Bignum.Parameters,Hacl.Endianness,Hacl.Spec,Hacl.Spec.*,Hacl.Spe,Hacl.Spe.*,Hacl.Cast,Hacl.UInt8,Hacl.UInt16,Hacl.UInt32,Hacl.UInt64,Hacl.UInt128,Prims,Seq.* \
 	$(KREMLIN_TESTLIB)
@@ -87,20 +88,7 @@ poly1305.exe: poly-c/out.krml
 
 extract-c: poly-c/Poly1305_32.c
 
-include $(FSTAR_HOME)/src/gmake/fstar.mk
-CODEGEN_ARGS=--lax --codegen OCaml --no_location_info $(FSTAR_DEFAULT_ARGS)
-OCAMLOPT := $(OCAMLOPT) -w -8-20-26-28-10
-POLY_EXTRACTED=Hacl_Bignum_Constants.ml Hacl_Bignum_Parameters.ml Hacl_MAC_Poly1305_64.ml
-
-extract-ml:
-	mkdir -p poly-ml
-	$(FSTAR) $(CODEGEN_ARGS) --include ../bignum --include ../lib \
-	--odir poly-ml $(POLY1305_FILES) \
-	--no_extract Hacl.UInt64 --no_extract Hacl.UInt32 --no_extract Hacl.UInt128 --no_extract Hacl.UInt16 --trace_error
-	$(OCAMLOPT) -I poly-ml  -I ../lib/ml $(addprefix poly-ml/,$(POLY_EXTRACTED))
-
-compile-ml:
-	$(OCAMLOPT) -I poly-ml -I ../lib/ml $(addprefix poly-ml/,$(POLY_EXTRACTED))
+test: poly1305.exe
 
 clean:
-	rm -rf *.exe *.exe.* *.out *~ poly-c
+	rm -rf *.exe *.exe.* *.out *~ poly-c *.krml
