@@ -290,35 +290,35 @@ let low_mul_5 z x y =
   let xy31 = x3 ** y1 in
   let xy40 = x4 ** y0 in
   let x    = xy00 in
-  let carry = Hacl.UInt128.(x >>^ 56ul) in
+  let carry' = Hacl.UInt128.(x >>^ 56ul) in
   let t     = sint128_to_sint64 x &^ (uint64_to_sint64 0xffffffffffffffuL) in
   assert_norm(pow2 56 = 0x100000000000000);
   UInt.logand_mask #64 (Hacl.UInt128.v x % pow2 64) 56;
   Math.Lemmas.pow2_modulo_modulo_lemma_1 (Hacl.UInt128.v x) 56 64;
   let t0  = t in
-  let x = Hacl.UInt128.(xy01 +^ xy10 +^ carry) in
-  let carry = Hacl.UInt128.(x >>^ 56ul) in
+  let x = Hacl.UInt128.(xy01 +^ xy10 +^ carry') in
+  let carry' = Hacl.UInt128.(x >>^ 56ul) in
   let t     = sint128_to_sint64 x &^ (uint64_to_sint64 0xffffffffffffffuL) in
   assert_norm(pow2 56 = 0x100000000000000);
   UInt.logand_mask #64 (Hacl.UInt128.v x % pow2 64) 56;
   Math.Lemmas.pow2_modulo_modulo_lemma_1 (Hacl.UInt128.v x) 56 64;
   let t1 = t in
-  let x = Hacl.UInt128.(xy02 +^ xy11 +^ xy20 +^ carry) in
-  let carry = Hacl.UInt128.(x >>^ 56ul) in
+  let x = Hacl.UInt128.(xy02 +^ xy11 +^ xy20 +^ carry') in
+  let carry' = Hacl.UInt128.(x >>^ 56ul) in
   let t     = sint128_to_sint64 x &^ (uint64_to_sint64 0xffffffffffffffuL) in
   assert_norm(pow2 56 = 0x100000000000000);
   UInt.logand_mask #64 (Hacl.UInt128.v x % pow2 64) 56;
   Math.Lemmas.pow2_modulo_modulo_lemma_1 (Hacl.UInt128.v x) 56 64;
   let t2 = t in
-  let x = Hacl.UInt128.(xy03 +^ xy12 +^ xy21 +^ xy30 +^ carry) in
-  let carry = Hacl.UInt128.(x >>^ 56ul) in
+  let x = Hacl.UInt128.(xy03 +^ xy12 +^ xy21 +^ xy30 +^ carry') in
+  let carry' = Hacl.UInt128.(x >>^ 56ul) in
   let t     = sint128_to_sint64 x &^ (uint64_to_sint64 0xffffffffffffffuL) in
   assert_norm(pow2 56 = 0x100000000000000);
   UInt.logand_mask #64 (Hacl.UInt128.v x % pow2 64) 56;
   Math.Lemmas.pow2_modulo_modulo_lemma_1 (Hacl.UInt128.v x) 56 64;
   let t3 = t in
   let open Hacl.UInt128 in
-  let        t4 = mod_40   (xy04 +^ xy13 +^ xy22 +^ xy31 +^ xy40 +^ carry) in
+  let        t4 = mod_40   (xy04 +^ xy13 +^ xy22 +^ xy31 +^ xy40 +^ carry') in
   Hacl.Lib.Create64.make_h64_5 z t0 t1 t2 t3 t4
 
 

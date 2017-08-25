@@ -612,7 +612,7 @@ let lemma_carry_top_wide_then_copy s =
   assert_norm(pow2 32 > pow2 26);
   assert_norm(pow2 32 > px)
 
-#set-options "--z3rlimit 50 --max_fuel 0"
+#reset-options "--z3rlimit 200 --max_fuel 0 --smtencoding.nl_arith_repr native --smtencoding.l_arith_repr native "
 
 val lemma_carry_wide_then_carry_top: s:seqelem_wide{carry_wide_pre s 0} -> Lemma
   (((w (Seq.index s 4) + pow2 (2*word_size - limb_size))/ pow2 26 < pow2 word_size
