@@ -44,7 +44,7 @@ FSTAR_INCLUDES+=--include $(HACL_HOME)/code/bignum
 
 ct: $(addsuffix -lax, $(POLY1305_FILES))
 	# Using the --verify_all argument to lift abstractions, typechecks all dependencies of Curve25519.fst
-	$(FSTAR) --lax --verify_all Poly1305_64.fst
+	$(FSTAR) --lax --verify_all Poly1305_32.fst
 
 bignum-ver: $(addsuffix -reloc-verify, $(BIGNUM))
 specific-ver: $(addsuffix -verify, $(POLY1305_SPECIFIC))
@@ -81,7 +81,7 @@ poly-c/Poly1305_32.c: poly-c/out.krml
 
 poly1305.exe: poly-c/out.krml
 	$(KREMLIN) $(KREMLIN_ARGS) \
-		-drop AEAD_Poly1305_64 -no-prefix Hacl.Test.Poly1305_32 \
+		-no-prefix Hacl.Test.Poly1305_32 \
 		-bundle 'Poly1305_32=Hacl.Bignum.*,Hacl.Impl.*,Hacl.Standalone.*,Poly1305_32' \
 		$^ -o $@
 	./$@
