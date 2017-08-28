@@ -1,21 +1,21 @@
 #include "Curve25519_115.h"
 
-static Hacl_UInt115_t Hacl_UInt115_add(Hacl_UInt115_t x, Hacl_UInt115_t y)
+static void Hacl_UInt115_add(Hacl_UInt115_t *x, Hacl_UInt115_t *y, Hacl_UInt115_t *ret)
 {
-  Hacl_UInt115_t scrut0 = x;
+  Hacl_UInt115_t scrut0 = x[0];
   uint64_t high = scrut0.high;
-  Hacl_UInt115_t scrut1 = y;
+  Hacl_UInt115_t scrut1 = y[0];
   uint64_t high0 = scrut1.high;
-  Hacl_UInt115_t scrut2 = x;
+  Hacl_UInt115_t scrut2 = x[0];
   uint64_t low = scrut2.low;
-  Hacl_UInt115_t scrut = y;
+  Hacl_UInt115_t scrut = y[0];
   uint64_t low0 = scrut.low;
-  return ((Hacl_UInt115_t ){ .high = high + high0, .low = low + low0 });
+  ret[0] = ((Hacl_UInt115_t ){ .high = high + high0, .low = low + low0 });
 }
 
-static Hacl_UInt115_t Hacl_UInt115_mul_wide(uint64_t x, uint64_t y)
+static void Hacl_UInt115_mul_wide(uint64_t x, uint64_t y, Hacl_UInt115_t *ret)
 {
-  return
+  ret[0] =
     (
       (Hacl_UInt115_t ){
         .high = ((x >> (uint32_t )26) * (y >> (uint32_t )26) << (uint32_t )1)
@@ -36,33 +36,33 @@ static Hacl_UInt115_t Hacl_UInt115_mul_wide(uint64_t x, uint64_t y)
     );
 }
 
-static Hacl_UInt115_t Hacl_UInt115_uint64_to_uint115(uint64_t x)
+static void Hacl_UInt115_uint64_to_uint115(uint64_t x, Hacl_UInt115_t *ret)
 {
-  return
+  ret[0] =
     ((Hacl_UInt115_t ){ .high = x >> (uint32_t )51, .low = x & (uint64_t )0x7ffffffffffff });
 }
 
-static uint64_t Hacl_UInt115_uint115_to_uint64(Hacl_UInt115_t x)
+static uint64_t Hacl_UInt115_uint115_to_uint64(Hacl_UInt115_t *x)
 {
-  Hacl_UInt115_t scrut0 = x;
+  Hacl_UInt115_t scrut0 = x[0];
   uint64_t low = scrut0.low;
-  Hacl_UInt115_t scrut = x;
+  Hacl_UInt115_t scrut = x[0];
   uint64_t high = scrut.high;
   return low + (high << (uint32_t )51);
 }
 
-static uint64_t Hacl_UInt115_split51_low(Hacl_UInt115_t s)
+static uint64_t Hacl_UInt115_split51_low(Hacl_UInt115_t *s)
 {
-  Hacl_UInt115_t scrut = s;
+  Hacl_UInt115_t scrut = s[0];
   uint64_t low = scrut.low;
   return low & (uint64_t )0x7ffffffffffff;
 }
 
-static uint64_t Hacl_UInt115_split51_high(Hacl_UInt115_t s)
+static uint64_t Hacl_UInt115_split51_high(Hacl_UInt115_t *s)
 {
-  Hacl_UInt115_t scrut0 = s;
+  Hacl_UInt115_t scrut0 = s[0];
   uint64_t high = scrut0.high;
-  Hacl_UInt115_t scrut = s;
+  Hacl_UInt115_t scrut = s[0];
   uint64_t low = scrut.low;
   return high + (low >> (uint32_t )51);
 }
@@ -81,20 +81,53 @@ static void Hacl_Bignum_Modulo_carry_top(uint64_t *b)
 inline static void
 Hacl_Bignum_Fproduct_copy_from_wide_(uint64_t *output, Hacl_UInt115_t *input)
 {
-  for (uint32_t i = (uint32_t )0; i < (uint32_t )5; i = i + (uint32_t )1)
   {
-    Hacl_UInt115_t uu____429 = input[i];
-    uint64_t uu____428 = Hacl_UInt115_uint115_to_uint64(uu____429);
-    output[i] = uu____428;
+    Hacl_UInt115_t uu____429 = input[0];
+    uint64_t uu____428 = Hacl_UInt115_uint115_to_uint64(&uu____429);
+    output[0] = uu____428;
+  }
+  {
+    Hacl_UInt115_t uu____429 = input[1];
+    uint64_t uu____428 = Hacl_UInt115_uint115_to_uint64(&uu____429);
+    output[1] = uu____428;
+  }
+  {
+    Hacl_UInt115_t uu____429 = input[2];
+    uint64_t uu____428 = Hacl_UInt115_uint115_to_uint64(&uu____429);
+    output[2] = uu____428;
+  }
+  {
+    Hacl_UInt115_t uu____429 = input[3];
+    uint64_t uu____428 = Hacl_UInt115_uint115_to_uint64(&uu____429);
+    output[3] = uu____428;
+  }
+  {
+    Hacl_UInt115_t uu____429 = input[4];
+    uint64_t uu____428 = Hacl_UInt115_uint115_to_uint64(&uu____429);
+    output[4] = uu____428;
   }
 }
 
 inline static void Hacl_Bignum_Fproduct_shift(uint64_t *output)
 {
   uint64_t tmp = output[4];
-  for (uint32_t i = (uint32_t )0; i < (uint32_t )4; i = i + (uint32_t )1)
   {
-    uint32_t ctr = (uint32_t )5 - i - (uint32_t )1;
+    uint32_t ctr = (uint32_t )5 - (uint32_t )0 - (uint32_t )1;
+    uint64_t z = output[ctr - (uint32_t )1];
+    output[ctr] = z;
+  }
+  {
+    uint32_t ctr = (uint32_t )5 - (uint32_t )1 - (uint32_t )1;
+    uint64_t z = output[ctr - (uint32_t )1];
+    output[ctr] = z;
+  }
+  {
+    uint32_t ctr = (uint32_t )5 - (uint32_t )2 - (uint32_t )1;
+    uint64_t z = output[ctr - (uint32_t )1];
+    output[ctr] = z;
+  }
+  {
+    uint32_t ctr = (uint32_t )5 - (uint32_t )3 - (uint32_t )1;
     uint64_t z = output[ctr - (uint32_t )1];
     output[ctr] = z;
   }
@@ -108,28 +141,107 @@ Hacl_Bignum_Fproduct_sum_scalar_multiplication_(
   uint64_t s
 )
 {
-  for (uint32_t i = (uint32_t )0; i < (uint32_t )5; i = i + (uint32_t )1)
   {
-    Hacl_UInt115_t uu____871 = output[i];
-    uint64_t uu____874 = input[i];
-    Hacl_UInt115_t uu____870 = Hacl_UInt115_add(uu____871, Hacl_UInt115_mul_wide(uu____874, s));
-    output[i] = uu____870;
+    Hacl_UInt115_t uu____871 = output[0];
+    uint64_t uu____874 = input[0];
+    Hacl_UInt115_t uu____870;
+    Hacl_UInt115_t ret;
+    Hacl_UInt115_mul_wide(uu____874, s, &ret);
+    Hacl_UInt115_t s1 = ret;
+    Hacl_UInt115_add(&uu____871, &s1, &uu____870);
+    output[0] = uu____870;
+  }
+  {
+    Hacl_UInt115_t uu____871 = output[1];
+    uint64_t uu____874 = input[1];
+    Hacl_UInt115_t uu____870;
+    Hacl_UInt115_t ret;
+    Hacl_UInt115_mul_wide(uu____874, s, &ret);
+    Hacl_UInt115_t s1 = ret;
+    Hacl_UInt115_add(&uu____871, &s1, &uu____870);
+    output[1] = uu____870;
+  }
+  {
+    Hacl_UInt115_t uu____871 = output[2];
+    uint64_t uu____874 = input[2];
+    Hacl_UInt115_t uu____870;
+    Hacl_UInt115_t ret;
+    Hacl_UInt115_mul_wide(uu____874, s, &ret);
+    Hacl_UInt115_t s1 = ret;
+    Hacl_UInt115_add(&uu____871, &s1, &uu____870);
+    output[2] = uu____870;
+  }
+  {
+    Hacl_UInt115_t uu____871 = output[3];
+    uint64_t uu____874 = input[3];
+    Hacl_UInt115_t uu____870;
+    Hacl_UInt115_t ret;
+    Hacl_UInt115_mul_wide(uu____874, s, &ret);
+    Hacl_UInt115_t s1 = ret;
+    Hacl_UInt115_add(&uu____871, &s1, &uu____870);
+    output[3] = uu____870;
+  }
+  {
+    Hacl_UInt115_t uu____871 = output[4];
+    uint64_t uu____874 = input[4];
+    Hacl_UInt115_t uu____870;
+    Hacl_UInt115_t ret;
+    Hacl_UInt115_mul_wide(uu____874, s, &ret);
+    Hacl_UInt115_t s1 = ret;
+    Hacl_UInt115_add(&uu____871, &s1, &uu____870);
+    output[4] = uu____870;
   }
 }
 
 inline static void Hacl_Bignum_Fproduct_carry_wide_(Hacl_UInt115_t *tmp)
 {
-  for (uint32_t i = (uint32_t )0; i < (uint32_t )4; i = i + (uint32_t )1)
   {
-    uint32_t ctr = i;
+    uint32_t ctr = (uint32_t )0;
     Hacl_UInt115_t tctr = tmp[ctr];
     Hacl_UInt115_t tctrp1 = tmp[ctr + (uint32_t )1];
-    (void )(Hacl_UInt115_uint115_to_uint64(tctr)
+    (void )(Hacl_UInt115_uint115_to_uint64(&tctr)
     & (((uint64_t )1 << (uint32_t )51) - (uint64_t )1));
-    uint64_t r01 = Hacl_UInt115_split51_low(tctr);
-    Hacl_UInt115_t c = Hacl_UInt115_uint64_to_uint115(Hacl_UInt115_split51_high(tctr));
-    tmp[ctr] = Hacl_UInt115_uint64_to_uint115(r01);
-    tmp[ctr + (uint32_t )1] = Hacl_UInt115_add(tctrp1, c);
+    uint64_t r01 = Hacl_UInt115_split51_low(&tctr);
+    Hacl_UInt115_t c;
+    Hacl_UInt115_uint64_to_uint115(Hacl_UInt115_split51_high(&tctr), &c);
+    Hacl_UInt115_uint64_to_uint115(r01, &tmp[ctr]);
+    Hacl_UInt115_add(&tctrp1, &c, &tmp[ctr + (uint32_t )1]);
+  }
+  {
+    uint32_t ctr = (uint32_t )1;
+    Hacl_UInt115_t tctr = tmp[ctr];
+    Hacl_UInt115_t tctrp1 = tmp[ctr + (uint32_t )1];
+    (void )(Hacl_UInt115_uint115_to_uint64(&tctr)
+    & (((uint64_t )1 << (uint32_t )51) - (uint64_t )1));
+    uint64_t r01 = Hacl_UInt115_split51_low(&tctr);
+    Hacl_UInt115_t c;
+    Hacl_UInt115_uint64_to_uint115(Hacl_UInt115_split51_high(&tctr), &c);
+    Hacl_UInt115_uint64_to_uint115(r01, &tmp[ctr]);
+    Hacl_UInt115_add(&tctrp1, &c, &tmp[ctr + (uint32_t )1]);
+  }
+  {
+    uint32_t ctr = (uint32_t )2;
+    Hacl_UInt115_t tctr = tmp[ctr];
+    Hacl_UInt115_t tctrp1 = tmp[ctr + (uint32_t )1];
+    (void )(Hacl_UInt115_uint115_to_uint64(&tctr)
+    & (((uint64_t )1 << (uint32_t )51) - (uint64_t )1));
+    uint64_t r01 = Hacl_UInt115_split51_low(&tctr);
+    Hacl_UInt115_t c;
+    Hacl_UInt115_uint64_to_uint115(Hacl_UInt115_split51_high(&tctr), &c);
+    Hacl_UInt115_uint64_to_uint115(r01, &tmp[ctr]);
+    Hacl_UInt115_add(&tctrp1, &c, &tmp[ctr + (uint32_t )1]);
+  }
+  {
+    uint32_t ctr = (uint32_t )3;
+    Hacl_UInt115_t tctr = tmp[ctr];
+    Hacl_UInt115_t tctrp1 = tmp[ctr + (uint32_t )1];
+    (void )(Hacl_UInt115_uint115_to_uint64(&tctr)
+    & (((uint64_t )1 << (uint32_t )51) - (uint64_t )1));
+    uint64_t r01 = Hacl_UInt115_split51_low(&tctr);
+    Hacl_UInt115_t c;
+    Hacl_UInt115_uint64_to_uint115(Hacl_UInt115_split51_high(&tctr), &c);
+    Hacl_UInt115_uint64_to_uint115(r01, &tmp[ctr]);
+    Hacl_UInt115_add(&tctrp1, &c, &tmp[ctr + (uint32_t )1]);
   }
 }
 
@@ -143,9 +255,44 @@ inline static void Hacl_Bignum_Fmul_shift_reduce(uint64_t *output)
 static void
 Hacl_Bignum_Fmul_mul_shift_reduce_(Hacl_UInt115_t *output, uint64_t *input, uint64_t *input21)
 {
-  for (uint32_t i = (uint32_t )0; i < (uint32_t )5; i = i + (uint32_t )1)
   {
-    uint32_t ctr = (uint32_t )5 - i - (uint32_t )1;
+    uint32_t ctr = (uint32_t )5 - (uint32_t )0 - (uint32_t )1;
+    uint32_t i1 = ctr;
+    uint32_t j = (uint32_t )4 - i1;
+    uint64_t input2i = input21[j];
+    Hacl_Bignum_Fproduct_sum_scalar_multiplication_(output, input, input2i);
+    if (ctr > (uint32_t )0)
+      Hacl_Bignum_Fmul_shift_reduce(input);
+  }
+  {
+    uint32_t ctr = (uint32_t )5 - (uint32_t )1 - (uint32_t )1;
+    uint32_t i1 = ctr;
+    uint32_t j = (uint32_t )4 - i1;
+    uint64_t input2i = input21[j];
+    Hacl_Bignum_Fproduct_sum_scalar_multiplication_(output, input, input2i);
+    if (ctr > (uint32_t )0)
+      Hacl_Bignum_Fmul_shift_reduce(input);
+  }
+  {
+    uint32_t ctr = (uint32_t )5 - (uint32_t )2 - (uint32_t )1;
+    uint32_t i1 = ctr;
+    uint32_t j = (uint32_t )4 - i1;
+    uint64_t input2i = input21[j];
+    Hacl_Bignum_Fproduct_sum_scalar_multiplication_(output, input, input2i);
+    if (ctr > (uint32_t )0)
+      Hacl_Bignum_Fmul_shift_reduce(input);
+  }
+  {
+    uint32_t ctr = (uint32_t )5 - (uint32_t )3 - (uint32_t )1;
+    uint32_t i1 = ctr;
+    uint32_t j = (uint32_t )4 - i1;
+    uint64_t input2i = input21[j];
+    Hacl_Bignum_Fproduct_sum_scalar_multiplication_(output, input, input2i);
+    if (ctr > (uint32_t )0)
+      Hacl_Bignum_Fmul_shift_reduce(input);
+  }
+  {
+    uint32_t ctr = (uint32_t )5 - (uint32_t )4 - (uint32_t )1;
     uint32_t i1 = ctr;
     uint32_t j = (uint32_t )4 - i1;
     uint64_t input2i = input21[j];
@@ -157,18 +304,25 @@ Hacl_Bignum_Fmul_mul_shift_reduce_(Hacl_UInt115_t *output, uint64_t *input, uint
 
 inline static void Hacl_Bignum_Fmul_fmul_(uint64_t *output, uint64_t *input, uint64_t *input21)
 {
-  KRML_CHECK_SIZE(Hacl_UInt115_uint64_to_uint115((uint64_t )0), (uint32_t )5);
+  Hacl_UInt115_t ret0;
+  Hacl_UInt115_uint64_to_uint115((uint64_t )0, &ret0);
+  KRML_CHECK_SIZE(ret0, (uint32_t )5);
   Hacl_UInt115_t t[5];
   for (uintmax_t _i = 0; _i < (uint32_t )5; ++_i)
-    t[_i] = Hacl_UInt115_uint64_to_uint115((uint64_t )0);
+    t[_i] = ret0;
   Hacl_Bignum_Fmul_mul_shift_reduce_(t, input, input21);
   Hacl_Bignum_Fproduct_carry_wide_(t);
   Hacl_UInt115_t b4 = t[4];
   Hacl_UInt115_t b0 = t[0];
-  uint64_t l = Hacl_UInt115_split51_low(b4);
-  uint64_t h = Hacl_UInt115_split51_high(b4);
-  Hacl_UInt115_t b0_ = Hacl_UInt115_add(b0, Hacl_UInt115_mul_wide((uint64_t )19, h));
-  Hacl_UInt115_t b4_ = Hacl_UInt115_uint64_to_uint115(l);
+  uint64_t l = Hacl_UInt115_split51_low(&b4);
+  uint64_t h = Hacl_UInt115_split51_high(&b4);
+  Hacl_UInt115_t b0_;
+  Hacl_UInt115_t ret;
+  Hacl_UInt115_mul_wide((uint64_t )19, h, &ret);
+  Hacl_UInt115_t s1 = ret;
+  Hacl_UInt115_add(&b0, &s1, &b0_);
+  Hacl_UInt115_t b4_;
+  Hacl_UInt115_uint64_to_uint115(l, &b4_);
   t[4] = b4_;
   t[0] = b0_;
   Hacl_Bignum_Fproduct_copy_from_wide_(output, t);
@@ -190,18 +344,18 @@ inline static void Hacl_Bignum_Fmul_fmul(uint64_t *output, uint64_t *input, uint
 inline static void
 Hacl_Bignum_Fsquare_upd_5(
   Hacl_UInt115_t *tmp,
-  Hacl_UInt115_t s0,
-  Hacl_UInt115_t s1,
-  Hacl_UInt115_t s2,
-  Hacl_UInt115_t s3,
-  Hacl_UInt115_t s4
+  Hacl_UInt115_t *s0,
+  Hacl_UInt115_t *s1,
+  Hacl_UInt115_t *s2,
+  Hacl_UInt115_t *s3,
+  Hacl_UInt115_t *s4
 )
 {
-  tmp[0] = s0;
-  tmp[1] = s1;
-  tmp[2] = s2;
-  tmp[3] = s3;
-  tmp[4] = s4;
+  tmp[0] = s0[0];
+  tmp[1] = s1[0];
+  tmp[2] = s2[0];
+  tmp[3] = s3[0];
+  tmp[4] = s4[0];
 }
 
 inline static void Hacl_Bignum_Fsquare_fsquare__(Hacl_UInt115_t *tmp, uint64_t *output)
@@ -216,27 +370,77 @@ inline static void Hacl_Bignum_Fsquare_fsquare__(Hacl_UInt115_t *tmp, uint64_t *
   uint64_t d2 = r2 * (uint64_t )2 * (uint64_t )19;
   uint64_t d419 = r4 * (uint64_t )19;
   uint64_t d4 = d419 * (uint64_t )2;
-  Hacl_UInt115_t
-  s0 =
-    Hacl_UInt115_add(Hacl_UInt115_add(Hacl_UInt115_mul_wide(r0, r0), Hacl_UInt115_mul_wide(d4, r1)),
-      Hacl_UInt115_mul_wide(d2, r3));
-  Hacl_UInt115_t
-  s1 =
-    Hacl_UInt115_add(Hacl_UInt115_add(Hacl_UInt115_mul_wide(d0, r1), Hacl_UInt115_mul_wide(d4, r2)),
-      Hacl_UInt115_mul_wide(r3 * (uint64_t )19, r3));
-  Hacl_UInt115_t
-  s2 =
-    Hacl_UInt115_add(Hacl_UInt115_add(Hacl_UInt115_mul_wide(d0, r2), Hacl_UInt115_mul_wide(r1, r1)),
-      Hacl_UInt115_mul_wide(d4, r3));
-  Hacl_UInt115_t
-  s3 =
-    Hacl_UInt115_add(Hacl_UInt115_add(Hacl_UInt115_mul_wide(d0, r3), Hacl_UInt115_mul_wide(d1, r2)),
-      Hacl_UInt115_mul_wide(r4, d419));
-  Hacl_UInt115_t
-  s4 =
-    Hacl_UInt115_add(Hacl_UInt115_add(Hacl_UInt115_mul_wide(d0, r4), Hacl_UInt115_mul_wide(d1, r3)),
-      Hacl_UInt115_mul_wide(r2, r2));
-  Hacl_Bignum_Fsquare_upd_5(tmp, s0, s1, s2, s3, s4);
+  Hacl_UInt115_t s0;
+  Hacl_UInt115_t ret0;
+  Hacl_UInt115_mul_wide(d2, r3, &ret0);
+  Hacl_UInt115_t s1 = ret0;
+  Hacl_UInt115_t ret1;
+  Hacl_UInt115_t ret2;
+  Hacl_UInt115_mul_wide(d4, r1, &ret2);
+  Hacl_UInt115_t s10 = ret2;
+  Hacl_UInt115_t ret3;
+  Hacl_UInt115_mul_wide(r0, r0, &ret3);
+  Hacl_UInt115_t s00 = ret3;
+  Hacl_UInt115_add(&s00, &s10, &ret1);
+  Hacl_UInt115_t s01 = ret1;
+  Hacl_UInt115_add(&s01, &s1, &s0);
+  Hacl_UInt115_t s11;
+  Hacl_UInt115_t ret4;
+  Hacl_UInt115_mul_wide(r3 * (uint64_t )19, r3, &ret4);
+  Hacl_UInt115_t s12 = ret4;
+  Hacl_UInt115_t ret5;
+  Hacl_UInt115_t ret6;
+  Hacl_UInt115_mul_wide(d4, r2, &ret6);
+  Hacl_UInt115_t s13 = ret6;
+  Hacl_UInt115_t ret7;
+  Hacl_UInt115_mul_wide(d0, r1, &ret7);
+  Hacl_UInt115_t s02 = ret7;
+  Hacl_UInt115_add(&s02, &s13, &ret5);
+  Hacl_UInt115_t s03 = ret5;
+  Hacl_UInt115_add(&s03, &s12, &s11);
+  Hacl_UInt115_t s2;
+  Hacl_UInt115_t ret8;
+  Hacl_UInt115_mul_wide(d4, r3, &ret8);
+  Hacl_UInt115_t s14 = ret8;
+  Hacl_UInt115_t ret9;
+  Hacl_UInt115_t ret10;
+  Hacl_UInt115_mul_wide(r1, r1, &ret10);
+  Hacl_UInt115_t s15 = ret10;
+  Hacl_UInt115_t ret11;
+  Hacl_UInt115_mul_wide(d0, r2, &ret11);
+  Hacl_UInt115_t s04 = ret11;
+  Hacl_UInt115_add(&s04, &s15, &ret9);
+  Hacl_UInt115_t s05 = ret9;
+  Hacl_UInt115_add(&s05, &s14, &s2);
+  Hacl_UInt115_t s3;
+  Hacl_UInt115_t ret12;
+  Hacl_UInt115_mul_wide(r4, d419, &ret12);
+  Hacl_UInt115_t s16 = ret12;
+  Hacl_UInt115_t ret13;
+  Hacl_UInt115_t ret14;
+  Hacl_UInt115_mul_wide(d1, r2, &ret14);
+  Hacl_UInt115_t s17 = ret14;
+  Hacl_UInt115_t ret15;
+  Hacl_UInt115_mul_wide(d0, r3, &ret15);
+  Hacl_UInt115_t s06 = ret15;
+  Hacl_UInt115_add(&s06, &s17, &ret13);
+  Hacl_UInt115_t s07 = ret13;
+  Hacl_UInt115_add(&s07, &s16, &s3);
+  Hacl_UInt115_t s4;
+  Hacl_UInt115_t ret16;
+  Hacl_UInt115_mul_wide(r2, r2, &ret16);
+  Hacl_UInt115_t s18 = ret16;
+  Hacl_UInt115_t ret17;
+  Hacl_UInt115_t ret18;
+  Hacl_UInt115_mul_wide(d1, r3, &ret18);
+  Hacl_UInt115_t s19 = ret18;
+  Hacl_UInt115_t ret;
+  Hacl_UInt115_mul_wide(d0, r4, &ret);
+  Hacl_UInt115_t s08 = ret;
+  Hacl_UInt115_add(&s08, &s19, &ret17);
+  Hacl_UInt115_t s09 = ret17;
+  Hacl_UInt115_add(&s09, &s18, &s4);
+  Hacl_Bignum_Fsquare_upd_5(tmp, &s0, &s11, &s2, &s3, &s4);
 }
 
 inline static void Hacl_Bignum_Fsquare_fsquare_(Hacl_UInt115_t *tmp, uint64_t *output)
@@ -245,10 +449,15 @@ inline static void Hacl_Bignum_Fsquare_fsquare_(Hacl_UInt115_t *tmp, uint64_t *o
   Hacl_Bignum_Fproduct_carry_wide_(tmp);
   Hacl_UInt115_t b4 = tmp[4];
   Hacl_UInt115_t b0 = tmp[0];
-  uint64_t l = Hacl_UInt115_split51_low(b4);
-  uint64_t h = Hacl_UInt115_split51_high(b4);
-  Hacl_UInt115_t b0_ = Hacl_UInt115_add(b0, Hacl_UInt115_mul_wide((uint64_t )19, h));
-  Hacl_UInt115_t b4_ = Hacl_UInt115_uint64_to_uint115(l);
+  uint64_t l = Hacl_UInt115_split51_low(&b4);
+  uint64_t h = Hacl_UInt115_split51_high(&b4);
+  Hacl_UInt115_t b0_;
+  Hacl_UInt115_t ret;
+  Hacl_UInt115_mul_wide((uint64_t )19, h, &ret);
+  Hacl_UInt115_t s1 = ret;
+  Hacl_UInt115_add(&b0, &s1, &b0_);
+  Hacl_UInt115_t b4_;
+  Hacl_UInt115_uint64_to_uint115(l, &b4_);
   tmp[4] = b4_;
   tmp[0] = b0_;
   Hacl_Bignum_Fproduct_copy_from_wide_(output, tmp);
@@ -276,20 +485,24 @@ Hacl_Bignum_Fsquare_fsquare_times_(uint64_t *output, Hacl_UInt115_t *tmp, uint32
 inline static void
 Hacl_Bignum_Fsquare_fsquare_times(uint64_t *output, uint64_t *input, uint32_t count1)
 {
-  KRML_CHECK_SIZE(Hacl_UInt115_uint64_to_uint115((uint64_t )0), (uint32_t )5);
+  Hacl_UInt115_t ret;
+  Hacl_UInt115_uint64_to_uint115((uint64_t )0, &ret);
+  KRML_CHECK_SIZE(ret, (uint32_t )5);
   Hacl_UInt115_t t[5];
   for (uintmax_t _i = 0; _i < (uint32_t )5; ++_i)
-    t[_i] = Hacl_UInt115_uint64_to_uint115((uint64_t )0);
+    t[_i] = ret;
   memcpy(output, input, (uint32_t )5 * sizeof input[0]);
   Hacl_Bignum_Fsquare_fsquare_times_(output, t, count1);
 }
 
 inline static void Hacl_Bignum_Fsquare_fsquare_times_inplace(uint64_t *output, uint32_t count1)
 {
-  KRML_CHECK_SIZE(Hacl_UInt115_uint64_to_uint115((uint64_t )0), (uint32_t )5);
+  Hacl_UInt115_t ret;
+  Hacl_UInt115_uint64_to_uint115((uint64_t )0, &ret);
+  KRML_CHECK_SIZE(ret, (uint32_t )5);
   Hacl_UInt115_t t[5];
   for (uintmax_t _i = 0; _i < (uint32_t )5; ++_i)
-    t[_i] = Hacl_UInt115_uint64_to_uint115((uint64_t )0);
+    t[_i] = ret;
   Hacl_Bignum_Fsquare_fsquare_times_(output, t, count1);
 }
 
@@ -333,12 +546,35 @@ inline static void Hacl_Bignum_Crecip_crecip(uint64_t *out, uint64_t *z)
 
 inline static void Hacl_Bignum_fsum(uint64_t *a, uint64_t *b)
 {
-  for (uint32_t i = (uint32_t )0; i < (uint32_t )5; i = i + (uint32_t )1)
   {
-    uint64_t uu____871 = a[i];
-    uint64_t uu____874 = b[i];
+    uint64_t uu____871 = a[0];
+    uint64_t uu____874 = b[0];
     uint64_t uu____870 = uu____871 + uu____874;
-    a[i] = uu____870;
+    a[0] = uu____870;
+  }
+  {
+    uint64_t uu____871 = a[1];
+    uint64_t uu____874 = b[1];
+    uint64_t uu____870 = uu____871 + uu____874;
+    a[1] = uu____870;
+  }
+  {
+    uint64_t uu____871 = a[2];
+    uint64_t uu____874 = b[2];
+    uint64_t uu____870 = uu____871 + uu____874;
+    a[2] = uu____870;
+  }
+  {
+    uint64_t uu____871 = a[3];
+    uint64_t uu____874 = b[3];
+    uint64_t uu____870 = uu____871 + uu____874;
+    a[3] = uu____870;
+  }
+  {
+    uint64_t uu____871 = a[4];
+    uint64_t uu____874 = b[4];
+    uint64_t uu____870 = uu____871 + uu____874;
+    a[4] = uu____870;
   }
 }
 
@@ -356,34 +592,88 @@ inline static void Hacl_Bignum_fdifference(uint64_t *a, uint64_t *b)
   tmp[2] = b2 + (uint64_t )0x3ffffffffffff8;
   tmp[3] = b3 + (uint64_t )0x3ffffffffffff8;
   tmp[4] = b4 + (uint64_t )0x3ffffffffffff8;
-  for (uint32_t i = (uint32_t )0; i < (uint32_t )5; i = i + (uint32_t )1)
   {
-    uint64_t uu____871 = a[i];
-    uint64_t uu____874 = tmp[i];
+    uint64_t uu____871 = a[0];
+    uint64_t uu____874 = tmp[0];
     uint64_t uu____870 = uu____874 - uu____871;
-    a[i] = uu____870;
+    a[0] = uu____870;
+  }
+  {
+    uint64_t uu____871 = a[1];
+    uint64_t uu____874 = tmp[1];
+    uint64_t uu____870 = uu____874 - uu____871;
+    a[1] = uu____870;
+  }
+  {
+    uint64_t uu____871 = a[2];
+    uint64_t uu____874 = tmp[2];
+    uint64_t uu____870 = uu____874 - uu____871;
+    a[2] = uu____870;
+  }
+  {
+    uint64_t uu____871 = a[3];
+    uint64_t uu____874 = tmp[3];
+    uint64_t uu____870 = uu____874 - uu____871;
+    a[3] = uu____870;
+  }
+  {
+    uint64_t uu____871 = a[4];
+    uint64_t uu____874 = tmp[4];
+    uint64_t uu____870 = uu____874 - uu____871;
+    a[4] = uu____870;
   }
 }
 
 inline static void Hacl_Bignum_fscalar(uint64_t *output, uint64_t *b, uint64_t s)
 {
-  KRML_CHECK_SIZE(Hacl_UInt115_uint64_to_uint115((uint64_t )0), (uint32_t )5);
+  Hacl_UInt115_t ret0;
+  Hacl_UInt115_uint64_to_uint115((uint64_t )0, &ret0);
+  KRML_CHECK_SIZE(ret0, (uint32_t )5);
   Hacl_UInt115_t tmp[5];
   for (uintmax_t _i = 0; _i < (uint32_t )5; ++_i)
-    tmp[_i] = Hacl_UInt115_uint64_to_uint115((uint64_t )0);
-  for (uint32_t i = (uint32_t )0; i < (uint32_t )5; i = i + (uint32_t )1)
+    tmp[_i] = ret0;
   {
-    uint64_t uu____429 = b[i];
-    Hacl_UInt115_t uu____428 = Hacl_UInt115_mul_wide(uu____429, s);
-    tmp[i] = uu____428;
+    uint64_t uu____429 = b[0];
+    Hacl_UInt115_t uu____428;
+    Hacl_UInt115_mul_wide(uu____429, s, &uu____428);
+    tmp[0] = uu____428;
+  }
+  {
+    uint64_t uu____429 = b[1];
+    Hacl_UInt115_t uu____428;
+    Hacl_UInt115_mul_wide(uu____429, s, &uu____428);
+    tmp[1] = uu____428;
+  }
+  {
+    uint64_t uu____429 = b[2];
+    Hacl_UInt115_t uu____428;
+    Hacl_UInt115_mul_wide(uu____429, s, &uu____428);
+    tmp[2] = uu____428;
+  }
+  {
+    uint64_t uu____429 = b[3];
+    Hacl_UInt115_t uu____428;
+    Hacl_UInt115_mul_wide(uu____429, s, &uu____428);
+    tmp[3] = uu____428;
+  }
+  {
+    uint64_t uu____429 = b[4];
+    Hacl_UInt115_t uu____428;
+    Hacl_UInt115_mul_wide(uu____429, s, &uu____428);
+    tmp[4] = uu____428;
   }
   Hacl_Bignum_Fproduct_carry_wide_(tmp);
   Hacl_UInt115_t b4 = tmp[4];
   Hacl_UInt115_t b0 = tmp[0];
-  uint64_t l = Hacl_UInt115_split51_low(b4);
-  uint64_t h = Hacl_UInt115_split51_high(b4);
-  Hacl_UInt115_t b0_ = Hacl_UInt115_add(b0, Hacl_UInt115_mul_wide((uint64_t )19, h));
-  Hacl_UInt115_t b4_ = Hacl_UInt115_uint64_to_uint115(l);
+  uint64_t l = Hacl_UInt115_split51_low(&b4);
+  uint64_t h = Hacl_UInt115_split51_high(&b4);
+  Hacl_UInt115_t b0_;
+  Hacl_UInt115_t ret;
+  Hacl_UInt115_mul_wide((uint64_t )19, h, &ret);
+  Hacl_UInt115_t s1 = ret;
+  Hacl_UInt115_add(&b0, &s1, &b0_);
+  Hacl_UInt115_t b4_;
+  Hacl_UInt115_uint64_to_uint115(l, &b4_);
   tmp[4] = b4_;
   tmp[0] = b0_;
   Hacl_Bignum_Fproduct_copy_from_wide_(output, tmp);

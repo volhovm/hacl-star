@@ -41,33 +41,6 @@ typedef FStar_UInt128_uint128 FStar_UInt128_t;
 
 extern void FStar_UInt128_constant_time_carry_ok(uint64_t x0, uint64_t x1);
 
-void
-FStar_UInt128_add_mod(
-  FStar_UInt128_uint128 *a,
-  FStar_UInt128_uint128 *b,
-  FStar_UInt128_uint128 *ret
-);
-
-void
-FStar_UInt128_logand(
-  FStar_UInt128_uint128 *a,
-  FStar_UInt128_uint128 *b,
-  FStar_UInt128_uint128 *ret
-);
-
-void
-FStar_UInt128_logor(
-  FStar_UInt128_uint128 *a,
-  FStar_UInt128_uint128 *b,
-  FStar_UInt128_uint128 *ret
-);
-
-void
-FStar_UInt128_shift_left(FStar_UInt128_uint128 *a, uint32_t s, FStar_UInt128_uint128 *ret);
-
-void
-FStar_UInt128_shift_right(FStar_UInt128_uint128 *a, uint32_t s, FStar_UInt128_uint128 *ret);
-
 typedef void *FStar_Set_eqtype;
 
 extern void FStar_PropositionalExtensionality_axiom();
@@ -131,10 +104,6 @@ FStar_Buffer_abuffer;
 
 extern bool FStar_Buffer_arefs(Prims_prop (*x0)(FStar_Buffer_abuffer x0), Prims_nat x1);
 
-void FStar_Int_Cast_Full_uint64_to_uint128(uint64_t a, FStar_UInt128_uint128 *ret);
-
-uint64_t FStar_Int_Cast_Full_uint128_to_uint64(FStar_UInt128_uint128 *a);
-
 typedef void *(*FStar_HyperStack_All_all_pre)(FStar_Monotonic_HyperStack_mem x0);
 
 typedef uint8_t FStar_Endianness_u8;
@@ -146,4 +115,13 @@ typedef uint64_t FStar_Endianness_u64;
 typedef void *FStar_Endianness_bytes;
 
 typedef void *FStar_Endianness_word;
+
+extern void
+FStar_Math_Axioms_lemma_mod_sub_distr_l_l(Prims_nat x0, Prims_nat x1, Prims_pos x2);
+
+extern void
+FStar_Math_Axioms_lemma_mod_sub_distr_l_r(Prims_nat x0, Prims_nat x1, Prims_pos x2);
+
+extern void
+FStar_Math_Axioms_lemma_int_mod_mul_distr_l(Prims_int x0, Prims_int x1, Prims_pos x2);
 #endif

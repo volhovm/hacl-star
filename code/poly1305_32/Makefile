@@ -66,8 +66,10 @@ all-ci: bignum-ci specific-ci
 # By default, KreMLin drops a bunch of spec-related module that are not meant to
 # extract.
 CFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable
-KREMLIN_ARGS+=-I $(HACL_HOME)/code/bignum -tmpdir poly-c -fnouint128 -fparentheses -ccopt -Wno-parentheses \
-	-bundle 'Hacl.Spec.*,Hacl.Spe.*' -fparentheses \
+KREMLIN_ARGS+=-I $(HACL_HOME)/code/bignum -tmpdir poly-c \
+	-fnouint128 -fparentheses -ccopt -Wno-parentheses \
+	-fnostruct-passing -fnoanonymous-unions -funroll-loops 10 \
+	-bundle 'Hacl.Spec.*,Hacl.Spe.*'\
 	-drop Combinators,Hacl.Endianness,Spec.*,Hacl.Bignum.Parameters,Hacl.Endianness,Hacl.Spec,Hacl.Spec.*,Hacl.Spe,Hacl.Spe.*,Hacl.Cast,Hacl.UInt8,Hacl.UInt16,Hacl.UInt32,Hacl.UInt64,Hacl.UInt128,Prims,Seq.* \
 	$(KREMLIN_TESTLIB)
 

@@ -81,6 +81,7 @@ all-ci: bignum-ci specific-ci
 
 CFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable
 KREMLIN_ARGS+=-I ../bignum -tmpdir x25519-c -fnouint128 -fparentheses \
+	-fnostruct-passing -fnoanonymous-unions -funroll-loops 10 \
 	-drop Spec.*,Hacl.Spec.*,Hacl.Cast,Hacl.UInt.*,Hacl.Endianness,Hacl.UInt8,Hacl.UInt16,Hacl.UInt32,Hacl.UInt64,Hacl.UInt128,Prims \
 	$(KREMLIN_TESTLIB)
 

@@ -9,7 +9,7 @@ CCOPTS := -Ofast -march=native -mtune=native -m64 -fwrapv -fomit-frame-pointer -
 CFLAGS= $(CCOPTS) -I $(OPENSSL_HOME) -I $(OPENSSL_HOME)/include -I $(OPENSSL_HOME)/crypto/ec \
 	-I $(OPENSSL_HOME)/crypto/include -I $(OPENSSL_HOME)/crypto/poly1305 \
 	-I $(LIBSODIUM_HOME)/include -L$(LIBSODIUM_HOME)/lib \
-	-I $(TWEETNACL_HOME) -I . -I $(KREMLIN_HOME)/kremlib -I $(HACL_HOME)/test/c
+	-I $(TWEETNACL_HOME) -I . -I $(HACL_HOME)/snapshots/snapshot-ccomp -I $(HACL_HOME)/test/c
 
 
 perf: perf-test-curve115
@@ -22,6 +22,12 @@ perf-test-curve115: test-curve115.exe
 
 unit-test-curve115: test-curve115.exe
 	./test-curve115.exe unit-test
+
+compcert-perf-test-curve115:
+	$(MAKE) perf-test-curve115 CC=ccomp CCOPTS="-O3 -DKRML_NOUINT128 -DKRML_NOSTRUCT_PASSING -finline-asm -D_BSD_SOURCE -D_DEFAULT_SOURCE"
+
+gcc-perf-test-curve115:
+	$(MAKE) perf-test-curve115 CC=gcc-6 CCOPTS="-O3 -DKRML_NOUINT128 -DKRML_NOSTRUCT_PASSING -march=native -m64 -D_BSD_SOURCE -D_DEFAULT_SOURCE"
 
 clean:
 	rm -rf *.o *~ *.exe
