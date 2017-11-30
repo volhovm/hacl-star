@@ -674,7 +674,7 @@ let longfelem_diff input output =
  */
 
 *)
-
+(*)
 val felem_shrink: input: felem -> output: smallfelem -> Tot (smallfelem)
 
 let felem_shrink input output = 
@@ -736,6 +736,211 @@ let felem_shrink input output =
     let s = upd_ s 2 (to_u64(index tmp 2)) in 
     let s = upd_ s 3 (to_u64(index tmp 3)) in 
     s
+*)
+(*/* smallfelem_expand converts a smallfelem to an felem */
+static void smallfelem_expand(felem out, const smallfelem in)
+{
+    out[0] = in[0];
+    out[1] = in[1];
+    out[2] = in[2];
+    out[3] = in[3];
+} *)
+
+val smallfelem_expand: input: smallfelem -> Tot felem
+let smallfelem_expand input = 
+    let s = create_felem() in 
+    let in0 = index input 0 in 
+    let in1 = index input 1 in 
+    let in2 = index input 2 in 
+    let in3 = index input 3 in 
+    let s = upd_ s 0 (to_u128 in0) in 
+    let s = upd_ s 1 (to_u128 in1) in 
+    let s = upd_ s 2 (to_u128 in2) in 
+    let s = upd_ s 3 (to_u128 in3) in 
+    s
+
+(*-
+ * smallfelem_square sets |out| = |small|^2
+ * On entry:
+ *   small[i] < 2^64
+ * On exit:
+ *   out[i] < 7 * 2^64 < 2^67
+ */
+static void smallfelem_square(longfelem out, const smallfelem small)
+{
+    limb a;
+    u64 high, low;
+
+    a = ((uint128_t) small[0]) * small[0];
+    low = a;
+    high = a >> 64;
+    out[0] = low;
+    out[1] = high;
+
+    a = ((uint128_t) small[0]) * small[1];
+    low = a;
+    high = a >> 64;
+    out[1] += low;
+    out[1] += low;
+    out[2] = high;
+
+    a = ((uint128_t) small[0]) * small[2];
+    low = a;
+    high = a >> 64;
+    out[2] += low;
+    out[2] *= 2;
+    out[3] = high;
+
+    a = ((uint128_t) small[0]) * small[3];
+    low = a;
+    high = a >> 64;
+    out[3] += low;
+    out[4] = high;
+
+    a = ((uint128_t) small[1]) * small[2];
+    low = a;
+    high = a >> 64;
+    out[3] += low;
+    out[3] *= 2;
+    out[4] += high;
+
+    a = ((uint128_t) small[1]) * small[1];
+    low = a;
+    high = a >> 64;
+    out[2] += low;
+    out[3] += high;
+
+    a = ((uint128_t) small[1]) * small[3];
+    low = a;
+    high = a >> 64;
+    out[4] += low;
+    out[4] *= 2;
+    out[5] = high;
+
+    a = ((uint128_t) small[2]) * small[3];
+    low = a;
+    high = a >> 64;
+    out[5] += low;
+    out[5] *= 2;
+    out[6] = high;
+    out[6] += high;
+
+    a = ((uint128_t) small[2]) * small[2];
+    low = a;
+    high = a >> 64;
+    out[4] += low;
+    out[5] += high;
+
+    a = ((uint128_t) small[3]) * small[3];
+    low = a;
+    high = a >> 64;
+    out[6] += low;
+    out[7] = high;
+}
+*)
+
+val smallfelem_square : small: smallfelem -> Tot longfelem
+
+let smallfelem_square small = 
+    let out = create_felem() in 
+    let a = u128(0) in 
+    let high = u64(0) in let low = u64(0) in 
+    let small0 = index small 0 in 
+    let small1 = index small 1 in 
+    let small2 = index small 2 in 
+    let small3 = index small 3 in 
+(* ? *)  
+    let a = mul_wide small0 small0 in 
+    let low = a in 
+    let high = shift_right a 64 in 
+    let out = upd_ out 0 low in 
+    let out = upd_ out 1 high in 
+    
+    let a = mul_wide small0 small1 in 
+    let low = a in 
+    let high = shift_right a 64 in
+    let out1 = index out 1 in 
+    let out = upd_ out 1 (add out1 low) in 
+    let out1 = index out 1 in 
+    let out = upd_ out 1 (add out1 low) in 
+    let out = upd_ out 2 high in 
+
+    let a = mul_wide small0 small2 in 
+    let low = a in 
+    let high = shift_right a 64 in 
+    let out2 = index out 2 in 
+    let out = upd_ out 2 (add out2 low) in 
+    let out2 = index out 2 in 
+    let out = upd_ out 2 (shift_left out2 2) in 
+    let out = upd_ out 3 high in 
+
+    let a = mul_wide small0 small3 in 
+    let low = a in 
+    let high = shift_right a 64 in
+    let out3 = index out 3 in 
+    let out = upd_ out 3 (add out3 low) in 
+    let out = upd_ out 4 high in 
+
+    let a = mul_wide small1 small2 in 
+    let low = a in 
+    let high = shift_right a 64 in
+    let out3 = index out 3 in 
+    let out = upd_ out 3 (add out3 low) in 
+    let out3 = index out 3 in 
+    let out = upd_ out 3 (shift_left out3 2) in 
+    let out4 = index out 4 in 
+    let out = upd_ out 4 (add out4 high) in 
+
+    let a = mul_wide small1 small1 in 
+    let low = a in 
+    let high = shift_right a 64 in
+    let out2 = index out 2 in 
+    let out = upd_ out 2 (add out2 low) in 
+    let out3 = index out 3 in 
+    let out = upd_ out 4 (add out3 high) in 
+
+     let a = mul_wide small1 small3 in 
+    let low = a in 
+    let high = shift_right a 64 in
+    let out4 = index out 4 in 
+    let out = upd_ out 4 (add out4 low) in 
+    let out4 = index out 4 in 
+    let out = upd_ out 4 (shift_left out4 2) in 
+    let out = upd_ out 5 high    in 
+
+    let a = mul_wide small2 small3 in 
+    let low = a in 
+    let high = shift_right a 64 in
+    let out5 = index out 5 in 
+    let out = upd_ out 5 (add out5 low) in 
+    let out5 = index out 5 in 
+    let out = upd_ out 5 (shift_left out5 2) in 
+    let out = upd_ out 6 (add high high) in 
+
+    let a = mul_wide small2 small2 in 
+    let low = a in 
+    let high = shift_right a 64 in
+    let out4 = index out 4 in 
+    let out = upd_ out 4 (add out4 low) in 
+    let out5 = index out 5 in 
+    let out = upd_ out 5 (add out5 high) in 
+
+    let a = mul_wide small3 small3 in 
+    let low = a in 
+    let high = shift_right a 64 in
+    let out6 = index out 6 in 
+    let out6 = upd_ out 6 (add out6 low) in 
+    let out = upd_ out 7 high in out
+
+
+
+
+
+
+
+
+
+
 
 
 
