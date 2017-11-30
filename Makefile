@@ -9,8 +9,9 @@ all: display
 display:
 	@echo "HACL* Makefile:"
 	@echo "If you want to run and test the C library:"
-	@echo "- 'make build' will generate a shared library from the hacl-c snapshot (no verification)"
-	@echo "- 'make unit-tests' will run tests on the library built rom the hacl-c snapshot (no verification)"
+	@echo "- 'make build' will use CMake to generate static and shared libraries for snapshots/hacl-c (no verification)"
+	@echo "- 'make build-make' will use Makefiles to do the same thing (no verification)"
+	@echo "- 'make unit-tests' will run tests on the library built from the hacl-c snapshot (no verification)"
 	@echo "- 'make clean-build' will clean 'build' artifacts"
 	@echo ""
 	@echo "If you want to verify the F* code and regenerate the C library:"
@@ -112,10 +113,10 @@ build-make:
 	$(MAKE) build/libhacl.so
 
 build-cmake:
-	mkdir -p build && cd build && CC=gcc cmake $(CMAKE_COMPILER_OPTION) .. && make
+	mkdir -p build && cd build && cmake $(CMAKE_COMPILER_OPTION) .. && make
 
 build: clean-build
-	$(MAKE) build-make
+	$(MAKE) build-cmake
 	@echo $(CYAN)"\nDone ! Generated libraries can be found in 'build'."$(NORMAL)
 
 #
@@ -152,7 +153,7 @@ ci: .clean-banner .clean-git .clean-snapshots
 	$(MAKE) .base
 	$(MAKE) build-make
 	$(MAKE) test-all
-#	$(MAKE) package
+	$(MAKE) package
 
 #
 # Clean
@@ -193,9 +194,8 @@ clean: .clean-banner clean-base clean-build
 	@echo $(CYAN)"# Packaging the HACL* generated code"$(NORMAL)
 	@echo $(CYAN)"  Make sure you have run verification before !"$(NORMAL)
 
-package: .package-banner snapshots/hacl-c build
+package: .package-banner
 	mkdir -p hacl
-	cp build/lib* hacl
 	cp -r snapshots/hacl-c/* hacl
 	tar -zcvf hacl-star.tar.gz hacl
 	rm -rf hacl
