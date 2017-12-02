@@ -25,21 +25,21 @@ private let felem = s: intseq limb nlimbs
 private let longfelem = s: intseq limb (nlimbs * 2)
 private let smallfelem = s: intseq U64 (nlimbs)
 
-let kPrime :intseq U64 4 = Seq.createL [0xffffffffffffffffUL; 0xffffffffUL; 0x0UL; 0xffffffff00000001UL]
+let kPrime :intseq U64 4 = Seq.createL [(u64(0xffffffffffffffff)); (u64(0xffffffff)); (u64(0x0)); (u64(0xffffffff00000001))]
 
 let bottom63bits = 0x7fffffffffffffffUL
 
 val create_felem: unit -> Tot (felem)
 let create_felem () = 
-	let zero = u128(0) in create_ zero nlimbs
+	let zero = u128(0) in create nlimbs zero
 
 val create_smallfelem: unit -> Tot (smallfelem)
 let create_smallfelem () = 
-	let zero = u64(0) in create_ zero nlimbs
+	let zero = u64(0) in create nlimbs zero
 
 val create_longfelem: unit -> Tot (longfelem)
 let create_longfelem () = 
-	let zero = u128(0) in create_ zero (nlimbs*2)
+	let zero = u128(0) in create (nlimbs*2) zero
 
 
 (*
@@ -59,10 +59,10 @@ let bin32_to_felem _in =
 	let o2 = to_u128(load64_le in2) in 
 	let o3 = to_u128(load64_le in3) in 
 	let s = create_felem () in 
-	let s = upd_ s 0 o0 in 
-	let s = upd_ s 1 o1 in 
-	let s = upd_ s 2 o2 in 
-	let s = upd_ s 3 o3 in 
+	let s = upd s 0 o0 in 
+	let s = upd s 1 o1 in 
+	let s = upd s 2 o2 in 
+	let s = upd s 3 o3 in 
 	s
 
 (*
@@ -86,7 +86,7 @@ let smallfelem_to_bin32 input =
 	let in1 = index input 1 in 
 	let in2 = index input 2 in 
 	let in3 = index	input 3 in 
-	let output = create_ 32 zero in 
+	let output = create 32 zero in 
 	let output = upd8 output (store64_le in0) in 
 	let output = upd8 output (store64_le in1) in 
 	let output = upd8 output (store64_le in2) in 
@@ -102,16 +102,21 @@ static void flip_endian(u8 *out, const u8 *in, unsigned len)
         out[i] = in[len - 1 - i];
 } *)
 
-val flip_endian: len: (uint_t U32) ->  input: intseq U8 len -> Tot (intseq U8 len)
+(*TO_Change: type annotation )
+val flip_endian: len: size_t ->  input: intseq U8 len -> Tot (intseq U8 len)
 
 let flip_endian len input = 
 	let zero = u8(0) in 
-	let output = create_ len zero in
+	let output = create len zero in
 	let counter = 0 in 
 	let f (counter:size_t{counter < len}) (output:intseq U8 len)  = 
-		let toChange = index input counter  in 
-		upd_ output counter toChange in 
+		let toChange = index #(uint_t U8) input counter  in 
+		upd output counter toChange in 
 	repeati len f output
+*)
+
+
+
 
 (*static void smallfelem_one(smallfelem out)
 {
@@ -127,7 +132,7 @@ val smallfelem_one : unit -> Tot (smallfelem)
 let smallfelem_one () = 
 	let one = u64(1) in 
 	let s = create_smallfelem () in 
-	let s = upd_ s 0 one in s
+	let s = upd s 0 one in s
 (*)
 static void smallfelem_assign(smallfelem out, const smallfelem in)
 {
@@ -146,10 +151,10 @@ let smallfelem_assign input =
 	let in2 = index	input 2 in 
 	let in3 = index input 3 in 
 	let s = create_smallfelem () in 
-	let s = upd_ s 0 in0 in 
-	let s = upd_ s 1 in1 in 
-	let s = upd_ s 2 in2 in 
-	let s = upd_ s 3 in3 in 
+	let s = upd s 0 in0 in 
+	let s = upd s 1 in1 in 
+	let s = upd s 2 in2 in 
+	let s = upd s 3 in3 in 
 	s
 
 (*static void felem_assign(felem out, const felem in)
@@ -169,10 +174,10 @@ let felem_assign input =
     let in2 = index input 2 in 
     let in3 = index input 3 in 
     let s = create_felem() in 
-    let s = upd_ s 0 in0 in 
-    let s = upd_ s 1 in1 in 
-    let s = upd_ s 2 in2 in 
-    let s = upd_ s 3 in3 in 
+    let s = upd s 0 in0 in 
+    let s = upd s 1 in1 in 
+    let s = upd s 2 in2 in 
+    let s = upd s 3 in3 in 
     s
 
 
@@ -216,10 +221,10 @@ let felem_sum input output =
     let o2 = index output 2 in 
     let o3 = index output 3 in 
     let s = create_felem() in 
-    let s = upd_ s 0 (add_mod in0 o0) in 
-    let s = upd_ s 1 (add_mod in1 o1) in 
-    let s = upd_ s 2 (add_mod in2 o2) in 
-    let s = upd_ s 3 (add_mod in3 o3) in 
+    let s = upd s 0 (add_mod in0 o0) in 
+    let s = upd s 1 (add_mod in1 o1) in 
+    let s = upd s 2 (add_mod in2 o2) in 
+    let s = upd s 3 (add_mod in3 o3) in 
     s
 
 (*)
@@ -244,10 +249,10 @@ let felem_small_sum input output =
     let o2 = index output 2 in 
     let o3 = index output 3 in 
     let s = create_felem() in 
-    let s = upd_ s 0 (add_mod in0 o0) in 
-    let s = upd_ s 1 (add_mod in1 o1) in 
-    let s = upd_ s 2 (add_mod in2 o2) in 
-    let s = upd_ s 3 (add_mod in3 o3) in 
+    let s = upd s 0 (add_mod in0 o0) in 
+    let s = upd s 1 (add_mod in1 o1) in 
+    let s = upd s 2 (add_mod in2 o2) in 
+    let s = upd s 3 (add_mod in3 o3) in 
     s
 
 (*)
@@ -303,17 +308,17 @@ let felem_scalar scalar output =
     let s = create_felem() in 
 
     (*)
-    let s = upd_ s 0 (shift_left o0 scalar) in 
-    let s = upd_ s 1 (shift_left o1 scalar) in 
-    let s = upd_ s 2 (shift_left o2 scalar) in 
-    let s = upd_ s 3 (shift_left o3 scalar) in 
+    let s = upd s 0 (shift_left o0 scalar) in 
+    let s = upd s 1 (shift_left o1 scalar) in 
+    let s = upd s 2 (shift_left o2 scalar) in 
+    let s = upd s 3 (shift_left o3 scalar) in 
 
     *)
     (*)
-    let s = upd_ s 0 (mul_wide o0 scalar) in 
-    let s = upd_ s 1 (mul_wide o1 scalar) in 
-    let s = upd_ s 2 (mul_wide o2 scalar) in 
-    let s = upd_ s 3 (mul_wide o3 scalar) in 
+    let s = upd s 0 (mul_wide o0 scalar) in 
+    let s = upd s 1 (mul_wide o1 scalar) in 
+    let s = upd s 2 (mul_wide o2 scalar) in 
+    let s = upd s 3 (mul_wide o3 scalar) in 
     *)
 
     s
@@ -353,14 +358,14 @@ let longfelem_scalar scalar output =
     let o7 = to_u64(o7) in 
 
     let s = create_longfelem() in 
-    let s = upd_ s 0 (mul_wide o0 scalar) in 
-    let s = upd_ s 1 (mul_wide o1 scalar) in 
-    let s = upd_ s 2 (mul_wide o2 scalar) in 
-    let s = upd_ s 3 (mul_wide o3 scalar) in 
-    let s = upd_ s 4 (mul_wide o4 scalar) in 
-    let s = upd_ s 5 (mul_wide o5 scalar) in 
-    let s = upd_ s 6 (mul_wide o6 scalar) in 
-    let s = upd_ s 7 (mul_wide o7 scalar) in 
+    let s = upd s 0 (mul_wide o0 scalar) in 
+    let s = upd s 1 (mul_wide o1 scalar) in 
+    let s = upd s 2 (mul_wide o2 scalar) in 
+    let s = upd s 3 (mul_wide o3 scalar) in 
+    let s = upd s 4 (mul_wide o4 scalar) in 
+    let s = upd s 5 (mul_wide o5 scalar) in 
+    let s = upd s 6 (mul_wide o6 scalar) in 
+    let s = upd s 7 (mul_wide o7 scalar) in 
     s
 
 (*val load128: high:UInt64.t -> low:UInt64.t -> Tot (z:UInt128.t{UInt128.v z = pow2 64 * UInt64.v high
@@ -378,35 +383,35 @@ val load128: high: (uint_t U64) -> low: (uint_t U64) ->
     (ensures (fun b ->uint_v b = pow2 64 * uint_v high + uint_v low ))
 
 let load128 high low = 
-    let high = u128(high) in 
+    let high = to_u128(high) in 
     let shift = u32(64) in 
     let hs = shift_left high shift in 
-    let ls = u128(low) in 
+    let ls = to_u128(low) in 
     let result = logor hs ls in 
     result
 
-let two105m41m9 = load128 0x1ffffffffffuL 0xfffffdfffffffe00uL
-let two105      = load128 0x30000000000uL 0x0uL
-let two105m41p9 = load128 0x1ffffffffffuL 0xfffffe0000000200uL
+let two105m41m9 = load128 (u64(0x1ffffffffff)) (u64(0xfffffdfffffffe00))
+let two105      = load128 (u64(0x30000000000)) (u64(0x0))
+let two105m41p9 = load128 (u64(0x1ffffffffff)) (u64(0xfffffe0000000200))
 
-let two107m43m11 = load128 0x7ffffffffffuL 0xfffff7fffffff800uL
-let two107       = load128 0x80000000000uL 0x0uL
-let two107m43p11 = load128 0x7ffffffffffuL 0xfffff80000000800uL
+let two107m43m11 = load128 (u64(0x7ffffffffff)) (u64(0xfffff7fffffff800))
+let two107       = load128 (u64(0x80000000000)) (u64(0x0))
+let two107m43p11 = load128 (u64(0x7ffffffffff)) (u64(0xfffff80000000800))
 
-let two64m0     =  to_u128 #U64 (0xffffffffffffffffuL)
-let two110p32m0 = load128 0x400000000000uL 0x00000000ffffffffuL
-let two64m46    = to_u128 #U64 (0xffffc00000000000uL)
-let two64m32    = to_u128 #U64 (0xffffffff00000000uL)
+let two64m0     =  to_u128 (u64(0xffffffffffffffff))
+let two110p32m0 = load128 (u64(0x400000000000)) (u64(0x00000000ffffffff))
+let two64m46    = to_u128 (u64(0xffffc00000000000))
+let two64m32    = to_u128 (u64(0xffffffff00000000))
 
-let two70m8p6     = load128 0x3fuL 0xffffffffffffff40uL
-let two70p40      = load128 0x40uL 0x0000010000000000uL
-let two70         = load128  0x40uL 0x0000010000000000uL
-let two70m40m38p6 = load128 0x3fuL 0xfffffec000000040uL
-let two70m6       = load128 0x3fuL 0xffffffffffffffc0uL
+let two70m8p6     = load128 (u64(0x3f)) (u64(0xffffffffffffff40))
+let two70p40      = load128 (u64(0x40)) (u64(0x0000010000000000))
+let two70         = load128  (u64(0x40)) (u64(0x0000010000000000))
+let two70m40m38p6 = load128 (u64(0x3f)) (u64(0xfffffec000000040))
+let two70m6       = load128 (u64(0x3f)) (u64(0xffffffffffffffc0))
 
-let two100m36m4 = load128 0xfffffffffuL 0xffffffeffffffff0uL
-let two100      = load128 0x1000000000uL 0x0uL
-let two100m36p4 = load128 0xfffffffffuL 0xfffffff000000010uL
+let two100m36m4 = load128 (u64(0xfffffffff)) (u64(0xffffffeffffffff0))
+let two100      = load128 (u64(0x1000000000)) (u64(0x0))
+let two100m36p4 = load128 (u64(0xfffffffff)) (u64(0xfffffff000000010))
 
 
 (* )
@@ -417,10 +422,10 @@ val zero105 : unit -> Tot (felem)
 
 let zero105 () = 
     let s = create_felem() in 
-    let s = upd_ s 0 two105m41p9 in 
-    let s = upd_ s 1 two105 in 
-    let s = upd_ s 2 two105m41p9 in 
-    let s = upd_ s 3 two105m41p9 in 
+    let s = upd s 0 two105m41p9 in 
+    let s = upd s 1 two105 in 
+    let s = upd s 2 two105m41p9 in 
+    let s = upd s 3 two105m41p9 in 
     s
 
 (* static const felem zero107 =
@@ -428,10 +433,10 @@ let zero105 () =
 val zero107: unit -> Tot (felem)
 let zero107 () = 
     let s = create_felem() in 
-    let s = upd_ s 0 two107m43m11 in 
-    let s = upd_ s 1 two107 in 
-    let s = upd_ s 2 two107m43p11 in 
-    let s = upd_ s 3 two107m43p11 in 
+    let s = upd s 0 two107m43m11 in 
+    let s = upd s 1 two107 in 
+    let s = upd s 2 two107m43p11 in 
+    let s = upd s 3 two107m43p11 in 
     s
 (*)
 /* zero110 is 0 mod p */
@@ -441,11 +446,25 @@ static const felem zero110 = { two64m0, two110p32m0, two64m46, two64m32 };
 val zero110 : unit -> Tot (felem)
 let zero110 ()  = 
     let s = create_felem() in 
-    let s = upd_ s 0 two64m0 in 
-    let s = upd_ s 1 two110p32m0 in 
-    let s = upd_ s 2 two64m46 in 
-    let s = upd_ s 3 two64m32 in 
+    let s = upd s 0 two64m0 in 
+    let s = upd s 1 two110p32m0 in 
+    let s = upd s 2 two64m46 in 
+    let s = upd s 3 two64m32 in 
     s
+
+(*static const felem zero100 =
+{ two100m36m4, two100, two100m36p4, two100m36p4 }; *)
+
+val zero100: unit -> Tot (felem)
+let zero100 () = 
+	let s = create_felem() in 
+	let s = upd s 0 two100m36p4 in 
+	let s = upd s 1 two100 in 
+	let s = upd s 2 two100m36p4 in 
+	let s = upd s 3 two100m36p4 in 
+	s
+
+
 
 (*)
 /*-
@@ -480,10 +499,10 @@ let smallfelem_neg small =
     let small2 = to_u128(small2) in 
     let small3 = to_u128(small3) in 
     let s = create_felem() in 
-    let s = upd_ s 0 (Spec.Lib.IntTypes.sub zero105_0 small0) in 
-    let s = upd_ s 1 (Spec.Lib.IntTypes.sub zero105_1 small1) in 
-    let s = upd_ s 2 (Spec.Lib.IntTypes.sub zero105_2 small2) in 
-    let s = upd_ s 3 (Spec.Lib.IntTypes.sub zero105_3 small3) in 
+    let s = upd s 0 (Spec.Lib.IntTypes.sub zero105_0 small0) in 
+    let s = upd s 1 (Spec.Lib.IntTypes.sub zero105_1 small1) in 
+    let s = upd s 2 (Spec.Lib.IntTypes.sub zero105_2 small2) in 
+    let s = upd s 3 (Spec.Lib.IntTypes.sub zero105_3 small3) in 
     s 
 
 (*)
@@ -525,10 +544,10 @@ let felem_diff input output =
     let o2 = add o2 zero105_2 in 
     let o3 = add o3 zero105_3 in 
     let s = create_felem() in 
-    let s = upd_ s 0 (Spec.Lib.IntTypes.sub o0 i0) in 
-    let s = upd_ s 1 (Spec.Lib.IntTypes.sub o1 i1) in
-    let s = upd_ s 2 (Spec.Lib.IntTypes.sub o2 i2) in 
-    let s = upd_ s 3 (Spec.Lib.IntTypes.sub o3 i3) in 
+    let s = upd s 0 (Spec.Lib.IntTypes.sub o0 i0) in 
+    let s = upd s 1 (Spec.Lib.IntTypes.sub o1 i1) in
+    let s = upd s 2 (Spec.Lib.IntTypes.sub o2 i2) in 
+    let s = upd s 3 (Spec.Lib.IntTypes.sub o3 i3) in 
     s
 
 
@@ -578,10 +597,10 @@ let felem_diff_zero107 input output =
     let o2 = add o2 zero107_2 in 
     let o3 = add o3 zero107_3 in 
     let s = create_felem() in 
-    let s = upd_ s 0 (Spec.Lib.IntTypes.sub o0 i0) in 
-    let s = upd_ s 1 (Spec.Lib.IntTypes.sub o1 i1) in
-    let s = upd_ s 2 (Spec.Lib.IntTypes.sub o2 i2) in 
-    let s = upd_ s 3 (Spec.Lib.IntTypes.sub o3 i3) in 
+    let s = upd s 0 (Spec.Lib.IntTypes.sub o0 i0) in 
+    let s = upd s 1 (Spec.Lib.IntTypes.sub o1 i1) in
+    let s = upd s 2 (Spec.Lib.IntTypes.sub o2 i2) in 
+    let s = upd s 3 (Spec.Lib.IntTypes.sub o3 i3) in 
     s
 (*)
 /*-
@@ -653,14 +672,14 @@ let longfelem_diff input output =
     let o6 = add o6 two70m6 in 
     let o7 = add o7 two70m6 in 
     let s = create_longfelem() in 
-    let s = upd_ s 0 (Spec.Lib.IntTypes.sub o0 i0) in 
-    let s = upd_ s 1 (Spec.Lib.IntTypes.sub o1 i1) in 
-    let s = upd_ s 2 (Spec.Lib.IntTypes.sub o2 i2) in 
-    let s = upd_ s 3 (Spec.Lib.IntTypes.sub o3 i3) in 
-    let s = upd_ s 4 (Spec.Lib.IntTypes.sub o4 i4) in 
-    let s = upd_ s 5 (Spec.Lib.IntTypes.sub o5 i5) in 
-    let s = upd_ s 6 (Spec.Lib.IntTypes.sub o6 i6) in 
-    let s = upd_ s 7 (Spec.Lib.IntTypes.sub o7 i7) in 
+    let s = upd s 0 (Spec.Lib.IntTypes.sub o0 i0) in 
+    let s = upd s 1 (Spec.Lib.IntTypes.sub o1 i1) in 
+    let s = upd s 2 (Spec.Lib.IntTypes.sub o2 i2) in 
+    let s = upd s 3 (Spec.Lib.IntTypes.sub o3 i3) in 
+    let s = upd s 4 (Spec.Lib.IntTypes.sub o4 i4) in 
+    let s = upd s 5 (Spec.Lib.IntTypes.sub o5 i5) in 
+    let s = upd s 6 (Spec.Lib.IntTypes.sub o6 i6) in 
+    let s = upd s 7 (Spec.Lib.IntTypes.sub o7 i7) in 
     s
 
 (* /*-
@@ -674,10 +693,10 @@ let longfelem_diff input output =
  */
 
 *)
-(*)
-val felem_shrink: input: felem -> output: smallfelem -> Tot (smallfelem)
 
-let felem_shrink input output = 
+val felem_shrink: input: felem -> Tot (smallfelem)
+
+let felem_shrink input = 
     let tmp = create_felem() in 
     let a = u64(0) in let b = u64(0) in let mask = u64(0) in 
 (* ! *)   let high = u64(0) in let low = u64(0) in 
@@ -695,48 +714,51 @@ let felem_shrink input output =
     let kPrime_1 = index kPrime 1 in 
     let kPrime_2 = index kPrime 2 in 
     let kPrime_3 = index kPrime 3 in 
-    let tmp = upd_ tmp 3 (add (add zero110_3 in3) (to_u128 #U64 (to_u64 #U128 (shift_right in2 64)))) in 
-    let tmp = upd_ tmp 2 (add zero110_2 (to_u64(in2))) in 
-    let tmp = upd_ tmp 0 (add zero110_0 in0) in 
-    let tmp = upd_ tmp 1 (add zero110_1 in1) in 
+    let tmp = upd tmp 3 (add (add zero110_3 in3) 
+    	(to_u128 #U64 
+    		(to_u64 #U128 
+    			(shift_right in2 (u32(64)))))) in 
+    let tmp = upd tmp 2 (add zero110_2 (to_u128(in2))) in  (*!to u64 -> to u 128*)
+    let tmp = upd tmp 0 (add zero110_0 in0) in 
+    let tmp = upd tmp 1 (add zero110_1 in1) in 
     let a = shift_right (index tmp 3) (u32(64)) in 
-    let tmp = upd_ tmp 3 (to_u128 #U64 (to_u64 #U128 (index tmp 3))) in 
-    let tmp = upd_ tmp 3 (Spec.Lib.IntTypes.sub (index tmp 3) a) in 
-    let tmp = upd_ tmp 3 (shift_left (to_u128(a)) 32) in 
+    let tmp = upd tmp 3 (to_u128 #U64 (to_u64 #U128 (index tmp 3))) in 
+    let tmp = upd tmp 3 (Spec.Lib.IntTypes.sub (index tmp 3) a) in 
+    let tmp = upd tmp 3 (shift_left (to_u128(a)) (u32(32))) in 
     let b = a in 
-    let a = shift_right (index tmp 3) 64 in 
+    let a = shift_right (index tmp 3) (u32(64)) in 
     let b = add a b in 
-    let tmp = upd_ tmp 3 (to_u128 #U64 (to_u64 #U128(index tmp 3))) in 
-    let tmp = upd_ tmp 3 (Spec.Lib.IntTypes.sub (index tmp 3) a) in 
-    let tmp = upd_ tmp 3 (shift_left (to_u128(a)) 32) in 
-    let tmp = upd_ tmp 0 (add (index tmp 0) b) in 
-    let tmp = upd_ tmp 1 (Spec.Lib.IntTypes.sub (index tmp 1) (shift_left (to_u128 b) 32)) in 
-    let high = shift_right (index tmp 3) 64 in 
-    let high = shift_left high 63 in 
-    let high = shift_right high 63 in 
+    let tmp = upd tmp 3 (to_u128 #U64 (to_u64 #U128(index tmp 3))) in 
+    let tmp = upd tmp 3 (Spec.Lib.IntTypes.sub (index tmp 3) a) in 
+    let tmp = upd tmp 3 (shift_left (to_u128(a)) (u32(32))) in 
+    let tmp = upd tmp 0 (add (index tmp 0) b) in 
+    let tmp = upd tmp 1 (Spec.Lib.IntTypes.sub (index tmp 1) (shift_left (to_u128 b) (u32(32)))) in 
+    let high = shift_right (index tmp 3) (u32(64)) in 
+    let high = shift_left high (u32(63)) in 
+    let high = shift_right high (u32(63)) in 
     let low = (index tmp 3) in 
-    let mask = shift_right low 63 in 
-    let low = logand low bottom63bits in 
-    let low = Spec.Lib.IntTypes.sub low kPrime3Test in 
+    let mask = shift_right low (u32(63)) in 
+    (* let low = logand low bottom63bits in *) (*!!!*)
+    (* let low = Spec.Lib.IntTypes.sub low kPrime3Test in *)
     let low = lognot low in 
-    let low = shift_right low 63 in 
+    let low = shift_right low (u32(63)) in 
     let mask = logor(logand mask low) high in 
-    let tmp = upd_ tmp 0 (Spec.Lib.IntTypes.sub (index tmp 0) (logand mask (to_u128(kPrime_0)))) in 
-    let tmp = upd_ tmp 1 (Spec.Lib.IntTypes.sub (index tmp 1) (logand mask (to_u128(kPrime_1)))) in 
-    let tmp = upd_ tmp 2 (Spec.Lib.IntTypes.sub (index tmp 2) (logand mask (to_u128(kPrime_3)))) in 
-    let tmp = upd_ tmp 1 (Spec.Lib.IntTypes.sub (index tmp 1) (to_u64( shift_right (index tmp 0) 64))) in 
-    let tmp = upd_ tmp 0 (to_u64 ((index tmp 0))) in 
-    let tmp = upd_ tmp 2 (Spec.Lib.IntTypes.sub (index tmp 2) (to_u64( shift_right (index tmp 1) 64))) in 
-    let tmp = upd_ tmp 0 (to_u64 ((index tmp 1))) in 
-    let tmp = upd_ tmp 3 (Spec.Lib.IntTypes.sub (index tmp 3) (to_u64( shift_right (index tmp 2) 64))) in 
-    let tmp = upd_ tmp 0 (to_u64 ((index tmp 2))) in 
+    let tmp = upd tmp 0 (Spec.Lib.IntTypes.sub (index tmp 0) (logand mask (to_u128(kPrime_0)))) in 
+    let tmp = upd tmp 1 (Spec.Lib.IntTypes.sub (index tmp 1) (logand mask (to_u128(kPrime_1)))) in 
+    let tmp = upd tmp 2 (Spec.Lib.IntTypes.sub (index tmp 2) (logand mask (to_u128(kPrime_3)))) in 
+    (*let tmp = upd tmp 1 (Spec.Lib.IntTypes.sub (index tmp 1) (to_u64( shift_right (index tmp 0) (u32(64))))) in 
+    let tmp = upd tmp 0 (to_u64 ((index tmp 0))) in 
+    let tmp = upd tmp 2 (Spec.Lib.IntTypes.sub (index tmp 2) (to_u64( shift_right (index tmp 1) (u32(64))))) in 
+    let tmp = upd tmp 0 (to_u64 ((index tmp 1))) in 
+    let tmp = upd tmp 3 (Spec.Lib.IntTypes.sub (index tmp 3) (to_u64( shift_right (index tmp 2) (u32(64))))) in 
+    let tmp = upd tmp 0 (to_u64 ((index tmp 2))) in *)
     let s = create_smallfelem () in 
-    let s = upd_ s 0 (to_u64(index tmp 0)) in 
-    let s = upd_ s 1 (to_u64(index tmp 1)) in 
-    let s = upd_ s 2 (to_u64(index tmp 2)) in 
-    let s = upd_ s 3 (to_u64(index tmp 3)) in 
+    let s = upd s 0 (to_u64(index tmp 0)) in 
+    let s = upd s 1 (to_u64(index tmp 1)) in 
+    let s = upd s 2 (to_u64(index tmp 2)) in 
+    let s = upd s 3 (to_u64(index tmp 3)) in 
     s
-*)
+
 (*/* smallfelem_expand converts a smallfelem to an felem */
 static void smallfelem_expand(felem out, const smallfelem in)
 {
@@ -753,12 +775,12 @@ let smallfelem_expand input =
     let in1 = index input 1 in 
     let in2 = index input 2 in 
     let in3 = index input 3 in 
-    let s = upd_ s 0 (to_u128 in0) in 
-    let s = upd_ s 1 (to_u128 in1) in 
-    let s = upd_ s 2 (to_u128 in2) in 
-    let s = upd_ s 3 (to_u128 in3) in 
+    let s = upd s 0 (to_u128 in0) in 
+    let s = upd s 1 (to_u128 in1) in 
+    let s = upd s 2 (to_u128 in2) in 
+    let s = upd s 3 (to_u128 in3) in 
     s
-
+(*)
 (*-
  * smallfelem_square sets |out| = |small|^2
  * On entry:
@@ -853,89 +875,462 @@ let smallfelem_square small =
     let a = mul_wide small0 small0 in 
     let low = a in 
     let high = shift_right a 64 in 
-    let out = upd_ out 0 low in 
-    let out = upd_ out 1 high in 
+    let out = upd out 0 low in 
+    let out = upd out 1 high in 
     
     let a = mul_wide small0 small1 in 
     let low = a in 
     let high = shift_right a 64 in
     let out1 = index out 1 in 
-    let out = upd_ out 1 (add out1 low) in 
+    let out = upd out 1 (add out1 low) in 
     let out1 = index out 1 in 
-    let out = upd_ out 1 (add out1 low) in 
-    let out = upd_ out 2 high in 
+    let out = upd out 1 (add out1 low) in 
+    let out = upd out 2 high in 
 
     let a = mul_wide small0 small2 in 
     let low = a in 
     let high = shift_right a 64 in 
     let out2 = index out 2 in 
-    let out = upd_ out 2 (add out2 low) in 
+    let out = upd out 2 (add out2 low) in 
     let out2 = index out 2 in 
-    let out = upd_ out 2 (shift_left out2 2) in 
-    let out = upd_ out 3 high in 
+    let out = upd out 2 (shift_left out2 2) in 
+    let out = upd out 3 high in 
 
     let a = mul_wide small0 small3 in 
     let low = a in 
     let high = shift_right a 64 in
     let out3 = index out 3 in 
-    let out = upd_ out 3 (add out3 low) in 
-    let out = upd_ out 4 high in 
+    let out = upd out 3 (add out3 low) in 
+    let out = upd out 4 high in 
 
     let a = mul_wide small1 small2 in 
     let low = a in 
     let high = shift_right a 64 in
     let out3 = index out 3 in 
-    let out = upd_ out 3 (add out3 low) in 
+    let out = upd out 3 (add out3 low) in 
     let out3 = index out 3 in 
-    let out = upd_ out 3 (shift_left out3 2) in 
+    let out = upd out 3 (shift_left out3 2) in 
     let out4 = index out 4 in 
-    let out = upd_ out 4 (add out4 high) in 
+    let out = upd out 4 (add out4 high) in 
 
     let a = mul_wide small1 small1 in 
     let low = a in 
     let high = shift_right a 64 in
     let out2 = index out 2 in 
-    let out = upd_ out 2 (add out2 low) in 
+    let out = upd out 2 (add out2 low) in 
     let out3 = index out 3 in 
-    let out = upd_ out 4 (add out3 high) in 
+    let out = upd out 4 (add out3 high) in 
 
      let a = mul_wide small1 small3 in 
     let low = a in 
     let high = shift_right a 64 in
     let out4 = index out 4 in 
-    let out = upd_ out 4 (add out4 low) in 
+    let out = upd out 4 (add out4 low) in 
     let out4 = index out 4 in 
-    let out = upd_ out 4 (shift_left out4 2) in 
-    let out = upd_ out 5 high    in 
+    let out = upd out 4 (shift_left out4 2) in 
+    let out = upd out 5 high    in 
 
     let a = mul_wide small2 small3 in 
     let low = a in 
     let high = shift_right a 64 in
     let out5 = index out 5 in 
-    let out = upd_ out 5 (add out5 low) in 
+    let out = upd out 5 (add out5 low) in 
     let out5 = index out 5 in 
-    let out = upd_ out 5 (shift_left out5 2) in 
-    let out = upd_ out 6 (add high high) in 
+    let out = upd out 5 (shift_left out5 2) in 
+    let out = upd out 6 (add high high) in 
 
     let a = mul_wide small2 small2 in 
     let low = a in 
     let high = shift_right a 64 in
     let out4 = index out 4 in 
-    let out = upd_ out 4 (add out4 low) in 
+    let out = upd out 4 (add out4 low) in 
     let out5 = index out 5 in 
-    let out = upd_ out 5 (add out5 high) in 
+    let out = upd out 5 (add out5 high) in 
 
     let a = mul_wide small3 small3 in 
     let low = a in 
     let high = shift_right a 64 in
     let out6 = index out 6 in 
-    let out6 = upd_ out 6 (add out6 low) in 
-    let out = upd_ out 7 high in out
+    let out6 = upd out 6 (add out6 low) in 
+    let out = upd out 7 high in out
+
+(*/*-
+ * felem_square sets |out| = |in|^2
+ * On entry:
+ *   in[i] < 2^109
+ * On exit:
+ *   out[i] < 7 * 2^64 < 2^67
+ */
+static void felem_square(longfelem out, const felem in)
+{
+    u64 small[4];
+    felem_shrink(small, in);
+    smallfelem_square(out, small);
+} *)
+
+val felem_square : input : felem -> Tot longfelem
+let felem_square input = 
+	let small = felem_shrink input in 
+	smallfelem_square small
 
 
+(*/*-
+ * smallfelem_mul sets |out| = |small1| * |small2|
+ * On entry:
+ *   small1[i] < 2^64
+ *   small2[i] < 2^64
+ * On exit:
+ *   out[i] < 7 * 2^64 < 2^67
+ */
+static void smallfelem_mul(longfelem out, const smallfelem small1,
+                           const smallfelem small2)
+{
+    limb a;
+    u64 high, low;
+
+    a = ((uint128_t) small1[0]) * small2[0];
+    low = a;
+    high = a >> 64;
+    out[0] = low;
+    out[1] = high;
+
+    a = ((uint128_t) small1[0]) * small2[1];
+    low = a;
+    high = a >> 64;
+    out[1] += low;
+    out[2] = high;
+
+    a = ((uint128_t) small1[1]) * small2[0];
+    low = a;
+    high = a >> 64;
+    out[1] += low;
+    out[2] += high;
+
+    a = ((uint128_t) small1[0]) * small2[2];
+    low = a;
+    high = a >> 64;
+    out[2] += low;
+    out[3] = high;
+
+    a = ((uint128_t) small1[1]) * small2[1];
+    low = a;
+    high = a >> 64;
+    out[2] += low;
+    out[3] += high;
+
+    a = ((uint128_t) small1[2]) * small2[0];
+    low = a;
+    high = a >> 64;
+    out[2] += low;
+    out[3] += high;
+
+    a = ((uint128_t) small1[0]) * small2[3];
+    low = a;
+    high = a >> 64;
+    out[3] += low;
+    out[4] = high;
+
+    a = ((uint128_t) small1[1]) * small2[2];
+    low = a;
+    high = a >> 64;
+    out[3] += low;
+    out[4] += high;
+
+    a = ((uint128_t) small1[2]) * small2[1];
+    low = a;
+    high = a >> 64;
+    out[3] += low;
+    out[4] += high;
+
+    a = ((uint128_t) small1[3]) * small2[0];
+    low = a;
+    high = a >> 64;
+    out[3] += low;
+    out[4] += high;
+
+    a = ((uint128_t) small1[1]) * small2[3];
+    low = a;
+    high = a >> 64;
+    out[4] += low;
+    out[5] = high;
+
+    a = ((uint128_t) small1[2]) * small2[2];
+    low = a;
+    high = a >> 64;
+    out[4] += low;
+    out[5] += high;
+
+    a = ((uint128_t) small1[3]) * small2[1];
+    low = a;
+    high = a >> 64;
+    out[4] += low;
+    out[5] += high;
+
+    a = ((uint128_t) small1[2]) * small2[3];
+    low = a;
+    high = a >> 64;
+    out[5] += low;
+    out[6] = high;
+
+    a = ((uint128_t) small1[3]) * small2[2];
+    low = a;
+    high = a >> 64;
+    out[5] += low;
+    out[6] += high;
+
+    a = ((uint128_t) small1[3]) * small2[3];
+    low = a;
+    high = a >> 64;
+    out[6] += low;
+    out[7] = high;
+} *)
+
+val smallfelem_mul: small1: smallfelem -> small2: smallfelem -> Tot (longfelem)
+
+let smallfelem_mul small1 small2 = 
+	let out = create_longfelem() in 
+	let small_10 = index small1 0 in 
+	let small_11 = index small1 1 in 
+	let small_12 = index small1 2 in 
+	let small_13 = index small1 3 in 
+	let small_20 = index small2 0 in 
+	let small_21 = index small2 1 in 
+	let small_22 = index small2 2 in 
+	let small_23 = index small2 3 in 
+	
+	let a = mul_wide small_10 small_20 in 
+	let low = a in 
+	let high = (shift_right #U128 a 64) in 
+	let out = upd out 0 low in 
+	let out = upd out 1 high in 
+
+	let a = mul_wide small_10 small_21 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out1 = index out 1 in 
+	let out = upd out 1 (add out1 low) in 
+	let out = upd out 2 high in 
+
+	let a = mul_wide small_11 small_20 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out1 = index out 1 in 
+	let out = upd out 1 (add out1 low) in 
+	let out2 = index out 2 in 
+	let out = upd  out 2(add out2 high) in 
+	
+	let a = mul_wide small_10 small_22 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out2 = index out 2 in 
+	let out = upd out 2 (add out2 low) in 
+	let out = upd out 3 high in 
+
+	let a = mul_wide small_11 small_21 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out2 = index out 2 in 
+	let out = upd out 2 (add out2 low) in 
+	let out3 = index out 3 in 
+	let out = upd out 3(add out3 high) in 
+
+	let a = mul_wide small_12 small_20 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out2 = index out 2 in 
+	let out = upd out 2 (add out2 low) in 
+	let out3 = index out 3 in 
+	let out = upd out 3(add out3 high) in 
+
+	let a = mul_wide small_10 small_23 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out3 = index out 3 in 
+	let out = upd out 3 (add out3 low) in 
+	let out = upd out 4 high in 
+
+	let a = mul_wide small_11 small_22 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out3 = index out 3 in 
+	let out = upd out 3 (add out3 low) in 
+	let out4 = index out 4 in 
+	let out = upd out 4 (add out4 high) in 
+
+	let a = mul_wide small_12 small_21 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out3 = index out 3 in 
+	let out = upd out 3 (add out3 low) in 
+	let out4 = index out 4 in 
+	let out = upd out 4 (add out4 high) in 
+
+	let a = mul_wide small_13 small_20 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out3 = index out 3 in 
+	let out = upd out 3 (add out3 low) in 
+	let out4 = index out 4 in 
+	let out = upd out 4 (add out4 high) in 
+
+	let a = mul_wide small_11 small_23 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out4 = index out 4 in 
+	let out = upd out 4 (add out4 low) in 
+	let out = upd out 5 high in 
+
+	let a = mul_wide small_12 small_22 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out4 = index out 4 in 
+	let out = upd out 4 (add out4 low) in 
+	let out5 = index out 5 in 
+	let out = upd out 5 (add out5 high) in
+
+	let a = mul_wide small_13 small_21 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out4 = index out 4 in 
+	let out = upd out 4 (add out4 low) in 
+	let out5 = index out 5 in 
+	let out = upd out 5 (add out5 high) in
+
+	let a = mul_wide small_12 small_23 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out5 = index out 5 in 
+	let out = upd out 5 (add out5 low) in 
+	let out = upd out 6 high in
+
+	let a = mul_wide small_13 small_22 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out5 = index out 5 in 
+	let out = upd out 5 (add out5 low) in 
+	let out6 = index out 6 in 
+	let out = upd out 6 (add out6 high) in
+
+	let a = mul_wide small_13 small_23 in 
+	let low = a in 
+	let high = (shift_right a 64) in 
+	let out6 = index out 6 in 
+	let out = upd out 6 (add out6 low) in 
+	let out = upd out 7 high in
+	out
+
+(*/*-
+ * felem_mul sets |out| = |in1| * |in2|
+ * On entry:
+ *   in1[i] < 2^109
+ *   in2[i] < 2^109
+ * On exit:
+ *   out[i] < 7 * 2^64 < 2^67
+ */
+static void felem_mul(longfelem out, const felem in1, const felem in2)
+{
+    smallfelem small1, small2;
+    felem_shrink(small1, in1);
+    felem_shrink(small2, in2);
+    smallfelem_mul(out, small1, small2);
+} *)
 
 
+val felem_mul: input1 : felem -> input2: felem -> Tot longfelem
+let felem_mul input1 input2 = 
+	let small1 = felem_shrink input1 in 
+	let small2 = felem_shrink input2 in 
+	smallfelem_mul small1 small2
 
+(*)	
+static void felem_small_mul(longfelem out, 
+const smallfelem small1,
+                            const felem in2)
+{
+    smallfelem small2;
+    felem_shrink(small2, in2);
+    smallfelem_mul(out, small1, small2);
+}
+
+*)
+
+val felem_small_mul: small1: smallfelem -> input2: felem -> Tot longfelem
+let felem_small_mul small1 input2 = 
+	let small2 = felem_shrink input2 in 
+	smallfelem_mul small1 small2
+
+(* static void felem_reduce_(felem out, const longfelem in)
+{
+    int128_t c;
+    /* combine common terms from below */
+    c = in[4] + (in[5] << 32);
+    out[0] += c;
+    out[3] -= c;
+
+    c = in[5] - in[7];
+    out[1] += c;
+    out[2] -= c;
+
+    /* the remaining terms */
+    /* 256: [(0,1),(96,-1),(192,-1),(224,1)] */
+    out[1] -= (in[4] << 32);
+    out[3] += (in[4] << 32);
+
+    /* 320: [(32,1),(64,1),(128,-1),(160,-1),(224,-1)] */
+    out[2] -= (in[5] << 32);
+
+    /* 384: [(0,-1),(32,-1),(96,2),(128,2),(224,-1)] */
+    out[0] -= in[6];
+    out[0] -= (in[6] << 32);
+    out[1] += (in[6] << 33);
+    out[2] += (in[6] * 2);
+    out[3] -= (in[6] << 32);
+
+    /* 448: [(0,-1),(32,-1),(64,-1),(128,1),(160,2),(192,3)] */
+    out[0] -= in[7];
+    out[0] -= (in[7] << 32);
+    out[2] += (in[7] << 33);
+    out[3] += (in[7] * 3);
+}
+*)
+(*)
+val felem_reduce_ : input: longfelem -> out: felem -> Tot (felem)
+
+let felem_reduce_ input out = 
+	let in4 = index input 4 in 
+	let in5 = index input 5 in 
+	let in5 = index input 6 in 
+	let in7 = index input 7 in 
+	let c = add in4 (shift_left in5 32) in 
+	let out0 = index out 0 in 
+	let out = upd out 0 (add out0 c) in 
+	let out3 = index out 3 in 
+	let out = upd out 3 (sub out3 c) in 
+
+	let c = sub in5 in7 in 
+	let out1 = index out 1 in 
+	let out = upd out 1 (add out1 c) in 
+	let out2 = index out 2 in 
+	let out = upd out 2 (sub out2 c) in 
+
+	let out1 = index out 1 in 
+	let out3 = index out 3 in 
+	let out = upd out 1 (sub out1 (shift_left in4 32)) in 
+	let out = upd out 3 (add out3 (shift_left in4 32)) in 
+
+	let out2 = index out 2 in 
+	let out = upd out 2 (sub out2 (shift_left in5 32)) in 
+
+	let out0 = index out 0 in 
+	let out = upd out 0 (sub out0 in6) in 
+	let out0 = index out 0 in 
+	let out = upd out 0 (sub out0 (shift_left in6 32)) in 
+	let out1 = index out 1 in 
+	let out = upd out 1 (add out0 (shift_left in6 33)) in 
+	let ou2 = index out 2 in 
+	let out = upd out 2 (add out0 (shift_left in6 1)) in 
+	let out1 = index out 3 in 
+	let out = upd out 1 (sub out0 (shift_left in6 32)) in 
 
 
 
