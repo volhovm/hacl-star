@@ -9,7 +9,9 @@ open Spec.Lib
 open Spec.Lib.IntSeq
 open Spec.Lib.IntBuf
 open Spec.Lib.IntTypes
+
 open Spec.Lib.IntSeq.Lemmas
+open Spec.Lib.IntBuf.Lemmas
 
 open P256.S
 open Hacl.P256.Zeros

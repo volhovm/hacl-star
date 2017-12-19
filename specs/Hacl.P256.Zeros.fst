@@ -8,7 +8,9 @@ open FStar.HyperStack.ST
 open Spec.Lib
 open Spec.Lib.IntBuf
 open Spec.Lib.IntTypes
+
 open Spec.Lib.IntSeq.Lemmas
+open Spec.Lib.IntBuf.Lemmas
 
 open P256.S
 
@@ -53,7 +55,7 @@ let two100m36m4 = load128 (u64(0xfffffffff)) (u64(0xffffffeffffffff0))
 let two100      = load128 (u64(0x1000000000)) (u64(0x0))
 let two100m36p4 = load128 (u64(0xfffffffff)) (u64(0xfffffff000000010))
 
-val zero105: unit -> Stack felem
+val zero105: unit -> StackInline felem
   (requires (fun h -> True))
   (ensures (fun h0 z h1 ->  creates1 z h0 h1 /\ preserves_live h0 h1 /\
   	(let s = as_lseq z h1 in 
@@ -90,7 +92,7 @@ let zero105_2 f =
 	upd f 2 two105m41p9;
 	upd f 3 two105m41p9
 
-val zero107: unit -> Stack felem
+val zero107: unit -> StackInline felem
   (requires (fun h -> True))
   (ensures (fun h0 z h1 -> creates1 z h0 h1 /\ preserves_live h0 h1 /\ 
   		(let s = as_lseq z h1 in 
@@ -110,7 +112,7 @@ let zero107 () =
 	upd s 0 two107m43m11;
 	upd s 1 two107;
 	upd s 2 two107m43p11;
-	upd s 3 two107m43p11;
+	upd s 3 two107m43p11; 
 	s
 
 val zero107_2: f: felem -> Stack unit
@@ -132,14 +134,46 @@ let zero107_2 f =
 	upd f 3 two107m43p11
 
 
-
-val zero110: unit -> Stack felem
+val zero110: unit -> StackInline felem
   (requires (fun h -> True))
-  (ensures (fun h0 z h1 -> creates1 z h0 h1 /\ preserves_live h0 h1))
+   (ensures (fun h0 z h1 -> creates1 z h0 h1 /\ preserves_live h0 h1 /\ 
+  		(let s = as_lseq z h1 in 
+	  		let s0 = Spec.Lib.IntSeq.index s 0 in 
+	  		let s1 = Spec.Lib.IntSeq.index s 1 in 
+	  		let s2 = Spec.Lib.IntSeq.index s 2 in 
+	  		let s3 = Spec.Lib.IntSeq.index s 3 in 
+	  		s0 == two64m0 /\  s1 == two110p32m0 /\ s2 == two64m46 /\ s3 == two64m32
+		)
+  ))
  
-let zero110 () = createL [two64m0; two110p32m0; two64m46; two64m32]
+let zero110 () = 
+	let s = create_felem() in 
+	upd s 0 two64m0;
+	upd s 1 two110p32m0;
+	upd s 2 two64m46;
+	upd s 3 two64m32;
+	s
 
-val zero100: unit -> Stack felem
+val zero110_2: f: felem -> Stack unit
+	(requires (fun h -> live h f))
+	(ensures (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies1 f h0 h1 /\ 
+	  	(let s = as_lseq f h1 in 
+	  		let s0 = Spec.Lib.IntSeq.index s 0 in 
+	  		let s1 = Spec.Lib.IntSeq.index s 1 in 
+	  		let s2 = Spec.Lib.IntSeq.index s 2 in 
+	  		let s3 = Spec.Lib.IntSeq.index s 3 in 
+	  		s0 == two64m0 /\  s1 == two110p32m0 /\ s2 == two64m46 /\ s3 == two64m32
+		)
+	  )
+	)
+
+let zero110_2 f = 
+	upd f 0 two64m0;
+	upd f 1 two110p32m0;
+	upd f 2 two64m46;
+	upd f 3 two64m32
+
+val zero100: unit -> StackInline felem
   (requires (fun h -> True))
   (ensures (fun h0 z h1 -> creates1 z h0 h1 /\ preserves_live h0 h1))
 
