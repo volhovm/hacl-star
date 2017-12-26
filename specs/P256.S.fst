@@ -220,27 +220,20 @@ let felem_small_sum out input =
 
 assume val mul_wide: a: uint_t U64 -> a: uint_t U64 -> Tot (uint_t U128)
 
-(* )
-val felem_scalar: out:felem -> scalar:uint32 ->
+val felem_scalar: out:felem -> scalar:uint32{uint_v scalar < 128} ->
   Stack unit
     (requires (fun h -> live h out))
     (ensures (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies1 out h0 h1))
 
 let felem_scalar out scalar =
-  let o0 = out.(0) in
-  let o1 = out.(1) in
-  let o2 = out.(2) in
-  let o3 = out.(3) in
-	let o0 = to_u64 o0 in
-	let o1 = to_u64 o1 in
-	let o2 = to_u64 o2 in
-	let o3 = to_u64 o3 in
-  out.(0) <- mul_wide o0 scalar;
-  out.(1) <- mul_wide o1 scalar;
-  out.(2) <- mul_wide o2 scalar;
-  out.(3) <- mul_wide o3 scalar  
-
-*)
+  let o0 = out.(size 0) in
+  let o1 = out.(size 1) in
+  let o2 = out.(size 2) in
+  let o3 = out.(size 3) in
+  out.(size 0) <- o0 <<. scalar;
+  out.(size 1) <- o1 <<. scalar;
+  out.(size 2) <- o2 <<. scalar;
+  out.(size 3) <- o3 <<. scalar  
 
 val longfelem_scalar: out:longfelem -> scalar:uint64 ->
   Stack unit

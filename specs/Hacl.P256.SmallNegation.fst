@@ -43,10 +43,8 @@ let smallfelem_neg out small tempBuffer =
 	out.(size 3) <- sub zero0 (to_u128 (small3))
 
 
-val felem_diff: out:felem -> input:felem -> 
-	tempBuffer: felem -> Stack unit
-    (requires (fun h -> live h out /\ live h input /\ live h tempBuffer /\
-     	disjoint out tempBuffer /\ disjoint input tempBuffer /\
+val felem_diff: out:felem -> input:felem ->  Stack unit
+    (requires (fun h -> live h out /\ live h input /\ 
      	(let input = as_lseq input h in 
      		let input0 = Spec.Lib.IntSeq.index input 0 in 
      		let input1 = Spec.Lib.IntSeq.index input 1 in 
@@ -69,12 +67,16 @@ val felem_diff: out:felem -> input:felem ->
 		uint_v out3 < pow2 128 - (uint_v two105m41p9)
 				))
 	)
-    (ensures (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies2 tempBuffer out h0 h1))
+    (ensures (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies1 out h0 h1))
 
 #set-options " --z3rlimit 500 "
 
-let felem_diff out input tempBuffer=
-zero105_2 tempBuffer;
+let felem_diff out input=
+  alloc  #(uint_t U128) #(unit) #(v(size 4)) (size 4) (u128(0)) 
+    [BufItem input] [BufItem out] 
+    (fun h0 _ h1 -> True) (
+      fun tempBuffer ->
+  zero105_2 tempBuffer;
   let input0 = input.(size 0) in
   let input1 = input.(size 1) in
   let input2 = input.(size 2) in
@@ -98,13 +100,12 @@ zero105_2 tempBuffer;
   out.(size 1) <- sub out1 input1;
   out.(size 2) <- sub out2 input2;
   out.(size 3) <- sub out3 input3
+)
 
 
 val felem_diff_zero107:
-  out:felem -> input:felem -> 
-	tempBuffer: felem -> Stack unit
-    (requires (fun h -> live h out /\ live h input /\ live h tempBuffer /\
-     	disjoint out tempBuffer /\ disjoint input tempBuffer /\
+  out:felem -> input:felem -> Stack unit
+    (requires (fun h -> live h out /\ live h input /\
      	(let input = as_lseq input h in 
      		let input0 = Spec.Lib.IntSeq.index input 0 in 
      		let input1 = Spec.Lib.IntSeq.index input 1 in 
@@ -127,10 +128,14 @@ val felem_diff_zero107:
 		uint_v out3 < pow2 128 - (uint_v two107m43p11)
 				))
 	)
-    (ensures (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies2 tempBuffer out h0 h1))
+    (ensures (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies1 out h0 h1))
 
 
-let felem_diff_zero107 out input tempBuffer=
+let felem_diff_zero107 out input=
+  alloc  #(uint_t U128) #(unit) #(v(size 4)) (size 4) (u128(0)) 
+    [BufItem input] [BufItem out] 
+    (fun h0 _ h1 -> True) (
+      fun tempBuffer ->
 zero107_2 tempBuffer;
   let input0 = input.(size 0) in
   let input1 = input.(size 1) in
@@ -154,7 +159,7 @@ zero107_2 tempBuffer;
   out.(size 0) <- sub out0 input0;
   out.(size 1) <- sub out1 input1;
   out.(size 2) <- sub out2 input2;
-  out.(size 3) <- sub out3 input3
+  out.(size 3) <- sub out3 input3)
 
 val longfelem_diff:
   out:longfelem -> input:longfelem ->
