@@ -2,7 +2,6 @@ module P256.S
 
 open FStar.Mul
 
-open FStar.HyperStack
 open FStar.HyperStack.ST
 
 open Spec.Lib
@@ -12,7 +11,6 @@ open Spec.Lib.IntTypes
 open Spec.Lib.IntSeq.Lemmas
 open Spec.Lib.IntBuf.Lemmas
 
-module Buffer = Spec.Lib.IntBuf
 
 (* Constants *)
 let nlimbs = size(4)
@@ -94,13 +92,6 @@ let bin32_to_felem output input =
 			output.(3) <- to_u128 (tempBuffer.(3))
 		)
 *)
-
-assume val uints_to_bytes_le:
-	o:lbuffer uint8 32 ->i:lbuffer uint64 4 -> 
-  	Stack unit 
-		(requires (fun h0 -> live h0 o /\ live h0 i))
-		(ensures (fun h0 _ h1 -> preserves_live h0 h1 /\
-			modifies1 o h0 h1 ))
 
 val smallfelem_to_bin32:
   output:lbuffer uint8 32 -> input:smallfelem ->

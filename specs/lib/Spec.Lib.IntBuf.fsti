@@ -54,7 +54,25 @@ inline_for_extraction val createL: #a:Type0 -> init:list a{List.Tot.length init 
 				          /\ modifies1 r h0 h1 
 					  /\ as_lseq r h1 == LSeq.createL #a init))
 
-inline_for_extraction val alloc: #a:Type0 -> #b:Type0 -> #len:size_nat -> clen:size_t{v clen == len} -> init:a -> 
+inline_for_extraction val alloc0: #a:Type0 -> #b:Type0 -> #len:size_nat -> 
+clen:size_t{v clen == len} -> init:a -> 
+		 reads:list bufitem ->
+		 writes:list bufitem ->
+		 pre_spec:(h0:mem -> Type0) ->
+		 spec:(h0:mem -> r:b -> h1:mem -> Type) ->
+		 impl:(buf:lbuffer a len -> Stack b
+			   (requires (fun h -> pre_spec h /\ live h buf /\ live_list h reads /\ live_list h writes /\ disjoint_list buf reads /\ disjoint_list buf writes))
+			   (ensures (fun h0 r h1 -> preserves_live h0 h1 /\
+						 modifies (BufItem buf :: writes) h0 h1 /\
+						 spec h0 r h1))) ->
+		    Stack b
+		      (requires (fun h0 -> pre_spec h0 /\ live_list h0 reads /\ live_list h0 writes))
+		      (ensures (fun h0 r h1 -> preserves_live h0 h1 /\ 
+					    modifies writes h0 h1 /\
+					    spec h0 r h1))
+
+inline_for_extraction val alloc: #a:Type0 -> #b:Type0 -> #len:size_nat -> 
+clen:size_t{v clen == len} -> init:a -> 
 		 reads:list bufitem ->
 		 writes:list bufitem ->
 		 spec:(h0:mem -> r:b -> h1:mem -> Type) ->
@@ -68,7 +86,6 @@ inline_for_extraction val alloc: #a:Type0 -> #b:Type0 -> #len:size_nat -> clen:s
 		      (ensures (fun h0 r h1 -> preserves_live h0 h1 /\ 
 					    modifies writes h0 h1 /\
 					    spec h0 r h1))
-
 
 inline_for_extraction val index: #a:Type0 -> #len:size_nat -> b:lbuffer a (len) -> i:size_t{v i < len} -> Stack a 
 		      (requires (fun h0 -> live h0 b))

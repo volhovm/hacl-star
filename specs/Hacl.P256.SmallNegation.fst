@@ -33,50 +33,60 @@ let smallfelem_neg out small tempBuffer =
 	let zero1  = tempBuffer.(size 1) in
 	let zero2  = tempBuffer.(size 2) in
 	let zero3  = tempBuffer.(size 3) in
-		assert((uint_v zero0) >= (uint_v small0));
-		assert((uint_v zero1) >= (uint_v small1));
-		assert((uint_v zero2) >= (uint_v small2));
-		assert((uint_v zero3) >= (uint_v small3));
 	out.(size 0) <- sub zero0 (to_u128 (small0));
 	out.(size 1) <- sub zero0 (to_u128 (small1));
 	out.(size 2) <- sub zero0 (to_u128 (small2));
 	out.(size 3) <- sub zero0 (to_u128 (small3))
 
-
 val felem_diff: out:felem -> input:felem ->  Stack unit
-    (requires (fun h -> live h out /\ live h input /\ 
+    (requires (fun h -> live h out /\ live h input /\ disjoint out input /\ disjoint input out /\ 
      	(let input = as_lseq input h in 
-     		let input0 = Spec.Lib.IntSeq.index input 0 in 
-     		let input1 = Spec.Lib.IntSeq.index input 1 in 
-     		let input2 = Spec.Lib.IntSeq.index input 2 in 
-     		let input3 = Spec.Lib.IntSeq.index input 3 in 
+     		let input0 = input.[0] in 
+     		let input1 = input.[1] in 
+     		let input2 = input.[2] in 
+     		let input3 = input.[3] in 
      		uint_v input0 < pow2 104 /\
      		uint_v input1 < pow2 104 /\
      		uint_v input2 < pow2 104 /\
-     		uint_v input3 < pow2 104 
-     	)
-     	/\
-    	(let out = as_lseq out h in 
-    	let out0 = Spec.Lib.IntSeq.index out 0 in 
-    	let out1 = Spec.Lib.IntSeq.index out 1 in 
-    	let out2 = Spec.Lib.IntSeq.index out 2 in 
-    	let out3 = Spec.Lib.IntSeq.index out 3 in 
-     	uint_v out0 < pow2 128 - (uint_v two105m41m9) /\
-    	uint_v out1 < pow2 128 - (uint_v two105) /\
-		uint_v out2 < pow2 128 - (uint_v two105m41p9) /\
-		uint_v out3 < pow2 128 - (uint_v two105m41p9)
-				))
-	)
+     		uint_v input3 < pow2 104)/\
+    	 (let out = as_lseq out h in 
+      	let out0 = out.[0] in 
+      	let out1 = out.[1] in 
+      	let out2 = out.[2] in 
+      	let out3 = out.[3] in 
+       	uint_v out0 < pow2 127 /\
+      	uint_v out1 < pow2 127 /\
+    		uint_v out2 < pow2 127 /\
+    		uint_v out3 < pow2 127
+			)))
     (ensures (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies1 out h0 h1))
 
-#set-options " --z3rlimit 500 "
-
-let felem_diff out input=
-  alloc  #(uint_t U128) #(unit) #(v(size 4)) (size 4) (u128(0)) 
-    [BufItem input] [BufItem out] 
+let felem_diff out input =
+  alloc0  #(uint_t U128) #(unit) #(v(size 4)) (size 4) (u128(0)) 
+    [BufItem input; BufItem out] [BufItem out] 
+    (fun h -> live h out /\ live h input /\ disjoint out input /\ disjoint input out /\ 
+      (let input = as_lseq input h in 
+        let input0 = input.[0] in 
+        let input1 = input.[1] in 
+        let input2 = input.[2] in 
+        let input3 = input.[3] in 
+        uint_v input0 < pow2 104 /\
+        uint_v input1 < pow2 104 /\
+        uint_v input2 < pow2 104 /\
+        uint_v input3 < pow2 104)/\
+       (let out = as_lseq out h in 
+        let out0 = out.[0] in 
+        let out1 = out.[1] in 
+        let out2 = out.[2] in 
+        let out3 = out.[3] in 
+        uint_v out0 < pow2 127 /\
+        uint_v out1 < pow2 127 /\
+        uint_v out2 < pow2 127 /\
+        uint_v out3 < pow2 127
+      ))
     (fun h0 _ h1 -> True) (
-      fun tempBuffer ->
-  zero105_2 tempBuffer;
+      fun tempBuffer ->  
+        zero105_2 tempBuffer;
   let input0 = input.(size 0) in
   let input1 = input.(size 1) in
   let input2 = input.(size 2) in
@@ -93,15 +103,12 @@ let felem_diff out input=
   let out1 = add zero1 out1 in
   let out2 = add zero2 out2 in
   let out3 = add zero3 out3 in
-	  assert_norm (uint_v two105m41m9 > pow2 104);
-	  assert_norm (uint_v two105 > pow2 104);
-	  assert_norm (uint_v two105m41p9 > pow2 104);
   out.(size 0) <- sub out0 input0;
   out.(size 1) <- sub out1 input1;
   out.(size 2) <- sub out2 input2;
   out.(size 3) <- sub out3 input3
 )
-
+(*)
 
 val felem_diff_zero107:
   out:felem -> input:felem -> Stack unit

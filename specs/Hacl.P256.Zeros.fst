@@ -2,7 +2,6 @@ module Hacl.P256.Zeros
 
 open FStar.Mul
 
-open FStar.HyperStack
 open FStar.HyperStack.ST
 
 open Spec.Lib
@@ -14,23 +13,22 @@ open Spec.Lib.IntBuf.Lemmas
 
 open P256.S
 
-module Buffer = Spec.Lib.IntBuf
 
-
-val load128: high: (uint_t U64) -> low: (uint_t U64) -> Pure (uint_t U128)
+val load128: high: uint64 -> low: uint64 -> Pure uint128
 	(requires True)
-    (ensures 
-    	(fun b -> ((uint_v b) = pow2 64 * (uint_v high) + (uint_v low )))
-    )
+    (ensures (fun b -> ((uint_v b) = pow2 64 * (uint_v high) + (uint_v low ))))
 
 let load128 high low = 
-    let high = to_u128(high) in 
-    let shift = u32(64) in 
+    let high = to_u128 high in 
+    let shift = u32 64 in 
     let hs = shift_left high shift in  
-    let ls = to_u128(low) in 
+    let ls = to_u128 low in 
     let result = logor hs ls in 
     assume (uint_v result = pow2 64* uint_v high + uint_v low);
     result
+
+(*TODO: Replace with u128-bit values
+Check required*)
 
 let two105m41m9 = load128 (u64(0x1ffffffffff)) (u64(0xfffffdfffffffe00))
 let two105      = load128 (u64(0x20000000000)) (u64(0x0))
@@ -82,15 +80,16 @@ val zero105_2: f: felem -> Stack unit
 	  		let s1 = Spec.Lib.IntSeq.index s 1 in 
 	  		let s2 = Spec.Lib.IntSeq.index s 2 in 
 	  		let s3 = Spec.Lib.IntSeq.index s 3 in 
-	  		s0 == two105m41m9 /\  s1 == two105 /\ s2 == two105m41p9 /\ s3 == two105m41p9
-		))
-	)
+	  		s0 == two105m41m9 /\  s1 == two105 /\ s2 == two105m41p9 /\ s3 == two105m41p9 /\
+	  		uint_v s0 > pow2 104 /\ uint_v s1 > pow2 104 /\ uint_v s2 > pow2 104 /\ uint_v s3 > pow2 104
+		)))
 
 let zero105_2 f = 
 	upd f (size 0) two105m41m9;
 	upd f (size 1) two105;
 	upd f (size 2) two105m41p9;
-	upd f (size 3) two105m41p9
+	upd f (size 3) two105m41p9;
+	  assert_norm (uint_v two105m41m9 > pow2 104)
 
 val zero107: unit -> StackInline felem
   (requires (fun h -> True))
@@ -101,11 +100,7 @@ val zero107: unit -> StackInline felem
 	  		let s2 = Spec.Lib.IntSeq.index s 2 in 
 	  		let s3 = Spec.Lib.IntSeq.index s 3 in 
 	  		s0 == two107m43m11 /\  s1 == two107 /\ s2 == two107m43p11 /\ s3 == two107m43p11
-		)
-
-
-
-  ))
+		)))
 
 let zero107 () = 
 	let s = create_felem() in 
@@ -124,8 +119,7 @@ val zero107_2: f: felem -> Stack unit
 	  		let s2 = Spec.Lib.IntSeq.index s 2 in 
 	  		let s3 = Spec.Lib.IntSeq.index s 3 in 
 	  		s0 == two107m43m11 /\  s1 == two107 /\ s2 == two107m43p11 /\ s3 == two107m43p11
-		))
-	)
+		)))
 
 let zero107_2 f = 
 	upd f (size 0) two107m43m11;
@@ -163,9 +157,7 @@ val zero110_2: f: felem-> Stack unit
 	  		let s2 = Spec.Lib.IntSeq.index s 2 in 
 	  		let s3 = Spec.Lib.IntSeq.index s 3 in 
 	  		s0 == two64m0 /\  s1 == two110p32m0 /\ s2 == two64m46 /\ s3 == two64m32
-		)
-	  )
-	)
+		)))
 
 let zero110_2 f = 
 	upd f (size 0) two64m0;
