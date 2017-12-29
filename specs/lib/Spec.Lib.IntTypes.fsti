@@ -238,6 +238,12 @@ val size_decr: s:size_t{size_v s > 0} -> s':size_t{size_v s' == size_v s - 1}
 inline_for_extraction
 val size_div: s1:size_t -> s2:size_t{size_v s2 > 0} -> s3:size_t{size_v s3 == size_v s1 / size_v s2}
 
+
+ val size_sl: s1: size_t ->  b:shiftval SIZE -> s3: size_t
+
+ val size_sub:  s1: size_t -> s2: size_t -> s3: size_t
+
+
 inline_for_extraction
 val size_mod: s1:size_t -> s2:size_t{size_v s2 > 0} -> s3:size_t{size_v s3 == size_v s1 % size_v s2}
 

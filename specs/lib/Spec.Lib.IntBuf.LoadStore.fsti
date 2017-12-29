@@ -20,6 +20,14 @@ val uints_from_bytes_le:
 			      as_lseq o h1 == 
 			      (LSeq.uints_from_bytes_le #t #(len) (as_lseq i h0) )))
 
+val uints_to_bytes_le: #t: inttype -> #len: size_nat -> 
+	o: lbuffer uint8 (len `op_Multiply` numbytes t) -> 
+	i: lbuffer (uint_t t) (len) -> 
+	Stack unit
+	(requires (fun h0 -> True))
+	(ensures (fun h0 _ h1 -> True))
+
+
 inline_for_extraction
 val uint32s_from_bytes_le: 
   #len:size_nat{len `op_Multiply` 4 <= max_size_t} -> 

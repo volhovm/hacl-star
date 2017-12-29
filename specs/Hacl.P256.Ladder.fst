@@ -29,14 +29,17 @@ open Hacl.P256.IsZero
 open Hacl.P256.PointDouble
 open Hacl.P256.Copy
 open Hacl.P256.PointAdd
+open Hacl.P256.Inv
+
+open Spec.Lib.IntBuf.LoadStore
 
 let pointLength = size(12)
 
 type point = lbuffer limb (v pointLength)
 
-let get_x (p:point) = sub p (size 0) (size 4)
-let get_y (p:point) = sub p (size 4) (size 4)
-let get_z (p:point) = sub p (size 8) (size 4)
+let get_x (p:point) = sub #_ #_ #(v(size 4)) p (size 0) (size 4)
+let get_y (p:point) = sub #_ #_ #(v(size 4)) p (size 4) (size 4)
+let get_z (p:point) = sub #_ #_ #(v(size 4)) p (size 8) (size 4)
 
 
 // TODO: implement
@@ -189,32 +192,75 @@ val point_mul_:
     (ensures (fun h0 _ h1 -> True (*live h0 k*)))
 
 let point_mul_ pp ppq p pq k =
-  let h0 = ST.get() in
-  let inv (h1: HyperStack.mem) (i: nat): Type0 = True in
-  let f' (i:size_t{size_v i >= 0 /\ size_v i < 256}): Stack unit
-    (requires (fun h -> True (*) inv h (UInt32.v i *)))
-    (ensures (fun h_1 _ h_2 -> True (*) FStar.UInt32.(inv h_2 (v i + 1)) *))) =
-    loop_step pp ppq p pq k ((u32 256) -! ((u32 2) *! i) -! (u32 1));
-    loop_step p pq pp ppq k ((u32 256) -! ((u32 2) *! i) -! (u32 2)) in
-    for (size 0) (size 128) inv f'
+	//let h0 = ST.get() in
+	let inv (h1:mem) (i:nat) = True in
+	let f' (i:size_t{size_v i >= 0 /\ size_v i < 256}): Stack unit
+	    (requires (fun h -> True (*) inv h (UInt32.v i *)))
+	    (ensures (fun h_1 _ h_2 -> True (*) FStar.UInt32.(inv h_2 (v i + 1)) *))) =
+	    loop_step pp ppq p pq k (size_sub (size 256) (size_incr (size_sl i (u32 2))));
+	    loop_step p pq pp ppq k (size_sub (size 256) (size_incr (size_incr (size_sl i (u32 2))))) in
+	    for (size 0) (size 128) inv f'
 
-(*)
 val p256:
-  outx:buffer UInt8.t{length outx = 32} ->
-  outy:buffer UInt8.t{length outy = 32} ->
-  inx:buffer UInt8.t{length inx = 32} ->
-  iny:buffer UInt8.t{length iny = 32} ->
-  key:buffer UInt8.t{length key = 32} ->
+  outx:lbuffer (uint_t U8) (v (size 32)) ->
+  outy:lbuffer (uint_t U8) (v (size 32)) ->
+  inx:lbuffer (uint_t U8) (v (size 32)) ->
+  iny:lbuffer (uint_t U8) (v (size 32)) ->
+  key:lbuffer (uint_t U8) (v (size 32)) ->
   Stack unit
     (requires (fun h -> True))
     (ensures (fun h0 _ h1 -> True))
+
 let p256 outx outy inx iny key =
-  push_frame();
-  // Initial point
-  let q = create (UInt128.uint64_to_uint128 0uL) 12ul in
-  let qx = get_x q in
-  let qy = get_y q in
-  let qz = get_z q in
+	let zero = (u128 0) in 
+	let q = create (pointLength) zero in
+	//WHY?
+	let qx = get_x q in 
+	let qy = get_y q in
+	let qz = get_z q in
+	uints_from_bytes_le qx inx; 
+	uints_from_bytes_le qy iny;
+	qz.(size 0) <- (u128 1);
+
+	let p = create (pointLength) zero in
+	let px = get_x p in
+	let py = get_y p in
+	px.(size 0) <- u128 1;
+	py.(size 0) <- u128 1;
+
+	let pp = create (pointLength) zero in
+  	let ppq = create (pointLength) zero in
+  	point_mul_ pp ppq p q key;
+
+  	let x = create (size 4) (u64 0) in
+	let y = create (size 4) (u64 0) in
+	let tmp = create (size 8) zero in
+	let z2 = create (size 4) zero in
+	let z3 = create (size 4) zero in
+	let z2_inv = create (size 4) zero in
+	let z3_inv = create (size 4) zero in
+	let big_x = create (size 4) zero in
+	let big_y = create (size 4) zero in
+  	
+  	felem_square tmp (get_z p);
+	felem_reduce z2 tmp;
+	felem_inv z2_inv z2;
+	felem_mul tmp (get_x p) z2_inv;
+	felem_reduce big_x tmp;
+	felem_contract x big_x;
+  
+	felem_mul tmp z2 (get_z p);
+	felem_reduce z3 tmp;
+	felem_inv z3_inv z3;
+	felem_mul tmp (get_y p) z3_inv;
+	felem_reduce big_y tmp;
+	felem_contract y big_y;
+
+	uints_to_bytes_le outx x;
+	uints_to_bytes_le outy y
+  (*)	
+
+
   let qx3 = load64_be (Buffer.sub inx 0ul 8ul) in
   let qx2 = load64_be (Buffer.sub inx 8ul 8ul) in
   let qx1 = load64_be (Buffer.sub inx 16ul 8ul) in
