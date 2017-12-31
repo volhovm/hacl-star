@@ -26,14 +26,40 @@ assume val lemma_4_pows: a: nat {a < pow2 126} -> b: nat {b < pow2 126} -> c: na
 
 val felem_shrink:
   out:smallfelem -> input:felem ->Stack unit
-  	(requires fun h -> True)
-  	(ensures fun h0 _ h1 -> True)
+    (requires (fun h -> live h out /\ live h input /\
+    	disjoint input out /\ disjoint out input /\ 
+    	(let input = as_lseq input h in 
+     		let input0 = input.[0] in 
+     		let input1 = input.[1] in 
+     		let input2 = input.[2] in 
+     		let input3 = input.[3] in 
+     		uint_v input0 < pow2 109 /\
+     		uint_v input1 < pow2 109 /\
+     		uint_v input2 < pow2 109 /\
+     		uint_v input3 < pow2 109 
+     	)
+    ))
+    (ensures (fun h0 _ h1 -> True))
 
 let felem_shrink out input = 
-	alloc #(uint_t U128) #(unit) #(v(size 4)) (size 4) (u128(0)) [BufItem input] [BufItem out] 
+	alloc2_0 #(uint_t U128) #(uint_t U64) #(unit) #(v(size 4)) 
+		#(v(size 4)) (size 4) (size 4) (u128(0))  (u64(0))
+		[BufItem input] [BufItem out] 
+		(fun h -> live h out /\ live h input /\
+    	disjoint input out /\ disjoint out input /\ 
+    	(let input = as_lseq input h in 
+     		let input0 = input.[0] in 
+     		let input1 = input.[1] in 
+     		let input2 = input.[2] in 
+     		let input3 = input.[3] in 
+     		uint_v input0 < pow2 109 /\
+     		uint_v input1 < pow2 109 /\
+     		uint_v input2 < pow2 109 /\
+     		uint_v input3 < pow2 109 ))
 		(fun h0 _ h1 -> True) (
-			fun tmp -> 
-	let zero110 = zero110 () in
+			fun zero110 _  -> 	
+	admit();
+		zero110_2 zero110;
   	let kPrime  = kPrime () in
   	let kPrime3Test = u64(0x7fffffff00000001) in 
 	let input0 = input.(size 0) in

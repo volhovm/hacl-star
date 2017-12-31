@@ -118,7 +118,8 @@ val zero107_2: f: felem -> Stack unit
 	  		let s1 = Spec.Lib.IntSeq.index s 1 in 
 	  		let s2 = Spec.Lib.IntSeq.index s 2 in 
 	  		let s3 = Spec.Lib.IntSeq.index s 3 in 
-	  		s0 == two107m43m11 /\  s1 == two107 /\ s2 == two107m43p11 /\ s3 == two107m43p11
+	  		s0 == two107m43m11 /\  s1 == two107 /\ s2 == two107m43p11 /\ s3 == two107m43p11 /\
+	  		uint_v s0 > pow2 106 /\ uint_v s1 = pow2 107 /\ uint_v s2 > pow2 106 /\ uint_v s3 > pow2 106
 		)))
 
 let zero107_2 f = 

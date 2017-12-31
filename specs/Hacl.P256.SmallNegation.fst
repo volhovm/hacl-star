@@ -108,41 +108,56 @@ let felem_diff out input =
   out.(size 2) <- sub out2 input2;
   out.(size 3) <- sub out3 input3
 )
-(*)
 
 val felem_diff_zero107:
   out:felem -> input:felem -> Stack unit
     (requires (fun h -> live h out /\ live h input /\
      	(let input = as_lseq input h in 
-     		let input0 = Spec.Lib.IntSeq.index input 0 in 
-     		let input1 = Spec.Lib.IntSeq.index input 1 in 
-     		let input2 = Spec.Lib.IntSeq.index input 2 in 
-     		let input3 = Spec.Lib.IntSeq.index input 3 in 
+     		let input0 = input.[0] in 
+        let input1 = input.[1] in 
+        let input2 = input.[2] in 
+        let input3 = input.[3] in 
      		uint_v input0 < pow2 106 /\
      		uint_v input1 < pow2 106 /\
      		uint_v input2 < pow2 106 /\
-     		uint_v input3 < pow2 106 
-     	)
-     	/\
+     		uint_v input3 < pow2 106 ) /\
     	(let out = as_lseq out h in 
-    	let out0 = Spec.Lib.IntSeq.index out 0 in 
-    	let out1 = Spec.Lib.IntSeq.index out 1 in 
-    	let out2 = Spec.Lib.IntSeq.index out 2 in 
-    	let out3 = Spec.Lib.IntSeq.index out 3 in 
-     	uint_v out0 < pow2 128 - (uint_v two107m43m11) /\
-    	uint_v out1 < pow2 128 - (uint_v two107) /\
-		uint_v out2 < pow2 128 - (uint_v two107m43p11) /\
-		uint_v out3 < pow2 128 - (uint_v two107m43p11)
-				))
-	)
+    	  let out0 = out.[0] in 
+        let out1 = out.[1] in 
+        let out2 = out.[2] in 
+        let out3 = out.[3] in 
+     	  uint_v out0 < pow2 127 /\
+        uint_v out1 < pow2 127 /\
+        uint_v out2 < pow2 127 /\
+        uint_v out3 < pow2 127
+	)))
     (ensures (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies1 out h0 h1))
 
 
 let felem_diff_zero107 out input=
-  alloc  #(uint_t U128) #(unit) #(v(size 4)) (size 4) (u128(0)) 
-    [BufItem input] [BufItem out] 
-    (fun h0 _ h1 -> True) (
-      fun tempBuffer ->
+  alloc0  #(uint_t U128) #(unit) #(v(size 4)) (size 4) (u128(0)) 
+    [BufItem input; BufItem out] [BufItem out] 
+    (fun h -> live h out /\ live h input /\
+      (let input = as_lseq input h in 
+        let input0 = input.[0] in 
+        let input1 = input.[1] in 
+        let input2 = input.[2] in 
+        let input3 = input.[3] in 
+        uint_v input0 < pow2 106 /\
+        uint_v input1 < pow2 106 /\
+        uint_v input2 < pow2 106 /\
+        uint_v input3 < pow2 106 ) /\
+      (let out = as_lseq out h in 
+        let out0 = out.[0] in 
+        let out1 = out.[1] in 
+        let out2 = out.[2] in 
+        let out3 = out.[3] in 
+        uint_v out0 < pow2 127 /\
+        uint_v out1 < pow2 127 /\
+        uint_v out2 < pow2 127 /\
+        uint_v out3 < pow2 127))
+    (fun h0 _ h1 -> True) 
+    (fun tempBuffer ->
 zero107_2 tempBuffer;
   let input0 = input.(size 0) in
   let input1 = input.(size 1) in
@@ -156,13 +171,10 @@ zero107_2 tempBuffer;
   let zero1  = tempBuffer.(size 1) in
   let zero2  = tempBuffer.(size 2) in 
   let zero3  = tempBuffer.(size 3) in
-  let out0 = add zero0 out0 in
+  let out0 = add zero0 out0 in 
   let out1 = add zero1 out1 in
   let out2 = add zero2 out2 in
   let out3 = add zero3 out3 in
-	  assert_norm (uint_v two107m43m11 > pow2 106);
-	  assert_norm (uint_v two107 > pow2 106);
-	  assert_norm (uint_v two107m43p11 > pow2 106);
   out.(size 0) <- sub out0 input0;
   out.(size 1) <- sub out1 input1;
   out.(size 2) <- sub out2 input2;
@@ -171,17 +183,16 @@ zero107_2 tempBuffer;
 val longfelem_diff:
   out:longfelem -> input:longfelem ->
    Stack unit
-    (requires (fun h -> live h out /\ live h input 
-    	 /\
+    (requires (fun h -> live h out /\ live h input /\ disjoint out input /\ disjoint input out /\
      	(let input = as_lseq input h in 
-     		let input0 = Spec.Lib.IntSeq.index input 0 in 
-     		let input1 = Spec.Lib.IntSeq.index input 1 in 
-     		let input2 = Spec.Lib.IntSeq.index input 2 in 
-     		let input3 = Spec.Lib.IntSeq.index input 3 in 
-     		let input4 = Spec.Lib.IntSeq.index input 4 in 
-     		let input5 = Spec.Lib.IntSeq.index input 5 in 
-     		let input6 = Spec.Lib.IntSeq.index input 6 in 
-     		let input7 = Spec.Lib.IntSeq.index input 7 in 
+     		let input0 = input.[0] in 
+     		let input1 = input.[1] in 
+     		let input2 = input.[2] in 
+     		let input3 = input.[3] in 
+     		let input4 = input.[4] in 
+     		let input5 = input.[5] in 
+     		let input6 = input.[6] in 
+     		let input7 = input.[7] in 
      		uint_v input0 < 7 * pow2 67 /\
      		uint_v input1 < 7 * pow2 67 /\
      		uint_v input2 < 7 * pow2 67 /\
@@ -189,29 +200,25 @@ val longfelem_diff:
      		uint_v input4 < 7 * pow2 67 /\
      		uint_v input5 < 7 * pow2 67 /\
      		uint_v input6 < 7 * pow2 67 /\
-     		uint_v input7 < 7 * pow2 67 
-     	)	
-    	/\
+     		uint_v input7 < 7 * pow2 67)/\
     	(let out = as_lseq out h in 
-    	let out0 = Spec.Lib.IntSeq.index out 0 in 
-    	let out1 = Spec.Lib.IntSeq.index out 1 in 
-    	let out2 = Spec.Lib.IntSeq.index out 2 in 
-    	let out3 = Spec.Lib.IntSeq.index out 3 in 
-		let out4 = Spec.Lib.IntSeq.index out 4 in 
-		let out5 = Spec.Lib.IntSeq.index out 5 in 
-		let out6 = Spec.Lib.IntSeq.index out 6 in 
-		let out7 = Spec.Lib.IntSeq.index out 7 in 
-     	uint_v out0 < pow2 128 - (uint_v two70m8p6) /\
-    	uint_v out1 < pow2 128 - (uint_v two70p40) /\
-		uint_v out2 < pow2 128 - (uint_v two70) /\
-		uint_v out3 < pow2 128 - (uint_v two70m40m38p6) /\
-		uint_v out4 < pow2 128 - (uint_v two70m6) /\
-		uint_v out5 < pow2 128 - (uint_v two70m6) /\
-		uint_v out6 < pow2 128 - (uint_v two70m6) /\
-		uint_v out7 < pow2 128 - (uint_v two70m6) 
-	)
-
-    ))
+    	let out0 =  out.[0] in 
+    	let out1 =  out.[1] in 
+    	let out2 =  out.[2] in 
+    	let out3 =  out.[3] in 
+  		let out4 =  out.[4] in 
+  		let out5 =  out.[5] in 
+  		let out6 =  out.[6] in 
+  		let out7 =  out.[7] in 
+     	uint_v out0 < pow2 127 /\
+    	uint_v out1 < pow2 127 /\
+		uint_v out2 < pow2 127 /\
+		uint_v out3 < pow2 127 /\
+		uint_v out4 < pow2 127 /\
+		uint_v out5 < pow2 127 /\
+		uint_v out6 < pow2 127 /\
+		uint_v out7 < pow2 127 
+	)))
     (ensures (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies1 out h0 h1))
 
 let longfelem_diff out input =
@@ -239,15 +246,6 @@ let longfelem_diff out input =
   let out5 = add two70m6 out5 in
   let out6 = add two70m6 out6 in
   let out7 = add two70m6 out7 in
-
-	assert_norm(uint_v two70m8p6 > pow2 70 - pow2 40 - pow2 38);
-	assert_norm(uint_v two70p40 >  pow2 70 - pow2 40 - pow2 38);
-	assert_norm(uint_v two70 >  pow2 70 - pow2 40 - pow2 38);
-	assert_norm(uint_v two70m40m38p6 >  pow2 70 - pow2 40 - pow2 38);
-	assert_norm(uint_v two70m6 >  pow2 70 - pow2 40 - pow2 38);
-
-	assert_norm(7 * pow2 67 <  pow2 70 - pow2 40 - pow2 38);	
-
   out.(size 0) <- sub out0 input0;
   out.(size 1) <- sub out1 input1;
   out.(size 2) <- sub out2 input2;
