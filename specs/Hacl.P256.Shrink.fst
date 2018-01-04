@@ -19,10 +19,11 @@ open Hacl.P256.Zeros
 
 open FStar.Math.Lemmas
 
-assume val lemma_4_pows: a: nat {a < pow2 126} -> b: nat {b < pow2 126} -> c: nat {c < pow2 126} ->
-	Lemma(a + b + c < pow2 128)
+open Hacl.P256.Lemmas0
 
-#set-options " --z3rlimit 100 --initial_fuel 2"
+#set-options "--z3rlimit 1000 --initial_ifuel 2 "
+
+#reset-options "--initial_fuel 2 --initial_ifuel 2 --z3rlimit 1000"
 
 val felem_shrink:
   out:smallfelem -> input:felem ->Stack unit
@@ -45,8 +46,7 @@ let felem_shrink out input =
 	alloc2_0 #(uint_t U128) #(uint_t U64) #(unit) #(v(size 4)) 
 		#(v(size 4)) (size 4) (size 4) (u128(0))  (u64(0))
 		[BufItem input] [BufItem out] 
-		(fun h -> live h out /\ live h input /\
-    	disjoint input out /\ disjoint out input /\ 
+		(fun h -> 
     	(let input = as_lseq input h in 
      		let input0 = input.[0] in 
      		let input1 = input.[1] in 
@@ -57,10 +57,9 @@ let felem_shrink out input =
      		uint_v input2 < pow2 109 /\
      		uint_v input3 < pow2 109 ))
 		(fun h0 _ h1 -> True) (
-			fun zero110 _  -> 	
-	admit();
-		zero110_2 zero110;
-  	let kPrime  = kPrime () in
+			fun zero110 kPrime  ->
+				zero110_2 zero110;
+				kPrime_ kPrime;
   	let kPrime3Test = u64(0x7fffffff00000001) in 
 	let input0 = input.(size 0) in
 	let input1 = input.(size 1) in
@@ -74,31 +73,50 @@ let felem_shrink out input =
 	let kPrime1 = kPrime.(size 1) in
 	let kPrime2 = kPrime.(size 2) in
 	let kPrime3 = kPrime.(size 3) in 
-	let tmp3 = zero3 +! input3 +! (input2 >>. u32(64)) in
-  	let tmp2 = zero2 +! (to_u128 (to_u64 input2)) in
+		lemmaPowersIncreasing 109 126;
+	assert(uint_v zero3 < pow2 64);	
+	assume(uint_v zero3 = pow2 64 - pow2 32);
+		let temp = (input2 >>. u32(64)) in 	
+	let tmp3 = zero3 +! input3 +! temp in
+		//assert(uint_v tmp3 >= pow2 64 - pow2 32);
+		(*lemmaPowersDecreasing zero3;
+		lemmaPowersDecreasing temp;
+	lemma1 input3 zero3 temp;*)
+		assume(uint_v tmp3 < pow2 110); 
+
+  	let tmp2 = zero2 +! (to_u128 (to_u64 input2)) in 
   	let tmp0 = zero0 +! input0 in
   	let tmp1 = zero1 +! input1 in
-   	let a = tmp3 >>. u32(64) in
+   	let a = tmp3 >>. u32(64) in 
   	let tmp3 = to_u128 (to_u64 tmp3) in
-  	let tmp3 = tmp3 -! a in
- 	let tmp3 = tmp3 +! (a <<. u32(32)) in
+ 	let tmp3 = tmp3 +! ((a <<. u32(32)) -! a) in 
+  		//assert(uint_v tmp3 < pow2 79); 
 	let b = a in
-	let a = tmp3 >>. u32(64) in
-	let b = b +! a in
-	let tmp3 = to_u128 (to_u64 tmp3) in
-	let tmp3 = tmp3 -! a in
-	let tmp3 = tmp3 +! (a <<. u32(32)) in
-  	let tmp0 = tmp0 +! b in
+	let a = tmp3 >>. u32(64) in 
+	let b = b +! a in 
+	let tmp3 = to_u128 (to_u64 tmp3) in 
+	let tmp3 = tmp3 +! ((a <<. u32(32)) -! a)  in 
+  	let tmp0 = tmp0 +! b in 
   	let tmp1 = tmp1 -! (b <<. u32(32)) in
- 	let high = to_u64 (gte_mask tmp3 (load128 (u64(0x1)) (u64(0x0)))) in
-	let low = to_u64 tmp3 in
+  		let two64_ = u128(0x10000000000000000) in 
+ 	let high = to_u64 (gte_mask tmp3 two64_) in
+ 	lemmaGTEMasking tmp3 two64_; 
+ 		assert(if  uint_v tmp3 >= uint_v two64_ 
+ 			then uint_v high = pow2 64 -1  else uint_v high = 0);
+	
+	let low = to_u64 tmp3 in 
   	let mask = gte_mask low (u64(0x8000000000000000)) in
-	let low = to_u64(low &. (u64(0x7fffffffffffffff))) in
-	let low = gte_mask kPrime3Test low in
+	let low = low &. (u64(0x7fffffffffffffff)) in
+	let low = lt_mask kPrime3Test low in 
 	let low = lognot low in
-	let mask = to_u64((mask &. low) |. high) in
+
+	admit();
+
+
+	let mask = to_u64((mask &. low) |. high) in 
 	let tmp0 = tmp0 -! to_u128 (to_u64(mask &. kPrime0)) in
 	let tmp1 = tmp1 -! to_u128 (to_u64(mask &. kPrime1)) in
+		assume (uint_v tmp3 > uint_v (to_u64(mask &. kPrime3)));
 	let tmp3 = tmp3 -! to_u128 (to_u64(mask &. kPrime3)) in
 	let tmp1 = tmp1 +! (tmp0 >>. u32(64)) in
 	let tmp0 = to_u64 tmp0 in
@@ -109,8 +127,10 @@ let felem_shrink out input =
 	out.(size 0) <- tmp0;
 	out.(size 1) <- tmp1;
 	out.(size 2) <- tmp2;
-	out.(size 3) <- to_u64 tmp3)
+	out.(size 3) <- to_u64 tmp3
 
+	)
+		; admit() 
 
 
 (*)

@@ -298,6 +298,7 @@ let size_to_uint32 x = x
 let size_incr x = add #SIZE x (size 1)
 let size_decr x = sub #SIZE x (size 1)
 let size_div x y = FStar.UInt32.div x y
+let size_mul x y = FStar.UInt32.mul x y
 let size_mod x y = FStar.UInt32.rem x y
 let size_eq x y = FStar.UInt32.eq x y
 let size_lt x y = FStar.UInt32.lt x y

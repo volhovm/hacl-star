@@ -170,13 +170,15 @@ inline_for_extraction
 val neq_mask: #t:inttype -> a:uint_t t  -> b:uint_t t -> uint_t t
 
 inline_for_extraction
-val gte_mask:  #t:inttype -> a:uint_t t  -> b:uint_t t -> uint_t t
+val gte_mask:  #t:inttype -> a:uint_t t  -> b:uint_t t -> masked: uint_t t
+    {if uint_v a >= uint_v b then uint_v masked = maxint t else uint_v masked = 0}
 
 inline_for_extraction
 val gt_mask:  #t:inttype -> a:uint_t t  -> b:uint_t t -> uint_t t
 
 inline_for_extraction
 val lt_mask:  #t:inttype -> a:uint_t t  -> b:uint_t t -> uint_t t
+  {if uint_v a < uint_v b then uint_v masked = maxint t else uint_v masked = 0}
 
 inline_for_extraction
 val lte_mask:  #t:inttype -> a:uint_t t  -> b:uint_t t -> uint_t t

@@ -13,6 +13,7 @@ open Spec.Lib.IntBuf.Lemmas
 
 open P256.S
 
+#set-options " --z3rlimit 200"
 
 val load128: high: uint64 -> low: uint64 -> Pure uint128
 	(requires True)
@@ -126,7 +127,8 @@ let zero107_2 f =
 	upd f (size 0) two107m43m11;
 	upd f (size 1) two107;
 	upd f (size 2) two107m43p11;
-	upd f (size 3) two107m43p11
+	upd f (size 3) two107m43p11;
+	assert_norm(uint_v two107 = pow2 107)
 
 
 val zero110: unit -> StackInline felem
@@ -157,14 +159,18 @@ val zero110_2: f: felem-> Stack unit
 	  		let s1 = Spec.Lib.IntSeq.index s 1 in 
 	  		let s2 = Spec.Lib.IntSeq.index s 2 in 
 	  		let s3 = Spec.Lib.IntSeq.index s 3 in 
-	  		s0 == two64m0 /\  s1 == two110p32m0 /\ s2 == two64m46 /\ s3 == two64m32
+	  		s0 == two64m0 /\  s1 == two110p32m0 /\ s2 == two64m46 /\ s3 == two64m32 /\ 
+	  		uint_v s0 == pow2 64 -1 
+
 		)))
 
 let zero110_2 f = 
 	upd f (size 0) two64m0;
 	upd f (size 1) two110p32m0;
 	upd f (size 2) two64m46;
-	upd f (size 3) two64m32
+	upd f (size 3) two64m32;
+	assert_norm(uint_v two64m0 = pow2 64 - 1);
+	assert_norm(uint_v two110p32m0 = pow2 110 + pow2 32 -1)
 
 val zero100: unit -> StackInline felem
   (requires (fun h -> True))

@@ -96,9 +96,11 @@ clen2:size_t{v clen2 == len2} -> init1:a -> init2:b ->
 		 pre_spec:(h0:mem -> Type0) ->
 		 spec:(h0:mem -> r:c -> h1:mem -> Type) ->
 		 impl:(buf1:lbuffer a len1 -> buf2:lbuffer b len2 -> Stack c
-			   (requires (fun h -> live h buf1 /\ live h buf2 /\ live_list h reads /\ live_list h writes /\ disjoint_list buf1 reads /\ disjoint_list buf2 reads /\ 
+			   (requires (fun h -> pre_spec h /\ disjoint buf1 buf2 /\ 
+			   	live h buf1 /\ live h buf2 /\ live_list h reads /\ live_list h writes /\ disjoint_list buf1 reads /\ disjoint_list buf2 reads /\
 			   disjoint_list buf1 writes /\ disjoint_list buf2 writes))
-			   (ensures (fun h0 r h1 -> pre_spec h0 /\ preserves_live h0 h1 /\
+			   
+			   (ensures (fun h0 r h1 -> preserves_live h0 h1 /\
 						 modifies (BufItem buf1:: BufItem buf2 :: writes) h0 h1 /\
 						 spec h0 r h1))) ->
 		    Stack c
