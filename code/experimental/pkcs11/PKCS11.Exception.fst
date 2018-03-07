@@ -145,4 +145,9 @@ let expectionChoose e1 e2 =
     else 
       resultRight e1  
 
-assume val castExpectionToRV: exc: result 'a -> Tot _CK_RV
+(* ToChange *)
+val castExpectionToRV: exc: result 'a -> Tot _CK_RV
+
+let castExpectionToRV exc = 
+	if resultIsOk exc then 0ul
+	else 1ul 

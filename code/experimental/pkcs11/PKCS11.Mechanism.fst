@@ -13,6 +13,8 @@ open FStar.Buffer
 
 open PKCS11.DateTime
 open PKCS11.TypeDeclaration
+open PKCS11.Exception
+
 open FStar.Option
 
 (* Getters *)
@@ -31,16 +33,20 @@ let isMechanismFound m =
 	| NotFoundMechanism -> true
 	| _ -> false	
 
-val mechanismGetType: m: mechanism -> Tot _CK_MECHANISM_TYPE
+val mechanismGetType: m: mechanism{Generation? m /\ Test? m} -> Tot _CK_MECHANISM_TYPE
 
 let mechanismGetType m = 
 	match m with 
 	| Generation identifier _ _ _ _ _ _ _   -> identifier
-	| _ -> 0ul
+	| Test identifier -> identifier
+
 
 val mechanismGetFunctionGeneration: m: mechanism{isMechanismGeneration m} -> 
 	Tot (buffer FStar.UInt8.t -> 
-		FStar.UInt32.t -> Stack unit 
+		FStar.UInt32.t ->
+		attrs: buffer attribute_t -> 
+		lenAttr: FStar.UInt32.t{length attrs = UInt32.v lenAttr} ->			
+		Stack unit 
 			(requires (fun h -> True)) 
 			(ensures (fun h0 _ h1 -> True))
 		)
@@ -97,87 +103,58 @@ For this mechanism, the ulMinKeySize and ulMaxKeySize fields of the
 CK_MECHANISM_INFO structure specify the supported range of key sizes
 in byte *)
 
-val getMemoryIndexForMechanism: m: _CK_MECHANISM_TYPE->  b: buffer 'a-> 
-	len: FStar.UInt32.t{length b == UInt32.v len} ->
-	Stack (buffer 'a) 
+
+
+assume val getMemoryMechanismProvidedAttributes: unit -> StackInline (sBuffer attribute_t)
+    (requires (fun h -> True))
+    (ensures (fun h0 _ h1 -> True))
+
+assume val getMemoryMechanismRequiredAttributes: unit -> StackInline (sBuffer _CK_ULONG)
 	(requires (fun h -> True))
 	(ensures (fun h0 _ h1 -> True))
 
-let getMemoryIndexForMechanism m b len = 
-	sub b 0ul 2ul
-
-val getAddressOfMechanismAttributes: m: mechanism -> 
-	Tot (buffer attribute_t)
-
-let getAddressOfMechanismAttributes m = 
-	match m with 
-	| Generation _ _ _ _ attrs _ _ _  -> attrs
-
-val getAddressOfMechanismRequiredAttributes: m: mechanism -> 
-	Tot (buffer _CK_ATTRIBUTE_TYPE)
-
-let getAddressOfMechanismRequiredAttributes m = 
-	match m with 
-	| Generation _ _ _ _ _ _ attrs _  -> attrs
-
-val mechanismLoadAttributes: m: mechanism -> b: buffer _CK_ULONG-> 
-	len: FStar.UInt32.t{length b == UInt32.v len} -> Stack (unit)
-	(requires (fun h -> True))
-	(ensures (fun h0 _ h1 -> True))
-
-let mechanismLoadAttributes m b len = 
-	let requestedParameters = getMemoryIndexForMechanism (mechanismGetType m) b len in 
-	let attr = CKA_CLASS 0ul requestedParameters 2ul false in 
-	let stubForAttributes = getAddressOfMechanismAttributes m in 
-	upd stubForAttributes 0ul attr
-
-
-val mechanismGiveAttributesRequired: m: mechanism -> b: buffer _CK_ULONG-> 
-	len: FStar.UInt32.t{length b == UInt32.v len} -> Stack (unit)
-	(requires (fun h -> True))
-	(ensures (fun h0 _ h1 -> True))
-
-let mechanismGiveAttributesRequired m b len = 
-	let requestedParameters = getMemoryIndexForMechanism (mechanismGetType m) b len in 
-	let attr = CKA_CLASS 0ul requestedParameters 2ul false in 
-	let stubForAttributes = getAddressOfMechanismAttributes m in 
-	upd stubForAttributes 0ul attr
-
-
-
-val mechanismAttributesProvidedList: m: mechanism -> StackInline (buffer attribute_t)
-	(requires (fun h -> True))
-	(ensures (fun h0 _ h1 -> True))
-
-let mechanismAttributesProvidedList m  = 
-	getAddressOfMechanismAttributes m 
-
-
-val mechanismLoadAttributesRequiredList: m: mechanism  -> 
-	b: buffer _CK_ULONG-> 
-	len: FStar.UInt32.t{length b == UInt32.v len} ->
-		Stack unit
+val getMemoryProvidedAttributes: mechanismIndex: _CK_MECHANISM_TYPE ->  
+	elements: FStar.UInt32.t -> 
+	Stack (result (buffer attribute_t)) 
 		(requires (fun h -> True))
 		(ensures (fun h0 _ h1 -> True))
 
-let mechanismLoadAttributesRequiredList m b len = 
-	let address = getAddressOfMechanismRequiredAttributes m in 
-	let attrs = getMemoryIndexForMechanism (mechanismGetType m) b len in (* buffer ck_ulong*)
-		assume (length attrs > UInt32.v (0ul));
-	let attr0 = attrs.(0ul) in 
-	upd address 0ul attr0
-(*)
-val mechanismRequiredAttributes: m: mechanism -> Stack (sBuffer _CK_ATTRIBUTE_TYPE)
-	(requires (fun h -> True))
-	(ensures (fun h0 _ h1 -> True))
+let getMemoryProvidedAttributes mechanismIndex elements= 
+	let memory = getMemoryMechanismProvidedAttributes () in 	
+	let lengthMemory = getSBufferLength memory in 
+	let memory = getSBufferB memory in 
+	if UInt32.v mechanismIndex = 1 then begin
+		let startIndexMemory = 0ul in 
+		let lenMechanism = elements in  
+		(*check for sub *)
+		if (true) then 
+			let memoryCut  = sub memory startIndexMemory lenMechanism in 
+			Inl memoryCut
+		else 
+			Inr(TestExc)	
+		end	
+	else
+		Inr(TestExc)
 
-let mechanismRequiredAttributes m = 
-	let id = mechanismGetType m in 
-	mechanismAttributesRequiredList id
+val getMemoryRequiredAttributes: mechanismIndex: _CK_MECHANISM_TYPE ->  
+	elements: FStar.UInt32.t -> 
+	Stack (result (buffer _CK_ULONG))
+		(requires (fun h -> True))
+		(ensures (fun h0 _ h1 -> True))
 
-val getAttributesProvidedByMechanism: m: mechanism -> Stack (buffer attribute_t)
-	(requires (fun h -> True))
-	(ensures (fun h0 _ h1 -> True))
-
-let getAttributesProvidedByMechanism m = 
-	mechanismAttributesProvidedList (mechanismGetType m)
+let getMemoryRequiredAttributes mechanismIndex elements = 
+	let memory = getMemoryMechanismRequiredAttributes () in 	
+	let lengthMemory = getSBufferLength memory in 
+	let memory = getSBufferB memory in 
+	if UInt32.v mechanismIndex = 1 then begin
+		let startIndexMemory = 0ul in 
+		let lenMechanism = elements in 
+		(*check for sub *)
+		if (true) then 
+			let memoryCut  = sub memory startIndexMemory lenMechanism in 
+			Inl memoryCut
+		else 
+			Inr(TestExc)	
+		end	
+	else
+		Inr(TestExc)

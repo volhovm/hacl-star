@@ -17,7 +17,6 @@ open PKCS11.Attribute
 open PKCS11.Mechanism
 open PKCS11.Objects
 
-open FStar.List
 
 type _CK_RV = FStar.UInt32.t
 type _CK_BBOOL = bool
@@ -60,15 +59,29 @@ type int = FStar.UInt32.t
 let is_exception = function Ex (Inr _) -> true | _ -> false 
  *)
 
-val checkAttributes: attr: buffer attribute_t -> m: mechanism -> Tot (result bool)
+val checkAttributes: attr: buffer attribute_t -> l: FStar.UInt32.t{length attr == v l} -> 
+      m: mechanism -> Stack (result bool)
+        (requires (fun h -> True))
+        (ensures (fun h0 _ h1 -> True))
 
-let checkAttributes attr m = Inl true (*)
+let checkAttributes attr l m = 
+  let check1 = attributesForAllNotReadOnly attr l in 
+  if not check1 then 
+    Inr TestExc else
+  Inl true 
+
+  (*)
    // let check1 = atrributesAllValid attr in 
     let check2 = attributesForAllNotReadOnly attr in 
     let check3 = attributesSufficient attr m in 
     (* +  two inconsistencies *) 
     if ( check2 && check3) then 
       (Inl true) else (Inr TestExc)  *)
+
+
+assume val getMemoryDefaultAttributes: unit -> StackInline (sBuffer attribute_t)
+  (requires (fun h -> True))
+  (ensures (fun h0 _ h1 -> True))    
 
 
 val _CK_C_GenerateKey: hsession: _CK_SESSION_HANDLE -> 
@@ -81,31 +94,48 @@ val _CK_C_GenerateKey: hsession: _CK_SESSION_HANDLE ->
 
 
 let _CK_C_GenerateKey hSession pMechanism pTemplate usCount phKey  = 
-    let reference = getTheReference phKey in 
-      castExpectionToRV(Inl true) (*)
-    let parsedAttributes = parseAttributes pTemplate in 
-    let parsedMechanism = parseMechanism pMechanism in 
-     (* TODO: check session *)
-    let result = resultIsOk parsedAttributes && resultIsOk parsedMechanism
-        && resultIsOk reference in
-
-    if result then begin
-      let unpackedMechanism = resultLeft parsedMechanism in 
-      let unpackedAttributes = resultLeft parsedAttributes in 
-      let unpackedReference = resultLeft reference in 
-      let attributes_correct = checkAttributes unpackedAttributes unpackedMechanism in 
-      if not (resultIsOk attributes_correct) then 
-        let exc =  Inr #bool (resultRight attributes_correct) in 
-        castExpectionToRV exc
-      else    
-        (*Check is completed *)
-        (*let keyLengthAttributeUnpacked = attrubuteSearchKeyLength unpackedAttributes in *)
-        (*(mechanismGetFunctionGeneration unpackedMechanism) unpackedReference 100ul;*)
-      castExpectionToRV(Inl true)
-    end  
-    else 
-      begin 
-        castExpectionToRV(Inr #bool (expectionChoose parsedAttributes parsedMechanism))
-      end
+(* creates a buffer for attributes *)
+    let tempP = create true 1ul in 
+    let testAttribute = CKA_STUB 999ul tempP 0ul false in 
+    let to = Buffer.create testAttribute 10ul in 
   
-  *)
+
+    let reference = getTheReference phKey in 
+
+    (* Moved to parsing *)
+    (*let memory = getMemory() in 
+    let b =  getSBufferB memory in 
+    let l = getSBufferLength memory in *)
+
+    let parsedMechanism = parseMechanism pMechanism   in 
+    let parsedAttributes = parseAttributes pTemplate to usCount in 
+
+    if not (resultIsOk parsedMechanism && resultIsOk parsedAttributes) then 
+      castExpectionToRV(Inr #bool TestExc) else
+    let unpackedMechanism = resultLeft parsedMechanism in 
+    let correctMechanism = (isMechanismGeneration unpackedMechanism) in 
+      if not correctMechanism then
+        castExpectionToRV(Inr #bool TestExc) else
+
+    let unpackedAttributes = resultLeft parsedAttributes in  
+    let checkedAttributes = checkAttributes unpackedAttributes usCount unpackedMechanism in 
+      if not (resultIsOk checkedAttributes) then 
+        castExpectionToRV (Inr #bool TestExc) else
+
+    let unpackedReference = resultLeft reference in 
+    let f = mechanismGetFunctionGeneration unpackedMechanism in 
+    f unpackedReference 100ul unpackedAttributes usCount;
+    castExpectionToRV(Inl true)
+
+assume val a: unit -> _CK_VOID_PTR
+
+let main()  = 
+  let hSession = 10ul in 
+  let vd = a() in 
+  let pMechanism = MechanismRaw 01ul vd 1ul in 
+  let testAttribute = AttributeRaw 1ul vd 1ul in 
+  let pTemplate = Buffer.create testAttribute 1ul in 
+  let usCount = 1ul in 
+  let phKey = 0ul in 
+  let r = _CK_C_GenerateKey hSession pMechanism pTemplate usCount phKey in 
+  0x1ul

@@ -14,9 +14,11 @@ open PKCS11.Mechanism
 open FStar.Option
 
 open FStar.Seq
-
+open PKCS11.Lib
 open FStar.Buffer
 
+
+#reset-options "--max_fuel 0 --z3rlimit 200"
 (* Getters*)
 
 val attributeGetTypeID: a: attribute_t -> Tot _CK_ATTRIBUTE_TYPE
@@ -42,31 +44,34 @@ let attributeGetTypeID a =
 	| CKA_UNWRAP identifier _ _ _ -> identifier	
 	| CKA_SIGN identifier _ _ _ -> identifier	
 	| CKA_VERIFY identifier _ _ _ -> identifier	
-(*)
-val attributeGetLength: a: attribute_t -> Tot (FStar.UInt64.t)
+	| CKA_STUB identifier _ _ _ -> identifier
+
+
+val attributeGetLength: a: attribute_t -> Tot _CK_ULONG
 
 let attributeGetLength a = 
 	match a with 
-	| CKA_CLASS _ length  _ _ -> length
-	| CKA_TOKEN _ length  _ _ -> length	
-	| CKA_PRIVATE  _ length  _ _ -> length	
-	| CKA_LABEL  _ length  _ _ -> length	
-	| CKA_APPLICATION _ length  _ _ -> length	
-	| CKA_VALUE _ length  _ _ -> length	
-	| CKA_OBJECT_ID _ length  _ _ -> length	
-	| CKA_CERTIFICATE_TYPE _ length  _ _ -> length	
-	| CKA_ISSUER _ length  _ _ -> length	
-	| CKA_SERIAL_NUMBER _ length  _ _ -> length	
-	| CKA_KEY_TYPE _ length  _ _ -> length	
-	| CKA_ID _ length  _ _ -> length	
-	| CKA_SENSITIVE _ length  _ _ -> length	
-	| CKA_ENCRYPT _ length  _ _ -> length	
-	| CKA_DECRYPT _ length  _ _ -> length	
-	| CKA_WRAP _ length  _ _ -> length	
-	| CKA_UNWRAP _ length  _ _ -> length	
-	| CKA_SIGN _ length  _ _ -> length	
-	| CKA_VERIFY _ length  _ _ -> length	
-*)
+	| CKA_CLASS _ _ length  _ -> length
+	| CKA_TOKEN _ _ length  _ -> length	
+	| CKA_PRIVATE _ _ length  _ -> length	
+	| CKA_LABEL  _ _ length  _ -> length	
+	| CKA_APPLICATION _ _ length  _ -> length	
+	| CKA_VALUE _ _ length  _ -> length	
+	| CKA_OBJECT_ID _ _ length  _ -> length	
+	| CKA_CERTIFICATE_TYPE _ _ length  _ -> length	
+	| CKA_ISSUER _ _ length  _ -> length	
+	| CKA_SERIAL_NUMBER _ _ length  _ -> length	
+	| CKA_KEY_TYPE _ _ length _ -> length	
+	| CKA_ID _ _ length  _ -> length	
+	| CKA_SENSITIVE _ _ length _ -> length	
+	| CKA_ENCRYPT _ _ length _ -> length	
+	| CKA_DECRYPT _ _ length _ -> length	
+	| CKA_WRAP _ _ length _ -> length	
+	| CKA_UNWRAP _ _ length _ -> length	
+	| CKA_SIGN _ _ length _ -> length	
+	| CKA_VERIFY _ _ length _ -> length	
+	| CKA_STUB _ _ length _ -> length
+
 val attributeGetReadOnly: a: attribute_t -> Tot bool
 
 let attributeGetReadOnly a = 
@@ -90,9 +95,7 @@ let attributeGetReadOnly a =
 	| CKA_UNWRAP _ _ _ readOnly -> readOnly	
 	| CKA_SIGN _ _ _ readOnly -> readOnly	
 	| CKA_VERIFY _ _  _ readOnly -> readOnly
-
-(*4.3.4.2 *)
-let attributesIsReadOnly = (function | _ -> false)
+	| CKA_STUB _ _ _ readOnly -> readOnly
 
 val attributeRawGetTypeID: a: _CK_ATTRIBUTE -> Tot _CK_ATTRIBUTE_TYPE
 
@@ -117,36 +120,22 @@ let attributeRawGetLength a =
 
 let cryptoKiAttributeDefault = []
 
-(*)
-val attributesForAll_Seq: s: seq attribute_t -> f: (attribute_t -> Tot bool) -> Pure bool
-	(requires True)
-		(ensures (fun b -> b == true <==> 
-		(forall (i: nat { i< length s}). f (index s i) == true)))
+(*4.3.4.2 *)
 
-let attributesForAll_Seq s f = 
-	for_all f s 
-*)
+val attributesIsReadOnlyParsing: a: _CK_ATTRIBUTE_TYPE -> Tot bool
 
-val _buffer_for_all: #a: Type -> b: buffer a -> l: UInt32.t{length b == v l} -> 
-	f: (a -> Tot bool) -> counter: UInt32.t {v counter <= v l} -> tempResult: bool -> 
-		Stack bool
-		(requires (fun h -> live h b))
-		(ensures (fun h0 value h1 -> live h1 b /\ value <==> (let s = as_seq h0 b in for_all f s)))
-
-let rec _buffer_for_all #a b l f counter tempResult = 
-	if UInt32.eq counter l then 
-		tempResult
+let attributesIsReadOnlyParsing a = 
+	if UInt32.v a = 1 then 
+		false
 	else 
-		_buffer_for_all #a b l f (add counter 1ul)	(tempResult && f (index b counter))
+		false	
 
-val buffer_for_all: #a: Type -> b: buffer a -> l: UInt32.t{length b == v l} -> 
-	f: (a -> Tot bool) -> 
-	Stack bool
-		(requires (fun h -> live h b))
-		(ensures (fun h0 value h1 -> live h1 b /\ value <==> (let s = as_seq h0 b in for_all f s)))
 
-let buffer_for_all #a b l f = 
-	_buffer_for_all #a b l f 0ul true
+val attributesIsReadOnlyPredicate: a: attribute_t -> Tot bool
+
+let attributesIsReadOnlyPredicate a = 
+	attributeGetReadOnly a 
+
 
 
 val attributesForAll: b: buffer attribute_t ->l: FStar.UInt32.t{length b == v l} ->  
@@ -158,6 +147,22 @@ val attributesForAll: b: buffer attribute_t ->l: FStar.UInt32.t{length b == v l}
 		(forall (i: nat { i< length s}). f (index s i) == true)))*)
 
 let attributesForAll b l f = buffer_for_all b l f
+
+
+(* Check I *)
+
+val attributesForAllNotReadOnly: b: buffer attribute_t ->l: FStar.UInt32.t{length b == v l} -> Stack bool
+			(requires (fun h -> live h b))
+			(ensures (fun h0 _ h1 -> live h1 b))
+
+let attributesForAllNotReadOnly b l  = 
+	not (attributesForAll b l attributesIsReadOnlyPredicate)
+
+(* Check I *)
+
+
+
+(*)
 
 val attributesForAllSeveralFunctions: b: buffer attribute_t ->l: FStar.UInt32.t{length b == v l} -> 
 		fs: buffer (attribute_t -> Tot bool)(*{List.length fs = 2}*) -> Stack bool
