@@ -4,45 +4,581 @@
 #define __PKCS11_Test_H
 
 
-#include "PKCS11_DateTime.h"
-#include "PKCS11_TypeDeclaration.h"
-#include "PKCS11_Mechanism.h"
-#include "PKCS11_Attribute.h"
-#include "PKCS11_Cast.h"
-#include "PKCS11_Exception.h"
-#include "PKCS11_Objects.h"
-#include "PKCS11_Parse.h"
-#include "PKCS11_Pointer.h"
+#include "FStar.h"
 
 
-typedef uint32_t _CK_RV0;
+typedef uint32_t PKCS11_TypeDeclaration__CK_ULONG;
+
+typedef uint32_t PKCS11_TypeDeclaration__CK_ATTRIBUTE_TYPE;
+
+typedef uint32_t PKCS11_TypeDeclaration__CK_MECHANISM_TYPE;
+
+typedef uint32_t PKCS11_TypeDeclaration__CK_SESSION_HANDLE;
+
+typedef uint32_t PKCS11_TypeDeclaration__CK_OBJECT_HANDLE;
+
+typedef uint32_t PKCS11_TypeDeclaration__CK_KEY_TYPE_T;
+
+typedef uint32_t PKCS11_TypeDeclaration__CK_OBJECT_CLASS;
+
+typedef uint32_t PKCS11_TypeDeclaration__CK_RV;
+
+typedef uint64_t PKCS11_TypeDeclaration_int;
+
+
+
+#define CK_PTR *
+
+typedef void        CK_PTR   PKCS11_TypeDeclaration__CK_VOID_PTR;
+
+
+extern bool *PKCS11_TypeDeclaration_ptrCastToBool(PKCS11_TypeDeclaration__CK_VOID_PTR x0);
+
+typedef enum {
+  PKCS11_TypeDeclaration_CKA_CLASS,
+  PKCS11_TypeDeclaration_CKA_TOKEN,
+  PKCS11_TypeDeclaration_CKA_PRIVATE,
+  PKCS11_TypeDeclaration_CKA_LABEL,
+  PKCS11_TypeDeclaration_CKA_APPLICATION,
+  PKCS11_TypeDeclaration_CKA_VALUE,
+  PKCS11_TypeDeclaration_CKA_OBJECT_ID,
+  PKCS11_TypeDeclaration_CKA_CERTIFICATE_TYPE,
+  PKCS11_TypeDeclaration_CKA_ISSUER,
+  PKCS11_TypeDeclaration_CKA_SERIAL_NUMBER,
+  PKCS11_TypeDeclaration_CKA_KEY_TYPE,
+  PKCS11_TypeDeclaration_CKA_ID,
+  PKCS11_TypeDeclaration_CKA_SENSITIVE,
+  PKCS11_TypeDeclaration_CKA_ENCRYPT,
+  PKCS11_TypeDeclaration_CKA_DECRYPT,
+  PKCS11_TypeDeclaration_CKA_WRAP,
+  PKCS11_TypeDeclaration_CKA_UNWRAP,
+  PKCS11_TypeDeclaration_CKA_SIGN,
+  PKCS11_TypeDeclaration_CKA_VERIFY,
+  PKCS11_TypeDeclaration_CKA_VALUE_LEN,
+  PKCS11_TypeDeclaration_CKA_STUB
+}
+PKCS11_TypeDeclaration_attribute_t_tags;
+
+typedef struct 
+{
+  PKCS11_TypeDeclaration_attribute_t_tags tag;
+  union {
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_CLASS;
+    struct 
+    {
+      uint32_t typeId;
+      bool *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_TOKEN;
+    struct 
+    {
+      uint32_t typeId;
+      bool *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_PRIVATE;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_LABEL;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_APPLICATION;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_VALUE;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_OBJECT_ID;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_CERTIFICATE_TYPE;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_ISSUER;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_SERIAL_NUMBER;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_KEY_TYPE;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_ID;
+    struct 
+    {
+      uint32_t typeId;
+      bool *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_SENSITIVE;
+    struct 
+    {
+      uint32_t typeId;
+      bool *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_ENCRYPT;
+    struct 
+    {
+      uint32_t typeId;
+      bool *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_DECRYPT;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_WRAP;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_UNWRAP;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_SIGN;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_VERIFY;
+    struct 
+    {
+      uint32_t typeId;
+      uint32_t *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_VALUE_LEN;
+    struct 
+    {
+      uint32_t typeId;
+      bool *pValue;
+      uint32_t ulValueLength;
+      bool isReadOnly;
+    }
+    case_CKA_STUB;
+  }
+  val;
+}
+PKCS11_TypeDeclaration_attribute_t;
+
+typedef bool *PKCS11_TypeDeclaration_flags_t;
+
+typedef enum {
+  PKCS11_TypeDeclaration_Generation,
+  PKCS11_TypeDeclaration_Test,
+  PKCS11_TypeDeclaration_NotFoundMechanism
+}
+PKCS11_TypeDeclaration_mechanism_tags;
+
+typedef struct 
+{
+  PKCS11_TypeDeclaration_mechanism_tags tag;
+  union {
+    struct 
+    {
+      uint32_t mechanismID;
+      void (*m)(uint8_t *x0, uint32_t x1, PKCS11_TypeDeclaration_attribute_t *x2, uint32_t x3);
+      PKCS11_TypeDeclaration__CK_VOID_PTR pParameters;
+      uint32_t ulParameterLen;
+      PKCS11_TypeDeclaration_attribute_t *attrs;
+      uint32_t attributesLen;
+      uint32_t *attributesRequired;
+      uint32_t attributesRequiredList;
+    }
+    case_Generation;
+    struct  { uint32_t mechanismID; } case_Test;
+  }
+  val;
+}
+PKCS11_TypeDeclaration_mechanism;
+
+typedef struct 
+{
+  uint32_t _type;
+  PKCS11_TypeDeclaration__CK_VOID_PTR pValue;
+  uint32_t ulValueLen;
+}
+PKCS11_TypeDeclaration__CK_ATTRIBUTE;
+
+typedef struct 
+{
+  uint32_t _type;
+  PKCS11_TypeDeclaration__CK_VOID_PTR pParameter;
+  uint32_t ulParameterLen;
+}
+PKCS11_TypeDeclaration__CK_MECHANISM;
+
+typedef enum {
+  PKCS11_Exception_CKR_GENERAL_ERROR,
+  PKCS11_Exception_CKR_HOST_MEMORY,
+  PKCS11_Exception_CKR_FUNCTION_FAILED
+}
+PKCS11_Exception_exp_ckr_general;
+
+typedef enum {
+  PKCS11_Exception_CKR_SESSION_HANDLE_INVALID,
+  PKCS11_Exception_CKR_DEVICE_REMOVED_Session,
+  PKCS11_Exception_CKR_SESSION_CLOSED
+}
+PKCS11_Exception_exp_ckr_session;
+
+typedef enum {
+  PKCS11_Exception_CKR_DEVICE_MEMORY,
+  PKCS11_Exception_CKR_DEVICE_ERROR,
+  PKCS11_Exception_CKR_TOKEN_NOT_PRESENT,
+  PKCS11_Exception_CKR_DEVICE_REMOVED_Token
+}
+PKCS11_Exception_exp_ckr_token;
+
+typedef enum { PKCS11_Exception_CKR_CANCEL } PKCS11_Exception_exp_ckr_callback;
+
+typedef enum { PKCS11_Exception_CKR_MUTEX_BAD, PKCS11_Exception_CKR_MUTEX_NOT_LOCKED }
+PKCS11_Exception_exp_ckr_mutex;
+
+typedef enum {
+  PKCS11_Exception_CKR_ACTION_PROHIBITED,
+  PKCS11_Exception_CKR_ARGUMENTS_BAD,
+  PKCS11_Exception_CKR_ATTRIBUTE_READ_ONLY,
+  PKCS11_Exception_CKR_ATTRIBUTE_SENSITIVE,
+  PKCS11_Exception_CKR_ATTRIBUTE_TYPE_INVALID,
+  PKCS11_Exception_CKR_ATTRIBUTE_VALUE_INVALID,
+  PKCS11_Exception_CKR_BUFFER_TOO_SMALL,
+  PKCS11_Exception_CKR_CANT_LOCK,
+  PKCS11_Exception_CKR_CRYPTOKI_ALREADY_INITIALIZED,
+  PKCS11_Exception_CKR_CRYPTOKI_NOT_INITIALIZED,
+  PKCS11_Exception_CKR_CURVE_NOT_SUPPORTED,
+  PKCS11_Exception_CKR_DATA_INVALID,
+  PKCS11_Exception_CKR_DATA_LEN_RANGE,
+  PKCS11_Exception_CKR_DOMAIN_PARAMS_INVALID,
+  PKCS11_Exception_CKR_ENCRYPTED_DATA_INVALID,
+  PKCS11_Exception_CKR_ENCRYPTED_DATA_LEN_RANGE,
+  PKCS11_Exception_CKR_EXCEEDED_MAX_ITERATIONS,
+  PKCS11_Exception_CKR_FIPS_SELF_TEST_FAILED,
+  PKCS11_Exception_CKR_FUNCTION_CANCELED,
+  PKCS11_Exception_CKR_FUNCTION_NOT_PARALLEL,
+  PKCS11_Exception_CKR_FUNCTION_NOT_SUPPORTED,
+  PKCS11_Exception_CKR_FUNCTION_REJECTED,
+  PKCS11_Exception_CKR_INFORMATION_SENSITIVE,
+  PKCS11_Exception_CKR_KEY_CHANGED,
+  PKCS11_Exception_CKR_KEY_FUNCTION_NOT_PERMITTED,
+  PKCS11_Exception_CKR_KEY_HANDLE_INVALID,
+  PKCS11_Exception_CKR_KEY_INDIGESTIBLE,
+  PKCS11_Exception_CKR_KEY_NEEDED,
+  PKCS11_Exception_CKR_KEY_NOT_NEEDED,
+  PKCS11_Exception_CKR_KEY_NOT_WRAPPABLE,
+  PKCS11_Exception_CKR_KEY_SIZE_RANGE,
+  PKCS11_Exception_CKR_KEY_TYPE_INCONSISTENT,
+  PKCS11_Exception_CKR_KEY_UNEXTRACTABLE,
+  PKCS11_Exception_CKR_LIBRARY_LOAD_FAILED,
+  PKCS11_Exception_CKR_MECHANISM_INVALID,
+  PKCS11_Exception_CKR_MECHANISM_PARAM_INVALID,
+  PKCS11_Exception_CKR_NEED_TO_CREATE_THREADS,
+  PKCS11_Exception_CKR_NO_EVENT,
+  PKCS11_Exception_CKR_OBJECT_HANDLE_INVALID,
+  PKCS11_Exception_CKR_OPERATION_ACTIVE,
+  PKCS11_Exception_CKR_OPERATION_NOT_INITIALIZED,
+  PKCS11_Exception_CKR_PIN_EXPIRED,
+  PKCS11_Exception_CKR_PIN_INCORRECT,
+  PKCS11_Exception_CKR_PIN_INVALID,
+  PKCS11_Exception_CKR_PIN_LEN_RANGE,
+  PKCS11_Exception_CKR_PIN_LOCKED,
+  PKCS11_Exception_CKR_PIN_TOO_WEAK,
+  PKCS11_Exception_CKR_PUBLIC_KEY_INVALID,
+  PKCS11_Exception_CKR_RANDOM_NO_RNG,
+  PKCS11_Exception_CKR_RANDOM_SEED_NOT_SUPPORTED,
+  PKCS11_Exception_CKR_SAVED_STATE_INVALID,
+  PKCS11_Exception_CKR_SESSION_COUNT,
+  PKCS11_Exception_CKR_SESSION_EXISTS,
+  PKCS11_Exception_CKR_SESSION_PARALLEL_NOT_SUPPORTED,
+  PKCS11_Exception_CKR_SESSION_READ_ONLY,
+  PKCS11_Exception_CKR_SESSION_READ_ONLY_EXISTS,
+  PKCS11_Exception_CKR_SESSION_READ_WRITE_SO_EXISTS,
+  PKCS11_Exception_CKR_SIGNATURE_LEN_RANGE,
+  PKCS11_Exception_CKR_SIGNATURE_INVALID,
+  PKCS11_Exception_CKR_SLOT_ID_INVALID,
+  PKCS11_Exception_CKR_STATE_UNSAVEABLE,
+  PKCS11_Exception_CKR_TEMPLATE_INCOMPLETE,
+  PKCS11_Exception_CKR_TEMPLATE_INCONSISTENT,
+  PKCS11_Exception_CKR_TOKEN_NOT_RECOGNIZED,
+  PKCS11_Exception_CKR_TOKEN_WRITE_PROTECTED,
+  PKCS11_Exception_CKR_UNWRAPPING_KEY_HANDLE_INVALID,
+  PKCS11_Exception_CKR_UNWRAPPING_KEY_SIZE_RANGE,
+  PKCS11_Exception_CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT,
+  PKCS11_Exception_CKR_USER_ALREADY_LOGGED_IN,
+  PKCS11_Exception_CKR_USER_ANOTHER_ALREADY_LOGGED_IN,
+  PKCS11_Exception_CKR_USER_NOT_LOGGED_IN,
+  PKCS11_Exception_CKR_USER_PIN_NOT_INITIALIZED,
+  PKCS11_Exception_CKR_USER_TOO_MANY_TYPES,
+  PKCS11_Exception_CKR_USER_TYPE_INVALID,
+  PKCS11_Exception_CKR_WRAPPED_KEY_INVALID,
+  PKCS11_Exception_CKR_WRAPPED_KEY_LEN_RANGE,
+  PKCS11_Exception_CKR_WRAPPING_KEY_HANDLE_INVALID,
+  PKCS11_Exception_CKR_WRAPPING_KEY_SIZE_RANGE,
+  PKCS11_Exception_CKR_WRAPPING_KEY_TYPE_INCONSISTENT
+}
+PKCS11_Exception_exp_ckr_other;
+
+typedef enum {
+  PKCS11_Exception_G,
+  PKCS11_Exception_S,
+  PKCS11_Exception_T,
+  PKCS11_Exception_C,
+  PKCS11_Exception_M,
+  PKCS11_Exception_O,
+  PKCS11_Exception_TestExc
+}
+PKCS11_Exception_exception_t_tags;
+
+typedef struct 
+{
+  PKCS11_Exception_exception_t_tags tag;
+  union {
+    struct  { PKCS11_Exception_exp_ckr_general exp; } case_G;
+    struct  { PKCS11_Exception_exp_ckr_session exp; } case_S;
+    struct  { PKCS11_Exception_exp_ckr_token exp; } case_T;
+    struct  { PKCS11_Exception_exp_ckr_callback exp; } case_C;
+    struct  { PKCS11_Exception_exp_ckr_mutex exp; } case_M;
+    struct  { PKCS11_Exception_exp_ckr_other exp; } case_O;
+  }
+  val;
+}
+PKCS11_Exception_exception_t;
+
+typedef struct 
+{
+  uint8_t day;
+  uint8_t month;
+  uint8_t year;
+}
+PKCS11_DateTime_date;
+
+extern PKCS11_DateTime_date PKCS11_DateTime_parseDate(void *x0);
+
+typedef struct 
+{
+  PKCS11_TypeDeclaration_attribute_t *b;
+  uint32_t l;
+}
+PKCS11_TypeDeclaration_sBuffer__PKCS11_TypeDeclaration_attribute_t;
+
+typedef struct 
+{
+  uint32_t *b;
+  uint32_t l;
+}
+PKCS11_TypeDeclaration_sBuffer__uint32_t;
+
+typedef enum { FStar_Pervasives_Inl, FStar_Pervasives_Inr }
+FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t_tags;
+
+typedef struct 
+{
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t_tags
+  tag;
+  union {
+    struct  { PKCS11_TypeDeclaration_attribute_t *v; } case_Inl;
+    struct  { PKCS11_Exception_exception_t v; } case_Inr;
+  }
+  val;
+}
+FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t;
+
+typedef struct 
+{
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t_tags
+  tag;
+  union {
+    struct  { uint32_t *v; } case_Inl;
+    struct  { PKCS11_Exception_exception_t v; } case_Inr;
+  }
+  val;
+}
+FStar_Pervasives_either__uint32_t__PKCS11_Exception_exception_t;
+
+extern uint32_t PKCS11_Cast_changeSizeOfBuffer(uint32_t x0, uint32_t x1);
+
+typedef struct 
+{
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t_tags
+  tag;
+  union {
+    struct  { uint8_t *v; } case_Inl;
+    struct  { PKCS11_Exception_exception_t v; } case_Inr;
+  }
+  val;
+}
+FStar_Pervasives_either__uint8_t__PKCS11_Exception_exception_t;
+
+extern FStar_Pervasives_either__uint8_t__PKCS11_Exception_exception_t
+PKCS11_Objects_getTheReference(uint32_t x0);
+
+typedef struct 
+{
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t_tags
+  tag;
+  union {
+    struct  { PKCS11_TypeDeclaration_attribute_t v; } case_Inl;
+    struct  { PKCS11_Exception_exception_t v; } case_Inr;
+  }
+  val;
+}
+FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t;
+
+typedef struct 
+{
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t_tags
+  tag;
+  union { struct  { PKCS11_Exception_exception_t v; } case_Inr; } val;
+}
+FStar_Pervasives_either_____PKCS11_Exception_exception_t;
+
+typedef struct 
+{
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t_tags
+  tag;
+  union {
+    struct  { PKCS11_TypeDeclaration_mechanism v; } case_Inl;
+    struct  { PKCS11_Exception_exception_t v; } case_Inr;
+  }
+  val;
+}
+FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t;
+
+typedef void *PKCS11_Pointer__CK_VOID_PTR;
+
+extern bool *PKCS11_Pointer_castToBool();
+
+typedef uint32_t _CK_RV;
 
 typedef bool _CK_BBOOL;
 
 typedef uint32_t *_CK_OBJECT_CLASS;
 
-typedef uint32_t int1;
+typedef uint32_t int0;
 
 typedef struct 
 {
-  FStar_Pervasives_either__uint8_t__PKCS11_Exception_exception_t_tags tag;
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t_tags
+  tag;
   union {
     struct  { bool v; } case_Inl;
-    struct  { exception_t v; } case_Inr;
+    struct  { PKCS11_Exception_exception_t v; } case_Inr;
   }
-  ;
+  val;
 }
 FStar_Pervasives_either__bool_PKCS11_Exception_exception_t;
 
 FStar_Pervasives_either__bool_PKCS11_Exception_exception_t
-checkAttributes(attribute_t *attr, mechanism m);
+checkAttributes(
+  PKCS11_TypeDeclaration_attribute_t *attr,
+  uint32_t l,
+  PKCS11_TypeDeclaration_mechanism m
+);
+
+extern PKCS11_TypeDeclaration_sBuffer__PKCS11_TypeDeclaration_attribute_t
+getMemoryDefaultAttributes();
+
+bool
+PKCS11_Exception_resultIsOk__bool(
+  FStar_Pervasives_either__bool_PKCS11_Exception_exception_t exc
+);
 
 uint32_t
-_CK_C_GenerateKey(
-  uint32_t hSession,
-  _CK_MECHANISM pMechanism,
-  _CK_ATTRIBUTE *pTemplate,
-  uint32_t usCount,
-  uint32_t phKey
+PKCS11_Exception_castExpectionToRV__bool(
+  FStar_Pervasives_either__bool_PKCS11_Exception_exception_t exc
 );
+
+uint8_t
+*PKCS11_Exception_resultLeft__uint8_t_(
+  FStar_Pervasives_either__uint8_t__PKCS11_Exception_exception_t exc
+);
+
+PKCS11_TypeDeclaration_mechanism
+PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration_mechanism(
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t exc
+);
+
+bool
+PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration_mechanism(
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t exc
+);
+
+extern PKCS11_TypeDeclaration__CK_VOID_PTR a();
+
+uint32_t main();
 #endif

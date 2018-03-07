@@ -2,34 +2,1172 @@
 
 #include "PKCS11_Test.h"
 
-FStar_Pervasives_either__bool_PKCS11_Exception_exception_t
-checkAttributes(attribute_t *attr, mechanism m)
+FStar_Pervasives_either__uint8_t__PKCS11_Exception_exception_t
+PKCS11_Objects_getTheReference(uint32_t x0)
+{
+    
+    uint8_t *a = (uint8_t *)malloc((sizeof(uint8_t)) * 255);
+      return
+        (
+          (FStar_Pervasives_either__uint8_t__PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inl,
+            .val = { .case_Inl = { .v = a } }
+          }
+        );
+}
+
+
+
+PKCS11_TypeDeclaration_sBuffer__uint32_t getMemory()
+{
+  uint32_t * b = (uint32_t *) malloc ((sizeof (uint32_t)) * 1000);
+  uint32_t l = 1000;
+
+  PKCS11_TypeDeclaration_sBuffer__uint32_t a = {b, l};
+  return a;
+}
+
+
+
+PKCS11_TypeDeclaration_sBuffer__PKCS11_TypeDeclaration_attribute_t
+PKCS11_Mechanism_getMemoryMechanismProvidedAttributes()
+{
+  PKCS11_TypeDeclaration_attribute_t * b = (PKCS11_TypeDeclaration_attribute_t *) 
+  malloc ((sizeof (PKCS11_TypeDeclaration_attribute_t)) * 5);
+  uint32_t l = 5;
+
+  PKCS11_TypeDeclaration_sBuffer__PKCS11_TypeDeclaration_attribute_t a = {b, l};
+  return a;
+}
+
+
+PKCS11_TypeDeclaration_sBuffer__uint32_t
+PKCS11_Mechanism_getMemoryMechanismRequiredAttributes()
+{
+  uint32_t * b = (uint32_t *) malloc ((sizeof (uint32_t)) * 10); 
+    uint32_t l = 10;
+
+  PKCS11_TypeDeclaration_sBuffer__uint32_t a = {b, l};
+  return a;
+
+}
+
+
+PKCS11_TypeDeclaration__CK_VOID_PTR a()
+{
+    void* b = (void *) malloc ((sizeof (void)) * 1000);
+    return b;
+
+}
+
+
+uint32_t *PKCS11_Cast_castToObjectClass(PKCS11_TypeDeclaration__CK_VOID_PTR x0) 
+{
+  return (uint32_t*) x0;
+}
+
+uint32_t *PKCS11_Cast_castToUlong(PKCS11_TypeDeclaration__CK_VOID_PTR x0)
+{
+  return (uint32_t*) x0;
+}
+
+uint32_t *PKCS11_Cast_castToKeyType(PKCS11_TypeDeclaration__CK_VOID_PTR x0)
+{
+  return (uint32_t*) x0;
+}
+
+
+uint32_t * PKCS11_Cast_castToBool(PKCS11_TypeDeclaration__CK_VOID_PTR x0)
+{
+  return (bool *) x0;
+}
+
+
+
+static bool PKCS11_Mechanism_isMechanismGeneration(PKCS11_TypeDeclaration_mechanism m)
+{
+  if (m.tag == PKCS11_TypeDeclaration_Generation)
+    return true;
+  else
+    return false;
+}
+
+static void
+(*PKCS11_Mechanism_mechanismGetFunctionGeneration(PKCS11_TypeDeclaration_mechanism m))(
+  uint8_t *x0,
+  uint32_t x1,
+  PKCS11_TypeDeclaration_attribute_t *x2,
+  uint32_t x3
+)
+{
+  if (m.tag == PKCS11_TypeDeclaration_Generation)
+  {
+    void
+    (*f1)(uint8_t *x0, uint32_t x1, PKCS11_TypeDeclaration_attribute_t *x2, uint32_t x3) =
+      m.val.case_Generation.m;
+    return f1;
+  }
+  else
+  {
+    printf("KreMLin abort at %s:%d\n%s\n", __FILE__, __LINE__, "no else in F*");
+    exit(255U);
+  }
+}
+
+static uint32_t PKCS11_Mechanism_mechanismRawGetTypeID(PKCS11_TypeDeclaration__CK_MECHANISM m)
+{
+  uint32_t t = m._type;
+  return t;
+}
+
+static PKCS11_TypeDeclaration__CK_VOID_PTR
+PKCS11_Mechanism_getMechanismRawParameters(PKCS11_TypeDeclaration__CK_MECHANISM m)
+{
+  PKCS11_TypeDeclaration__CK_VOID_PTR par = m.pParameter;
+  return par;
+}
+
+static uint32_t
+PKCS11_Mechanism_getMechanismRawParametersLen(PKCS11_TypeDeclaration__CK_MECHANISM m)
+{
+  uint32_t len = m.ulParameterLen;
+  return len;
+}
+
+static PKCS11_TypeDeclaration_attribute_t
+*PKCS11_TypeDeclaration_getSBufferB__PKCS11_TypeDeclaration_attribute_t(
+  PKCS11_TypeDeclaration_sBuffer__PKCS11_TypeDeclaration_attribute_t a
+)
+{
+  PKCS11_TypeDeclaration_attribute_t *b = a.b;
+  return b;
+}
+
+static FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t
+PKCS11_Mechanism_getMemoryProvidedAttributes(uint32_t mechanismIndex, uint32_t elements)
+{
+  PKCS11_TypeDeclaration_sBuffer__PKCS11_TypeDeclaration_attribute_t
+  memory = PKCS11_Mechanism_getMemoryMechanismProvidedAttributes();
+  if (FStar_UInt32_v(mechanismIndex) == (krml_checked_int_t)1)
+    return
+      (
+        (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inl,
+          .val = {
+            .case_Inl = {
+              .v = PKCS11_TypeDeclaration_getSBufferB__PKCS11_TypeDeclaration_attribute_t(memory)
+            }
+          }
+        }
+      );
+  else
+    return
+      (
+        (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inr,
+          .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+        }
+      );
+}
+
+static uint32_t
+*PKCS11_TypeDeclaration_getSBufferB__PKCS11_TypeDeclaration__CK_ULONG(
+  PKCS11_TypeDeclaration_sBuffer__uint32_t a
+)
+{
+  uint32_t *b = a.b;
+  return b;
+}
+
+static FStar_Pervasives_either__uint32_t__PKCS11_Exception_exception_t
+PKCS11_Mechanism_getMemoryRequiredAttributes(uint32_t mechanismIndex, uint32_t elements)
+{
+  PKCS11_TypeDeclaration_sBuffer__uint32_t
+  memory = PKCS11_Mechanism_getMemoryMechanismRequiredAttributes();
+  if (FStar_UInt32_v(mechanismIndex) == (krml_checked_int_t)1)
+    return
+      (
+        (FStar_Pervasives_either__uint32_t__PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inl,
+          .val = {
+            .case_Inl = {
+              .v = PKCS11_TypeDeclaration_getSBufferB__PKCS11_TypeDeclaration__CK_ULONG(memory)
+            }
+          }
+        }
+      );
+  else
+    return
+      (
+        (FStar_Pervasives_either__uint32_t__PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inr,
+          .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+        }
+      );
+}
+
+static bool PKCS11_Attribute_attributeGetReadOnly(PKCS11_TypeDeclaration_attribute_t a)
+{
+  if (a.tag == PKCS11_TypeDeclaration_CKA_CLASS)
+  {
+    bool readOnly = a.val.case_CKA_CLASS.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_TOKEN)
+  {
+    bool readOnly = a.val.case_CKA_TOKEN.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_PRIVATE)
+  {
+    bool readOnly = a.val.case_CKA_PRIVATE.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_LABEL)
+  {
+    bool readOnly = a.val.case_CKA_LABEL.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_APPLICATION)
+  {
+    bool readOnly = a.val.case_CKA_APPLICATION.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_VALUE)
+  {
+    bool readOnly = a.val.case_CKA_VALUE.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_OBJECT_ID)
+  {
+    bool readOnly = a.val.case_CKA_OBJECT_ID.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_CERTIFICATE_TYPE)
+  {
+    bool readOnly = a.val.case_CKA_CERTIFICATE_TYPE.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_ISSUER)
+  {
+    bool readOnly = a.val.case_CKA_ISSUER.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_SERIAL_NUMBER)
+  {
+    bool readOnly = a.val.case_CKA_SERIAL_NUMBER.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_KEY_TYPE)
+  {
+    bool readOnly = a.val.case_CKA_KEY_TYPE.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_ID)
+  {
+    bool readOnly = a.val.case_CKA_ID.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_SENSITIVE)
+  {
+    bool readOnly = a.val.case_CKA_SENSITIVE.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_ENCRYPT)
+  {
+    bool readOnly = a.val.case_CKA_ENCRYPT.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_DECRYPT)
+  {
+    bool readOnly = a.val.case_CKA_DECRYPT.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_WRAP)
+  {
+    bool readOnly = a.val.case_CKA_WRAP.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_UNWRAP)
+  {
+    bool readOnly = a.val.case_CKA_UNWRAP.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_SIGN)
+  {
+    bool readOnly = a.val.case_CKA_SIGN.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_VERIFY)
+  {
+    bool readOnly = a.val.case_CKA_VERIFY.isReadOnly;
+    return readOnly;
+  }
+  else if (a.tag == PKCS11_TypeDeclaration_CKA_STUB)
+  {
+    bool readOnly = a.val.case_CKA_STUB.isReadOnly;
+    return readOnly;
+  }
+  else
+  {
+    printf("KreMLin abort at %s:%d\n%s\n", __FILE__, __LINE__, "no else in F*");
+    exit(255U);
+  }
+}
+
+static uint32_t PKCS11_Attribute_attributeRawGetTypeID(PKCS11_TypeDeclaration__CK_ATTRIBUTE a)
+{
+  uint32_t typ = a._type;
+  return typ;
+}
+
+static PKCS11_TypeDeclaration__CK_VOID_PTR
+PKCS11_Attribute_attributeRawGetData(PKCS11_TypeDeclaration__CK_ATTRIBUTE a)
+{
+  PKCS11_TypeDeclaration__CK_VOID_PTR pValue = a.pValue;
+  return pValue;
+}
+
+static uint32_t PKCS11_Attribute_attributeRawGetLength(PKCS11_TypeDeclaration__CK_ATTRIBUTE a)
+{
+  uint32_t length1 = a.ulValueLen;
+  return length1;
+}
+
+static bool PKCS11_Attribute_attributesIsReadOnlyParsing(uint32_t a)
+{
+  if (FStar_UInt32_v(a) == (krml_checked_int_t)1)
+    return false;
+  else
+    return false;
+}
+
+static bool
+PKCS11_Attribute_attributesIsReadOnlyPredicate(PKCS11_TypeDeclaration_attribute_t a)
+{
+  return PKCS11_Attribute_attributeGetReadOnly(a);
+}
+
+static bool
+PKCS11_Lib__buffer_for_all__PKCS11_TypeDeclaration_attribute_t(
+  PKCS11_TypeDeclaration_attribute_t *b,
+  uint32_t l,
+  bool (*f1)(PKCS11_TypeDeclaration_attribute_t x0),
+  uint32_t counter,
+  bool tempResult
+)
+{
+  if (FStar_UInt32_v(counter) == FStar_UInt32_v(l))
+    return tempResult;
+  else
+  {
+    PKCS11_TypeDeclaration_attribute_t element = b[counter];
+    uint32_t counter1 = counter + (uint32_t)1U;
+    bool funcResult = f1(element);
+    bool tempResult1 = tempResult && funcResult;
+    return
+      PKCS11_Lib__buffer_for_all__PKCS11_TypeDeclaration_attribute_t(b,
+        l,
+        f1,
+        counter1,
+        tempResult1);
+  }
+}
+
+static bool
+PKCS11_Lib_buffer_for_all__PKCS11_TypeDeclaration_attribute_t(
+  PKCS11_TypeDeclaration_attribute_t *b,
+  uint32_t l,
+  bool (*f1)(PKCS11_TypeDeclaration_attribute_t x0)
+)
 {
   return
-    (
-      (FStar_Pervasives_either__bool_PKCS11_Exception_exception_t){
-        .tag = FStar_Pervasives_Inl,
-        { .case_Inl = { .v = true } }
+    PKCS11_Lib__buffer_for_all__PKCS11_TypeDeclaration_attribute_t(b,
+      l,
+      f1,
+      (uint32_t)0U,
+      true);
+}
+
+static bool
+PKCS11_Attribute_attributesForAll(
+  PKCS11_TypeDeclaration_attribute_t *b,
+  uint32_t l,
+  bool (*f1)(PKCS11_TypeDeclaration_attribute_t x0)
+)
+{
+  return PKCS11_Lib_buffer_for_all__PKCS11_TypeDeclaration_attribute_t(b, l, f1);
+}
+
+static bool
+PKCS11_Attribute_attributesForAllNotReadOnly(PKCS11_TypeDeclaration_attribute_t *b, uint32_t l)
+{
+  bool
+  uu____1106 =
+    PKCS11_Attribute_attributesForAll(b,
+      l,
+      PKCS11_Attribute_attributesIsReadOnlyPredicate);
+  return !uu____1106;
+}
+
+static FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t
+PKCS11_Parse_parseAttribute(PKCS11_TypeDeclaration__CK_ATTRIBUTE attr_r)
+{
+  uint32_t typ = PKCS11_Attribute_attributeRawGetTypeID(attr_r);
+  PKCS11_TypeDeclaration__CK_VOID_PTR data = PKCS11_Attribute_attributeRawGetData(attr_r);
+  uint32_t length1 = PKCS11_Attribute_attributeRawGetLength(attr_r);
+  bool isReadOnly = PKCS11_Attribute_attributesIsReadOnlyParsing(typ);
+  if (FStar_UInt32_v(typ) == (krml_checked_int_t)0)
+    if (length1 == (uint32_t)1U)
+    {
+      uint32_t *pointer = PKCS11_Cast_castToObjectClass(data);
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inl,
+            .val = {
+              .case_Inl = {
+                .v = {
+                  .tag = PKCS11_TypeDeclaration_CKA_CLASS,
+                  .val = {
+                    .case_CKA_CLASS = {
+                      .typeId = typ,
+                      .pValue = pointer,
+                      .ulValueLength = length1,
+                      .isReadOnly = isReadOnly
+                    }
+                  }
+                }
+              }
+            }
+          }
+        );
+    }
+    else
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inr,
+            .val = {
+              .case_Inr = {
+                .v = {
+                  .tag = PKCS11_Exception_O,
+                  .val = { .case_O = { .exp = PKCS11_Exception_CKR_ATTRIBUTE_TYPE_INVALID } }
+                }
+              }
+            }
+          }
+        );
+  else if (FStar_UInt32_v(typ) == (krml_checked_int_t)1)
+    if (length1 == (uint32_t)1U)
+    {
+      bool *pointer = PKCS11_Cast_castToBool(data);
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inl,
+            .val = {
+              .case_Inl = {
+                .v = {
+                  .tag = PKCS11_TypeDeclaration_CKA_TOKEN,
+                  .val = {
+                    .case_CKA_TOKEN = {
+                      .typeId = typ,
+                      .pValue = pointer,
+                      .ulValueLength = length1,
+                      .isReadOnly = isReadOnly
+                    }
+                  }
+                }
+              }
+            }
+          }
+        );
+    }
+    else
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inr,
+            .val = {
+              .case_Inr = {
+                .v = {
+                  .tag = PKCS11_Exception_O,
+                  .val = { .case_O = { .exp = PKCS11_Exception_CKR_ATTRIBUTE_TYPE_INVALID } }
+                }
+              }
+            }
+          }
+        );
+  else if (FStar_UInt32_v(typ) == (krml_checked_int_t)2)
+    if (length1 == (uint32_t)1U)
+    {
+      bool *pointer = PKCS11_Cast_castToBool(data);
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inl,
+            .val = {
+              .case_Inl = {
+                .v = {
+                  .tag = PKCS11_TypeDeclaration_CKA_TOKEN,
+                  .val = {
+                    .case_CKA_TOKEN = {
+                      .typeId = typ,
+                      .pValue = pointer,
+                      .ulValueLength = length1,
+                      .isReadOnly = isReadOnly
+                    }
+                  }
+                }
+              }
+            }
+          }
+        );
+    }
+    else
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inr,
+            .val = {
+              .case_Inr = {
+                .v = {
+                  .tag = PKCS11_Exception_O,
+                  .val = { .case_O = { .exp = PKCS11_Exception_CKR_ATTRIBUTE_TYPE_INVALID } }
+                }
+              }
+            }
+          }
+        );
+  else if (FStar_UInt32_v(typ) == (krml_checked_int_t)3)
+  {
+    uint32_t *pointer = PKCS11_Cast_castToUlong(data);
+    return
+      (
+        (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inl,
+          .val = {
+            .case_Inl = {
+              .v = {
+                .tag = PKCS11_TypeDeclaration_CKA_LABEL,
+                .val = {
+                  .case_CKA_LABEL = {
+                    .typeId = typ,
+                    .pValue = pointer,
+                    .ulValueLength = length1,
+                    .isReadOnly = isReadOnly
+                  }
+                }
+              }
+            }
+          }
+        }
+      );
+  }
+  else if (FStar_UInt32_v(typ) == (krml_checked_int_t)100)
+    if (length1 == (uint32_t)1U)
+    {
+      uint32_t *pointer = PKCS11_Cast_castToKeyType(data);
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inl,
+            .val = {
+              .case_Inl = {
+                .v = {
+                  .tag = PKCS11_TypeDeclaration_CKA_KEY_TYPE,
+                  .val = {
+                    .case_CKA_KEY_TYPE = {
+                      .typeId = typ,
+                      .pValue = pointer,
+                      .ulValueLength = length1,
+                      .isReadOnly = isReadOnly
+                    }
+                  }
+                }
+              }
+            }
+          }
+        );
+    }
+    else
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inr,
+            .val = {
+              .case_Inr = {
+                .v = {
+                  .tag = PKCS11_Exception_O,
+                  .val = { .case_O = { .exp = PKCS11_Exception_CKR_ATTRIBUTE_TYPE_INVALID } }
+                }
+              }
+            }
+          }
+        );
+  else if (FStar_UInt32_v(typ) == (krml_checked_int_t)103)
+    if (length1 == (uint32_t)1U)
+    {
+      bool *pointer = PKCS11_Cast_castToBool(data);
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inl,
+            .val = {
+              .case_Inl = {
+                .v = {
+                  .tag = PKCS11_TypeDeclaration_CKA_SENSITIVE,
+                  .val = {
+                    .case_CKA_SENSITIVE = {
+                      .typeId = typ,
+                      .pValue = pointer,
+                      .ulValueLength = length1,
+                      .isReadOnly = isReadOnly
+                    }
+                  }
+                }
+              }
+            }
+          }
+        );
+    }
+    else
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inr,
+            .val = {
+              .case_Inr = {
+                .v = {
+                  .tag = PKCS11_Exception_O,
+                  .val = { .case_O = { .exp = PKCS11_Exception_CKR_ATTRIBUTE_TYPE_INVALID } }
+                }
+              }
+            }
+          }
+        );
+  else if (FStar_UInt32_v(typ) == (krml_checked_int_t)161)
+    if (length1 == (uint32_t)1U)
+    {
+      uint32_t *pointer = PKCS11_Cast_castToUlong(data);
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inl,
+            .val = {
+              .case_Inl = {
+                .v = {
+                  .tag = PKCS11_TypeDeclaration_CKA_VALUE_LEN,
+                  .val = {
+                    .case_CKA_VALUE_LEN = {
+                      .typeId = typ,
+                      .pValue = pointer,
+                      .ulValueLength = length1,
+                      .isReadOnly = isReadOnly
+                    }
+                  }
+                }
+              }
+            }
+          }
+        );
+    }
+    else
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inr,
+            .val = {
+              .case_Inr = {
+                .v = {
+                  .tag = PKCS11_Exception_O,
+                  .val = { .case_O = { .exp = PKCS11_Exception_CKR_ATTRIBUTE_TYPE_INVALID } }
+                }
+              }
+            }
+          }
+        );
+  else
+    return
+      (
+        (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inr,
+          .val = {
+            .case_Inr = {
+              .v = {
+                .tag = PKCS11_Exception_O,
+                .val = { .case_O = { .exp = PKCS11_Exception_CKR_ATTRIBUTE_TYPE_INVALID } }
+              }
+            }
+          }
+        }
+      );
+}
+
+static bool
+PKCS11_Exception_resultIsOk____(FStar_Pervasives_either_____PKCS11_Exception_exception_t exc)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+    return true;
+  else
+    return false;
+}
+
+static PKCS11_TypeDeclaration_attribute_t
+PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration_attribute_t(
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+  {
+    PKCS11_TypeDeclaration_attribute_t a = exc.val.case_Inl.v;
+    return a;
+  }
+  else
+  {
+    printf("KreMLin abort at %s:%d\n%s\n", __FILE__, __LINE__, "no else in F*");
+    exit(255U);
+  }
+}
+
+static bool
+PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration_attribute_t(
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+    return true;
+  else
+    return false;
+}
+
+static FStar_Pervasives_either_____PKCS11_Exception_exception_t
+PKCS11_Parse__buffer_map__PKCS11_TypeDeclaration__CK_ATTRIBUTE_PKCS11_TypeDeclaration_attribute_t(
+  PKCS11_TypeDeclaration__CK_ATTRIBUTE *b1,
+  PKCS11_TypeDeclaration_attribute_t *b2,
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t
+  (*f1)(PKCS11_TypeDeclaration__CK_ATTRIBUTE x0),
+  uint32_t len,
+  uint32_t counter
+)
+{
+  if (counter == len)
+    return
+      ((FStar_Pervasives_either_____PKCS11_Exception_exception_t){ .tag = FStar_Pervasives_Inl });
+  else
+  {
+    PKCS11_TypeDeclaration__CK_ATTRIBUTE uu____221 = b1[counter];
+    FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t
+    element = f1(uu____221);
+    if (PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration_attribute_t(element))
+    {
+      PKCS11_TypeDeclaration__CK_ATTRIBUTE toChange = b1[counter];
+      FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t
+      changed = f1(toChange);
+      if (!PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration_attribute_t(changed))
+        return
+          (
+            (FStar_Pervasives_either_____PKCS11_Exception_exception_t){
+              .tag = FStar_Pervasives_Inr,
+              .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+            }
+          );
+      else
+      {
+        PKCS11_TypeDeclaration_attribute_t
+        unpackedChanged = PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration_attribute_t(changed);
+        b2[counter] = unpackedChanged;
+        uint32_t counter1 = counter + (uint32_t)1U;
+        return
+          PKCS11_Parse__buffer_map__PKCS11_TypeDeclaration__CK_ATTRIBUTE_PKCS11_TypeDeclaration_attribute_t(b1,
+            b2,
+            f1,
+            len,
+            counter1);
       }
-    );
+    }
+    else
+      return
+        (
+          (FStar_Pervasives_either_____PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inr,
+            .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+          }
+        );
+  }
+}
+
+static FStar_Pervasives_either_____PKCS11_Exception_exception_t
+PKCS11_Parse_buffer_map__PKCS11_TypeDeclaration__CK_ATTRIBUTE_PKCS11_TypeDeclaration_attribute_t(
+  PKCS11_TypeDeclaration__CK_ATTRIBUTE *b1,
+  PKCS11_TypeDeclaration_attribute_t *b2,
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t_PKCS11_Exception_exception_t
+  (*f1)(PKCS11_TypeDeclaration__CK_ATTRIBUTE x0),
+  uint32_t len
+)
+{
+  return
+    PKCS11_Parse__buffer_map__PKCS11_TypeDeclaration__CK_ATTRIBUTE_PKCS11_TypeDeclaration_attribute_t(b1,
+      b2,
+      f1,
+      len,
+      (uint32_t)0U);
+}
+
+static FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t
+PKCS11_Parse_parseAttributes(
+  PKCS11_TypeDeclaration__CK_ATTRIBUTE *attr_r,
+  PKCS11_TypeDeclaration_attribute_t *to_378,
+  uint32_t len
+)
+{
+  FStar_Pervasives_either_____PKCS11_Exception_exception_t
+  result =
+    PKCS11_Parse_buffer_map__PKCS11_TypeDeclaration__CK_ATTRIBUTE_PKCS11_TypeDeclaration_attribute_t(attr_r,
+      to_378,
+      PKCS11_Parse_parseAttribute,
+      len);
+  if (PKCS11_Exception_resultIsOk____(result))
+    return
+      (
+        (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inl,
+          .val = { .case_Inl = { .v = to_378 } }
+        }
+      );
+  else
+    return
+      (
+        (FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inr,
+          .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+        }
+      );
+}
+
+static void
+PKCS11_Parse_rng_algorithm(
+  uint8_t *input,
+  uint32_t length1,
+  PKCS11_TypeDeclaration_attribute_t *attrs,
+  uint32_t lenAttr
+)
+{
+  uint8_t zero1 = (uint8_t)0x1U;
+  input[0U] = zero1;
+}
+
+static PKCS11_TypeDeclaration_attribute_t
+*PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration_attribute_t_(
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+  {
+    PKCS11_TypeDeclaration_attribute_t *a = exc.val.case_Inl.v;
+    return a;
+  }
+  else
+  {
+    printf("KreMLin abort at %s:%d\n%s\n", __FILE__, __LINE__, "no else in F*");
+    exit(255U);
+  }
+}
+
+static uint32_t
+*PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration__CK_ULONG_(
+  FStar_Pervasives_either__uint32_t__PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+  {
+    uint32_t *a = exc.val.case_Inl.v;
+    return a;
+  }
+  else
+  {
+    printf("KreMLin abort at %s:%d\n%s\n", __FILE__, __LINE__, "no else in F*");
+    exit(255U);
+  }
+}
+
+static bool
+PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration_attribute_t_(
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+    return true;
+  else
+    return false;
+}
+
+static bool
+PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration__CK_ULONG_(
+  FStar_Pervasives_either__uint32_t__PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+    return true;
+  else
+    return false;
+}
+
+static FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t
+PKCS11_Parse_parseMechanism(PKCS11_TypeDeclaration__CK_MECHANISM m)
+{
+  uint32_t id = PKCS11_Mechanism_mechanismRawGetTypeID(m);
+  PKCS11_TypeDeclaration__CK_VOID_PTR params = PKCS11_Mechanism_getMechanismRawParameters(m);
+  uint32_t paramLen = PKCS11_Mechanism_getMechanismRawParametersLen(m);
+  if (FStar_UInt32_v(id) == (krml_checked_int_t)1)
+  {
+    uint32_t lengthProvidedAttr = (uint32_t)2U;
+    uint32_t lengthRequiredAttr = (uint32_t)0U;
+    FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t
+    providedAttrs = PKCS11_Mechanism_getMemoryProvidedAttributes(id, lengthProvidedAttr);
+    FStar_Pervasives_either__uint32_t__PKCS11_Exception_exception_t
+    requiredAttrs = PKCS11_Mechanism_getMemoryRequiredAttributes(id, lengthRequiredAttr);
+    if
+    (PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration_attribute_t_(providedAttrs)
+    && PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration__CK_ULONG_(requiredAttrs))
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inl,
+            .val = {
+              .case_Inl = {
+                .v = {
+                  .tag = PKCS11_TypeDeclaration_Generation,
+                  .val = {
+                    .case_Generation = {
+                      .mechanismID = id, .m = PKCS11_Parse_rng_algorithm, .pParameters = params,
+                      .ulParameterLen = paramLen,
+                      .attrs = PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration_attribute_t_(providedAttrs),
+                      .attributesLen = lengthProvidedAttr,
+                      .attributesRequired = PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration__CK_ULONG_(requiredAttrs),
+                      .attributesRequiredList = lengthRequiredAttr
+                    }
+                  }
+                }
+              }
+            }
+          }
+        );
+    else
+      return
+        (
+          (FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inr,
+            .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+          }
+        );
+  }
+  else
+    return
+      (
+        (FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inr,
+          .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+        }
+      );
+}
+
+FStar_Pervasives_either__bool_PKCS11_Exception_exception_t
+checkAttributes(
+  PKCS11_TypeDeclaration_attribute_t *attr,
+  uint32_t l,
+  PKCS11_TypeDeclaration_mechanism m
+)
+{
+  bool check1 = PKCS11_Attribute_attributesForAllNotReadOnly(attr, l);
+  if (!check1)
+    return
+      (
+        (FStar_Pervasives_either__bool_PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inr,
+          .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+        }
+      );
+  else
+    return
+      (
+        (FStar_Pervasives_either__bool_PKCS11_Exception_exception_t){
+          .tag = FStar_Pervasives_Inl,
+          .val = { .case_Inl = { .v = true } }
+        }
+      );
+}
+
+bool
+PKCS11_Exception_resultIsOk__bool(
+  FStar_Pervasives_either__bool_PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+    return true;
+  else
+    return false;
 }
 
 uint32_t
-_CK_C_GenerateKey(
-  uint32_t hSession,
-  _CK_MECHANISM pMechanism,
-  _CK_ATTRIBUTE *pTemplate,
-  uint32_t usCount,
-  uint32_t phKey
+PKCS11_Exception_castExpectionToRV__bool(
+  FStar_Pervasives_either__bool_PKCS11_Exception_exception_t exc
 )
 {
-  (void)PKCS11_Objects_getTheReference(phKey);
-  return
-    castExpectionToRV((
+  if (PKCS11_Exception_resultIsOk__bool(exc))
+    return (uint32_t)0U;
+  else
+    return (uint32_t)1U;
+}
+
+uint8_t
+*PKCS11_Exception_resultLeft__uint8_t_(
+  FStar_Pervasives_either__uint8_t__PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+  {
+    uint8_t *a = exc.val.case_Inl.v;
+    return a;
+  }
+  else
+  {
+    printf("KreMLin abort at %s:%d\n%s\n", __FILE__, __LINE__, "no else in F*");
+    exit(255U);
+  }
+}
+
+PKCS11_TypeDeclaration_mechanism
+PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration_mechanism(
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+  {
+    PKCS11_TypeDeclaration_mechanism a = exc.val.case_Inl.v;
+    return a;
+  }
+  else
+  {
+    printf("KreMLin abort at %s:%d\n%s\n", __FILE__, __LINE__, "no else in F*");
+    exit(255U);
+  }
+}
+
+bool
+PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration_mechanism(
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t exc
+)
+{
+  if (exc.tag == FStar_Pervasives_Inl)
+    return true;
+  else
+    return false;
+}
+
+uint32_t main()
+{
+  PKCS11_TypeDeclaration__CK_VOID_PTR vd = a();
+  PKCS11_TypeDeclaration__CK_MECHANISM
+  pMechanism = { ._type = (uint32_t)01U, .pParameter = vd, .ulParameterLen = (uint32_t)1U };
+  PKCS11_TypeDeclaration__CK_ATTRIBUTE
+  testAttribute = { ._type = (uint32_t)1U, .pValue = vd, .ulValueLen = (uint32_t)1U };
+  KRML_CHECK_SIZE(testAttribute, (uint32_t)1U);
+  PKCS11_TypeDeclaration__CK_ATTRIBUTE pTemplate[1U];
+  pTemplate[0U] = testAttribute;
+  uint32_t usCount = (uint32_t)1U;
+  uint32_t phKey = (uint32_t)0U;
+  KRML_CHECK_SIZE(true, (uint32_t)1U);
+  bool tempP[1U];
+  tempP[0U] = true;
+  PKCS11_TypeDeclaration_attribute_t
+  testAttribute0 =
+    {
+      .tag = PKCS11_TypeDeclaration_CKA_STUB,
+      .val = {
+        .case_CKA_STUB = {
+          .typeId = (uint32_t)999U,
+          .pValue = tempP,
+          .ulValueLength = (uint32_t)0U,
+          .isReadOnly = false
+        }
+      }
+    };
+  KRML_CHECK_SIZE(testAttribute0, (uint32_t)10U);
+  PKCS11_TypeDeclaration_attribute_t to_161[10U];
+  for (uint32_t _i = 0U; _i < (uint32_t)10U; ++_i)
+    to_161[_i] = testAttribute0;
+  FStar_Pervasives_either__uint8_t__PKCS11_Exception_exception_t
+  reference = PKCS11_Objects_getTheReference(phKey);
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_mechanism_PKCS11_Exception_exception_t
+  parsedMechanism = PKCS11_Parse_parseMechanism(pMechanism);
+  FStar_Pervasives_either__PKCS11_TypeDeclaration_attribute_t__PKCS11_Exception_exception_t
+  parsedAttributes = PKCS11_Parse_parseAttributes(pTemplate, to_161, usCount);
+  if
+  (!(PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration_mechanism(parsedMechanism)
+  && PKCS11_Exception_resultIsOk__PKCS11_TypeDeclaration_attribute_t_(parsedAttributes)))
+    (void)PKCS11_Exception_castExpectionToRV__bool((
         (FStar_Pervasives_either__bool_PKCS11_Exception_exception_t){
-          .tag = FStar_Pervasives_Inl,
-          { .case_Inl = { .v = true } }
+          .tag = FStar_Pervasives_Inr,
+          .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
         }
       ));
+  else
+  {
+    PKCS11_TypeDeclaration_mechanism
+    unpackedMechanism =
+      PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration_mechanism(parsedMechanism);
+    bool correctMechanism = PKCS11_Mechanism_isMechanismGeneration(unpackedMechanism);
+    if (!correctMechanism)
+      (void)PKCS11_Exception_castExpectionToRV__bool((
+          (FStar_Pervasives_either__bool_PKCS11_Exception_exception_t){
+            .tag = FStar_Pervasives_Inr,
+            .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+          }
+        ));
+    else
+    {
+      PKCS11_TypeDeclaration_attribute_t
+      *unpackedAttributes =
+        PKCS11_Exception_resultLeft__PKCS11_TypeDeclaration_attribute_t_(parsedAttributes);
+      FStar_Pervasives_either__bool_PKCS11_Exception_exception_t
+      checkedAttributes = checkAttributes(unpackedAttributes, usCount, unpackedMechanism);
+      if (!PKCS11_Exception_resultIsOk__bool(checkedAttributes))
+        (void)PKCS11_Exception_castExpectionToRV__bool((
+            (FStar_Pervasives_either__bool_PKCS11_Exception_exception_t){
+              .tag = FStar_Pervasives_Inr,
+              .val = { .case_Inr = { .v = { .tag = PKCS11_Exception_TestExc } } }
+            }
+          ));
+      else
+      {
+        uint8_t *unpackedReference = PKCS11_Exception_resultLeft__uint8_t_(reference);
+              for (uint32_t _i = 0U; _i < (uint32_t)20U; ++_i)
+          printf("%i", unpackedReference[_i]);
+      printf("%s\n", "");
+
+
+
+        void
+        (*f1)(uint8_t *x0, uint32_t x1, PKCS11_TypeDeclaration_attribute_t *x2, uint32_t x3) =
+          (PKCS11_Mechanism_mechanismGetFunctionGeneration(unpackedMechanism));
+        f1(unpackedReference, (uint32_t)100U, unpackedAttributes, usCount);
+
+      for (uint32_t _i = 0U; _i < (uint32_t)20U; ++_i)
+          printf("%i", unpackedReference[_i]);
+      printf("%s\n", "");
+
+
+        (void)PKCS11_Exception_castExpectionToRV__bool((
+            (FStar_Pervasives_either__bool_PKCS11_Exception_exception_t){
+              .tag = FStar_Pervasives_Inl,
+              .val = { .case_Inl = { .v = true } }
+            }
+          ));
+      }
+    }
+  }
+  return (uint32_t)0x1U;
 }
 
