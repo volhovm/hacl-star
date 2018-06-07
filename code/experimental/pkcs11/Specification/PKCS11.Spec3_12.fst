@@ -561,9 +561,9 @@ let deviceAddSession hSession f d newSession =
 
 
 val _CKS_GenerateKey: d: device ->  
-	hSession: nat -> 
+	hSession: _CK_SESSION_HANDLE -> 
 	pMechanism: _CK_MECHANISM_TYPE{isPresentOnDevice d pMechanism /\ 
-		(let flags = mechanismGetFlags d pMechanism in isFlagSign flags)} ->
+		(let flags = mechanismGetFlags d pMechanism in isFlagKeyGeneration flags)} ->
 	pTemplate: seq attributeSpecification{checkedAttributes pTemplate} -> 
 	Pure(
 		(handler: result _CK_OBJECT_HANDLE) & 
