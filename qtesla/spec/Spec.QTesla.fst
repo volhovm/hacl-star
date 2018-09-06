@@ -200,40 +200,37 @@ let genA_updateA a i newVal =
 
 So at their suggestion this code takes a different approach: We define the function to always terminate but with the possibility of failure, and then assume the existence of an "oracle" function that somehow tells us that if we end up calling cSHAKE a certain number of times, we're guaranteed to succeed. This is what the "fuel" parameter in genA_while and the definition of genA_oracle below it are all about. *)
 
-val genA_while: #seedALen:size_nat -> seedA: lbytes seedALen -> cBuf: bytes -> s:uint16 -> a:polys_t -> genA_pos: size_nat{(genA_pos+1) * computed_b <= length cBuf} -> nblocks:size_nat -> i:nat -> fuel:nat -> Tot (option polys_t) (decreases %[(params_k * params_n - i); fuel])
-let rec genA_while #seedALen seedA cBuf s a genA_pos nblocks i fuel =
+val genA_while: #seedALen:size_nat -> seedA: lbytes seedALen -> cBuf: bytes{length cBuf >= 2} -> s:uint16 -> a:polys_t -> pos: size_nat{(pos+1) * computed_b <= length cBuf} -> bPrime:size_nat{bPrime >= 1 /\ params_rateXOF * bPrime = length cBuf} -> i:nat -> fuel:nat -> Tot (option polys_t) (decreases %[(params_k * params_n - i); fuel])
+let rec genA_while #seedALen seedA cBuf s a pos bPrime i fuel =
   if fuel = 0 then None else
   if i < params_k * params_n
-    then let c_pos = genA_getC cBuf genA_pos in
-      let a, genA_pos, i, fuel =
+    then let s, pos, bPrime, cBuf =
+      if pos > ((params_rateXOF * bPrime) / computed_b) - 4
+      then let s, pos, bPrime = (add_mod s (u16 1)), 0, 1 in
+           let cBuf = cshake128_frodo seedALen seedA s (params_rateXOF * bPrime) in
+	   s, pos, bPrime, cBuf
+      else s, pos, bPrime, cBuf in
+    let c_pos = genA_getC cBuf pos in
+      let a, i, fuel =
         let c_pos_mod = c_pos % (pow2 computed_ceil_log_q) in
 	if params_q > c_pos_mod
-	then genA_updateA a i c_pos_mod, genA_pos + 1, i + 1, fuel
-	else a, genA_pos + 1, i, fuel - 1 in
-      let s, genA_pos, cBuf, nblocks =
-	(* length cBuf = params_rateXOF * nblocks, but it's not easily proven. *)
-	if genA_pos * computed_b > (length cBuf) - 4 * computed_b
-      (* TODO: May not want to use add_mod here; may instead need to prove we'll never wrap *)
-	then let s = (add_mod s (u16 1)) in
-	     let genA_pos = 0 in
-	     let cBuf = cshake128_frodo seedALen seedA s params_rateXOF in
-	     s, genA_pos, cBuf, 1
-	else s, genA_pos, cBuf, nblocks in
-      genA_while #seedALen seedA cBuf s a genA_pos nblocks i fuel
+	then genA_updateA a i c_pos_mod, i + 1, fuel
+	else a, i, fuel - 1 in
+      let pos = pos + 1 in
+      genA_while #seedALen seedA cBuf s a pos bPrime i fuel
     else Some a
 
-assume val genA_oracle: #seedALen:size_nat -> seedA: lbytes seedALen -> cBuf: bytes -> s:uint16 -> a:polys_t -> genA_pos: size_nat{(genA_pos+1) * computed_b < length cBuf} -> nblocks:size_nat -> i:nat -> Tot (fuel:nat{Some? (genA_while #seedALen seedA cBuf s a genA_pos nblocks i fuel)})
+assume val genA_oracle: #seedALen:size_nat -> seedA: lbytes seedALen -> cBuf: bytes -> s:uint16 -> a:polys_t -> pos: size_nat{(pos+1) * computed_b < length cBuf} -> bPrime:size_nat{bPrime >= 1 /\ params_rateXOF * bPrime = length cBuf} -> i:nat -> Tot (fuel:nat{Some? (genA_while #seedALen seedA cBuf s a pos bPrime i fuel)})
   
 val genA: #seedALen: size_nat -> seedA: lbytes seedALen -> Tot polys_t
 let genA #seedALen seedA =
-  let b = computed_b in
-  let nblocks = params_bGenA in
+  let bPrime = params_bGenA in
+  let cBuf = cshake128_frodo seedALen seedA (u16 0) (params_rateXOF * bPrime) in
   let i = 0 in
-  let genA_pos = 0 in
-  let cBuf = cshake128_frodo seedALen seedA (u16 0) (params_rateXOF * params_bGenA) in
+  let pos = 0 in
   let a = create_polys in
-  let fuel:nat = genA_oracle seedA cBuf (u16 0) a genA_pos nblocks i in
-  let res = genA_while seedA cBuf (u16 0) a genA_pos nblocks i fuel in
+  let fuel:nat = genA_oracle seedA cBuf (u16 0) a pos bPrime i in
+  let res = genA_while seedA cBuf (u16 0) a pos bPrime i fuel in
   Some?.v res
 
 // Nonce is called "nonce" to avoid confusion; in spec it is S.
@@ -270,11 +267,18 @@ let keygen_sampleE seedE nonce =
   let e = create_polys in
   keygen_sampleE_step seedE nonce e 0
 
+val poly_mod: f:poly_t -> n:nat{n >= 2 /\ n <= params_q} -> Tot poly_t
+let poly_mod f n =
+  repeati (Seq.length f)
+  (fun i (f:poly_t) ->
+    let fi = (Seq.index f i) % n in
+    Seq.upd f i fi) f
+
 val keygen_computeT_step: a:polys_t -> s:poly_t -> e:polys_t -> t:polys_t -> i:size_nat{i <= Seq.length a} -> Tot polys_t (decreases (Seq.length a - i))
 let rec keygen_computeT_step a s e t i =
   if i = Seq.length a then t
     else // Remember, a is always in NTT form; other polys in standard form
-         let ti = poly_add (poly_ntt_mul (Seq.index a i) s) (Seq.index e i) in
+         let ti = (((Seq.index a i) `poly_ntt_mul` s) `poly_add` (Seq.index e i)) `poly_mod` params_q in
 	 let t = Seq.upd t i ti in
 	 keygen_computeT_step a s e t (i + 1)
 
@@ -283,7 +287,7 @@ let keygen_computeT a s e =
   let t = create_polys in
   keygen_computeT_step a s e t 0
 
-//val qTesla_keygen: n: nat -> Tot ((poly_t * polys_t * (lbytes params_kappa) * (lbytes params_kappa)) * ((lbytes params_kappa) * polys_t))
+//val qTesla_keygen: Tot (tuple2 qtesla_sk qtesla_pk)
 let qTesla_keygen : tuple2 qtesla_sk qtesla_pk =
   let preseed = random_bytes params_kappa in
   let seedbuf = prf1 preseed in
@@ -309,28 +313,44 @@ let qTesla_keygen : tuple2 qtesla_sk qtesla_pk =
 
   let e, nonce = keygen_sampleE seedE nonce in
   let t = keygen_computeT a s e in
-  (s, e, seedA, seedY), (seedA, t)
+  let sk = (s, e, seedA, seedY) in
+  let pk = (seedA, t) in
+  sk, pk
 
 let ySampler_XOF = cshake128_frodo
 
-val ySampler_step: yBuf: lbytes (computed_ySampler_b * params_n) -> y: poly_t -> i: size_nat{i <= Seq.length y} -> Tot poly_t (decreases (Seq.length y - i))
-let rec ySampler_step yBuf y i =
+val ySampler_while: rand: lbytes params_kappa -> cBuf: bytes -> pos: size_nat -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = length cBuf} -> sPrime: uint16 -> i: size_nat{i <= params_n} -> y: poly_t -> fuel:nat -> Tot (option poly_t) (decreases %[(params_n - i); fuel])
+let rec ySampler_while rand cBuf pos nPrime sPrime i y fuel =
+  if fuel = 0 then None else
   let b = computed_ySampler_b in
-  if i = Seq.length y then y
-    else let yiBuf = slice yBuf (i * b) ((i+1) * b) in
-         let yi = nat_from_bytes_le yiBuf in
-	 let yi = yi % pow2 computed_ySampler_modulus in
-	 assert_norm (yi < params_q); 
-	 let yi = yi - params_B in
-	 let y = Seq.upd y i yi in
-	 ySampler_step yBuf y (i + 1)
-	 
+  if i < params_n
+  then let sPrime, pos, nPrime, cBuf =
+    if pos >= nPrime 
+    then let sPrime, pos, nPrime = (add_mod sPrime (u16 1)), 0, params_rateXOF / b in
+         let cBuf = ySampler_XOF (length rand) rand sPrime params_rateXOF in
+         sPrime, pos, nPrime, cBuf
+    else sPrime, pos, nPrime, cBuf in
+    let yi = (nat_from_bytes_le (slice (to_lbytes cBuf) (pos * b) ((pos + 1) * b))) % (pow2 computed_ySampler_modulus) - params_B in
+    assert(yi < pow2 computed_ySampler_modulus);
+    assert_norm(pow2 computed_ySampler_modulus < params_q);
+    assert(yi < params_q);
+    let y = Seq.upd y i yi in
+    let i, fuel = if yi <> params_B + 1 then i+1, fuel else i, fuel-1 in
+    let pos = pos + 1 in
+    ySampler_while rand cBuf pos nPrime sPrime i y fuel
+  else Some y
+
+assume val ySampler_oracle: rand: lbytes params_kappa -> cBuf: bytes -> pos: size_nat -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = length cBuf} -> sPrime: uint16 -> i: size_nat{i <= params_n} -> y: poly_t -> Tot (fuel:nat{Some? (ySampler_while rand cBuf pos nPrime sPrime i y fuel)})
+
 val ySampler: rand: lbytes params_kappa -> nonce: uint16 -> Tot poly_t
 let ySampler rand nonce =
   let b = computed_ySampler_b in
-  let yBuf = ySampler_XOF (length rand) rand (mul_mod nonce (u16 (pow2 8))) (b * params_n) in
-  let y:poly_t = create_poly in
-  ySampler_step yBuf y 0
+  let y = create_poly in
+  let pos, nPrime, sPrime = 0, params_n, (mul_mod nonce (u16 256)) in
+  let cBuf = ySampler_XOF (length rand) rand sPrime (b * nPrime) in
+  let i = 0 in
+  let fuel = ySampler_oracle rand cBuf pos nPrime sPrime i y in
+  Some?.v (ySampler_while rand cBuf pos nPrime sPrime i y fuel)
 
 #reset-options "--z3rlimit 50 --max_fuel 0"
 val hashH: #mlen: size_nat{params_k * params_n + mlen <= max_size_t} -> v: polys_t -> m: lbytes mlen -> Tot (lbytes params_kappa)
@@ -369,28 +389,29 @@ let enc_while_getR #rLen rBuf i =
   nat_from_bytes_le byte
 
 (* pos_list and sign_list aren't returned by this function in the spec, although they are used in the implementation. We compute them here for consistency but only return c. *)
-val enc_while: cPrime: (lbytes params_kappa) -> rBuf: (lbytes params_rateXOF) -> pos_list: (Seq.lseq int params_h) -> sign_list: signlist_t -> cnt: size_nat{cnt < params_rateXOF - 2} -> c: poly_t -> s:uint16 -> i: size_nat -> fuel:nat -> Tot (option poly_t) (decreases %[(params_h - i); fuel])
+val enc_while: cPrime: (lbytes params_kappa) -> rBuf: (lbytes params_rateXOF) -> pos_list: (Seq.lseq int params_h) -> sign_list: signlist_t -> cnt: size_nat -> c: poly_t -> s:uint16 -> i: size_nat -> fuel:nat -> Tot (option poly_t) (decreases %[(params_h - i); fuel])
 let rec enc_while cPrime rBuf pos_list sign_list cnt c s i fuel =
   if fuel = 0 then None else
-  if i >= params_h then Some c else
-  let pos = ((enc_while_getR rBuf cnt) * 256 + (enc_while_getR rBuf (cnt+1))) % params_n in
-  let cnt = cnt + 2 in
-  let c, i, fuel, cnt, pos_list, sign_list = 
-    if Seq.index c pos = 0 
-    then let signVal:signlist_elt = if (enc_while_getR rBuf cnt) % 2 = 1 then -1 else 1 in
-         let c:poly_t = Seq.upd c pos signVal in 
-	 let pos_list = Seq.upd pos_list i pos in
-	 let sign_list = Seq.upd sign_list i (Seq.index c pos) in
-	 c, i + 1, fuel, cnt + 1, pos_list, sign_list
-    else c, i, fuel - 1, cnt, pos_list, sign_list in
-  let cnt, s, rBuf =
+  if i < params_h then 
+    let cnt, s, rBuf =
     if cnt > (params_rateXOF - 3)
-    then let s = add_mod s (u16 1) in // TODO: add_mod ok?
-	 let cnt = 0 in
+    then let s, cnt = add_mod s (u16 1), 0 in // TODO: add_mod ok?
 	 let rBuf = cshake128_frodo params_kappa cPrime s params_rateXOF in
 	 cnt, s, rBuf
     else cnt, s, rBuf in
+  let pos = ((enc_while_getR rBuf cnt) * 256 + (enc_while_getR rBuf (cnt+1))) % params_n in
+  let c, i, fuel, pos_list, sign_list = 
+    if Seq.index c pos = 0 
+    then let cpos:signlist_elt = if (enc_while_getR rBuf cnt + 2) % 2 = 1 then -1 else 1 in
+         let c:poly_t = Seq.upd c pos cpos in 
+	 let pos_list = Seq.upd pos_list i pos in
+	 let sign_list = Seq.upd sign_list i (Seq.index c pos) in
+	 let i = i + 1 in
+	 c, i, fuel, pos_list, sign_list
+    else c, i, fuel - 1, pos_list, sign_list in
+  let cnt = cnt + 3 in
   enc_while cPrime rBuf pos_list sign_list cnt c s i fuel
+  else Some c
 	       
 assume val enc_oracle: cPrime: (lbytes params_kappa) -> rBuf: (lbytes params_rateXOF) -> pos_list: (Seq.lseq int params_h) -> sign_list: signlist_t -> cnt: size_nat{cnt < params_rateXOF - 2} -> c: poly_t -> s:uint16 -> i: size_nat -> Tot (fuel:nat{Some? (enc_while cPrime rBuf pos_list sign_list cnt c s i fuel)})
 
@@ -501,18 +522,17 @@ let rec qtesla_sign_step4 #mLen m sk r rand counter fuel =
       Seq.upd v i vi) v in
   let cPrime = hashH (polysM v) m in
   let c = enc cPrime in
-  let z = poly_add y (poly_mul s c) in
+  let z = y `poly_add` (s `poly_mul` c) in
   if test_rejection z
   then qtesla_sign_step4 m sk r rand (add_mod counter (u16 1)) (fuel - 1)
   else let w:polys_t = create_polys in
        let w:polys_t = repeati params_k 
        (fun i (w:polys_t) -> 
-	 let (wi:poly_t) = poly_sub (Seq.index v i) (poly_mul (Seq.index e i) c) in
+	 let (wi:poly_t) = ((Seq.index v i) `poly_sub` ((Seq.index e i) `poly_mul` c)) `poly_mod_pm` params_q in
 	 Seq.upd w i wi) w in
        if test_w w
        then qtesla_sign_step4 m sk r rand (add_mod counter (u16 1)) (fuel - 1)
        else Some (z, cPrime)
-
 
 assume val qtesla_sign_oracle:  #mLen: size_nat{params_k * params_n + mLen <= max_size_t} -> m: (lbytes mLen) -> sk: qtesla_sk -> r: (lbytes params_kappa) -> rand: (lbytes params_kappa) -> counter:uint16 -> Tot (fuel:nat{Some? (qtesla_sign_step4 #mLen m sk r rand counter fuel)})
 
