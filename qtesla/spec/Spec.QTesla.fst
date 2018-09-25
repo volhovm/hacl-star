@@ -17,23 +17,146 @@ open Spec.Frodo.Keccak
 type nonzero_nat = x:nat{x > 0}
 
 // qTESLA-I
+(*
 let params_lambda:nat = 95 // security parameter
-let params_kappa:nat = 32 // output length of hash function in bytes
+let params_kappa:nat = 32 // output length of hash function in bytes (spec lists them in bits, so convert)
 let params_n:size_nat = 512 // Dimension
-let params_h:nat = 30      // # of nonzero entries of output elements of Enc
 let params_k:size_nat = 1       // #R-LWE samples (number of polynomials in e, t, a, etc)
 let params_q:int = 4205569 // modulus
-let params_Ls:int = 1586   // bound on s for checkS
+let params_h:nat = 30      // # of nonzero entries of output elements of Enc
 let params_Le:int = 1586   // bound on e_i for checkE
-let params_d:nat = 21      // number of rounded bits
+let params_Ls:int = 1586   // bound on s for checkS
 let params_B:nat = 1048575 // interval the randomness is chosing from during signing
+let params_d:nat = 21      // number of rounded bits
 let params_bGenA:int = 19  // number of blocks requested to SHAKE128 for GenA
 
 let params_rateXOF = 168
 let params_xof = shake128        // extendable output function used in PRF1: use shake128 or shake256 depending on parameters chosen
 let params_hash_shake = shake128 // hash function used in hash H: use shake128 or shake256 depending on parameters chosen
 
-//let field_t = x:int{x < params_q /\ -params_q < x}
+// See the GenerateNTTConstants-Magma.txt script for computing these five
+// constants used in NTT.
+let computed_phi = 3768668
+let computed_omega = 118029
+let computed_phi_inv = 3764481
+let computed_omega_inv = 590666
+let computed_n_inv = 4197355
+*)
+// end qTESLA-I parameters
+
+// qTESLA-III-speed
+(*
+let params_lambda:nat = 160 // security parameter
+let params_kappa:nat = 32 // output length of hash function in bytes (spec lists them in bits, so convert)
+let params_n:size_nat = 1024 // Dimension
+let params_k:size_nat = 1       // #R-LWE samples (number of polynomials in e, t, a, etc)
+let params_q:int = 8404993 // modulus
+let params_h:nat = 48      // # of nonzero entries of output elements of Enc
+let params_Le:int = 1147   // bound on e_i for checkE
+let params_Ls:int = 1233   // bound on s for checkS
+let params_B:nat = 2097151 // interval the randomness is chosing from during signing
+let params_d:nat = 22      // number of rounded bits
+let params_bGenA:int = 38  // number of blocks requested to SHAKE128 for GenA
+
+let params_rateXOF = 168
+let params_xof = shake128        // extendable output function used in PRF1: use shake128 or shake256 depending on parameters chosen
+let params_hash_shake = shake128 // hash function used in hash H: use shake128 or shake256 depending on parameters chosen
+
+// See the GenerateNTTConstants-Magma.txt script for computing these five
+// constants used in NTT.
+let computed_phi = 5216957
+let computed_omega = 3851906
+let computed_phi_inv = 4276303
+let computed_omega_inv = 7267723
+let computed_n_inv = 8396785
+*)
+// end qTESLA-III-speed parameters
+
+// qTESLA-III-size
+(*
+let params_lambda:nat = 160 // security parameter
+let params_kappa:nat = 32 // output length of hash function in bytes (spec lists them in bits, so convert)
+let params_n:size_nat = 1024 // Dimension
+let params_k:size_nat = 1       // #R-LWE samples (number of polynomials in e, t, a, etc)
+let params_q:int = 4206593 // modulus
+let params_h:nat = 48      // # of nonzero entries of output elements of Enc
+let params_Le:int = 910    // bound on e_i for checkE
+let params_Ls:int = 910    // bound on s for checkS
+let params_B:nat = 1048575 // interval the randomness is chosing from during signing
+let params_d:nat = 21      // number of rounded bits
+let params_bGenA:int = 38  // number of blocks requested to SHAKE128 for GenA
+
+let params_rateXOF = 168
+let params_xof = shake128        // extendable output function used in PRF1: use shake128 or shake256 depending on parameters chosen
+let params_hash_shake = shake128 // hash function used in hash H: use shake128 or shake256 depending on parameters chosen
+
+// See the GenerateNTTConstants-Magma.txt script for computing these five
+// constants used in NTT.
+let computed_phi = 3999147
+let computed_omega = 396526
+let computed_phi_inv = 1974815
+let computed_omega_inv = 3979855
+let computed_n_inv = 4202485
+*)
+// end qTESLA-III-size parameters
+
+// qTESLA-p-I
+(*
+let params_lambda:nat = 95 // security parameter
+let params_kappa:nat = 32 // output length of hash function in bytes (spec lists them in bits, so convert)
+let params_n:size_nat = 1024 // Dimension
+let params_k:size_nat = 4       // #R-LWE samples (number of polynomials in e, t, a, etc)
+let params_q:int = 485978113 // modulus
+let params_h:nat = 25      // # of nonzero entries of output elements of Enc
+let params_Le:int = 554    // bound on e_i for checkE
+let params_Ls:int = 554    // bound on s for checkS
+let params_B:nat = 2097151 // interval the randomness is chosing from during signing
+let params_d:nat = 22      // number of rounded bits
+let params_bGenA:int = 108 // number of blocks requested to SHAKE128 for GenA
+
+let params_rateXOF = 168
+let params_xof = shake128        // extendable output function used in PRF1: use shake128 or shake256 depending on parameters chosen
+let params_hash_shake = shake128 // hash function used in hash H: use shake128 or shake256 depending on parameters chosen
+
+// See the GenerateNTTConstants-Magma.txt script for computing these five
+// constants used in NTT.
+let computed_phi = 250428822
+let computed_omega = 483976553
+let computed_phi_inv = 195194787
+let computed_omega_inv = 67220789
+let computed_n_inv = 485503525
+*)
+// end qTESLA-p-I parameters
+
+// qTESLA-p-III
+
+let params_lambda:nat = 160 // security parameter
+let params_kappa:nat = 32 // output length of hash function in bytes (spec lists them in bits, so convert)
+let params_n:size_nat = 2048 // Dimension
+let params_k:size_nat = 5       // #R-LWE samples (number of polynomials in e, t, a, etc)
+let params_q:int = 1129725953 // modulus
+let params_h:nat = 40      // # of nonzero entries of output elements of Enc
+let params_Le:int = 901    // bound on e_i for checkE
+let params_Ls:int = 901    // bound on s for checkS
+let params_B:nat = 8388607 // interval the randomness is chosing from during signing
+let params_d:nat = 24      // number of rounded bits
+let params_bGenA:int = 180 // number of blocks requested to SHAKE128 for GenA
+
+let params_rateXOF = 168
+let params_xof = shake128        // extendable output function used in PRF1: use shake128 or shake256 depending on parameters chosen
+let params_hash_shake = shake128 // hash function used in hash H: use shake128 or shake256 depending on parameters chosen
+
+// See the GenerateNTTConstants-Magma.txt script for computing these five
+// constants used in NTT.
+let computed_phi = 752833504
+let computed_omega = 905348506
+let computed_phi_inv = 500168718
+let computed_omega_inv = 224686349
+let computed_n_inv = 1129174329
+
+// end qTESLA-p-III parameters
+
+// End of parameter settings.
 let field_t = x:int{x > -params_q /\ x < params_q}
 
 let computed_ceil_log_q:nat = 23 // Computed: ceil(log_2 q)
@@ -41,12 +164,6 @@ let computed_b:size_nat = 3           // Computed: ceil((log_2 q)/8)
 
 let computed_ySampler_b:nat = 3  // Computed: ceil(((log_2 B) + 1)/8), B = 2^20-1
 let computed_ySampler_modulus:nat = 21  // Computed: ceil(log_2 B) + 1
-
-let computed_phi:field_t = 3768668
-let computed_omega:field_t = 118029
-let computed_phi_inv:field_t = 3764481
-let computed_omega_inv:field_t = 590666
-let computed_n_inv:field_t = 4197355
 
 // Single polynomial in \mathcal{R}_q/<x^n+1>
 let poly_t = Seq.lseq field_t params_n
@@ -255,14 +372,15 @@ let keygen_sampleS_while seedS nonce = Some?.v (keygen_sample_while seedS nonce 
 let keygen_sampleE_while seedE nonce = Some?.v (keygen_sample_while seedE nonce checkE (keygen_sample_oracle seedE nonce checkE))
 
 #reset-options "--z3rlimit 50 --max_fuel 0"
-val keygen_sampleE_step: seedE:(lbytes params_kappa) -> nonce:nonzero_nat -> e:polys_t -> i:size_nat{i <= Seq.length e} -> Tot (tuple2 polys_t nonzero_nat) (decreases (Seq.length e - i))
+val keygen_sampleE_step: seedE:(lbytes (params_kappa * params_k)) -> nonce:nonzero_nat -> e:polys_t -> i:size_nat{i <= Seq.length e} -> Tot (tuple2 polys_t nonzero_nat) (decreases (Seq.length e - i))
 let rec keygen_sampleE_step seedE nonce e i =
   if i = Seq.length e then e, nonce
-		      else let ei, nonce = keygen_sampleE_while seedE nonce in
+		      else let seedEi = Lib.Sequence.sub seedE (i * params_kappa) params_kappa in
+		           let ei, nonce = keygen_sampleE_while seedEi nonce in
 		           let e = Seq.upd e i ei in
 			   keygen_sampleE_step seedE nonce e (i + 1)
 
-val keygen_sampleE: seedE:(lbytes params_kappa) -> nonce:nonzero_nat -> Tot (tuple2 polys_t nonzero_nat)
+val keygen_sampleE: seedE:(lbytes (params_kappa * params_k)) -> nonce:nonzero_nat -> Tot (tuple2 polys_t nonzero_nat)
 let keygen_sampleE seedE nonce = 
   let e = create_polys in
   keygen_sampleE_step seedE nonce e 0
@@ -310,7 +428,6 @@ let qTesla_keygen : tuple2 qtesla_sk qtesla_pk =
   let a = genA seedA in
   let nonce = 1 in
   let s, nonce = keygen_sampleS_while seedS nonce in
-
   let e, nonce = keygen_sampleE seedE nonce in
   let t = keygen_computeT a s e in
   let sk = (s, e, seedA, seedY) in
@@ -453,10 +570,13 @@ let fnL f =
 
 // [*]_M: Z -> Z
 #reset-options "--z3rlimit 50 --max_fuel 0"
-val intM: c: int -> Tot (x:int{x > -params_q /\ x < params_q})
+val intM: c: int -> Tot field_t // (x:int{x > -params_q /\ x < params_q})
 let intM c = 
   assert_norm((pow2 params_d) >= 2);
-  ((c `mod_pm` params_q) - (c `mod_pm` (pow2 params_d))) / (pow2 params_d)
+  let res = ((c `mod_pm` params_q) - (c `mod_pm` (pow2 params_d))) / (pow2 params_d) in
+  assume(res > -params_q); // TODO: Above line fails with --max-fuel 0 and goes off into the weeds without it, on the qTESLA-p-III parameter set.
+  res
+  
 
 // [*]_M: R_q -> R_q
 val fnM: f: poly_t -> Tot poly_t
