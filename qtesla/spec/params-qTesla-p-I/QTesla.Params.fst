@@ -3,8 +3,9 @@ module QTesla.Params
 open Lib.IntTypes
 
 let params_lambda = 95 // security parameter
-let params_kappa = 32 // output length of hash function in bytes (spec lists them in bits, so convert)
-let params_n = 1024 // Dimension
+let params_kappa = 32  // output length of hash function in bytes (spec lists them in bits, so convert)
+let params_n = 1024    // Dimension
+let params_xi = 100000 // Gaussian sampler scaling parameter, multiplied by 10000. 
 let params_k = 4       // #R-LWE samples (number of polynomials in e, t, a, etc)
 let params_q = 485978113 // modulus
 let params_h = 25      // # of nonzero entries of output elements of Enc
@@ -25,3 +26,18 @@ let computed_omega = 483976553
 let computed_phi_inv = 195194787
 let computed_omega_inv = 67220789
 let computed_n_inv = 485503525
+
+// Generated using gaussSigma2Sample_table.magma from the submission package.
+unfold let cdt_list: list nat =
+  [02000000000000000000000000000000;
+   03000000000000000000000000000000;
+   03200000000000000000000000000000;
+   03210000000000000000000000000000;
+   03210200000000000000000000000000;
+   03210201000000000000000000000000;
+   03210201002000000000000000000000;
+   03210201002001000000000000000000;
+   03210201002001000200000000000000;
+   03210201002001000200010000000000;
+   03210201002001000200010000200000;
+   03210201002001000200010000200001]

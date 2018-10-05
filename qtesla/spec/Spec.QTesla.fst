@@ -2,6 +2,7 @@ module Spec.QTesla
 
 open FStar.List.Tot
 open FStar.Seq
+open FStar.List.Tot
 open FStar.Math.Lemmas
 open FStar.Mul
 
@@ -18,6 +19,11 @@ open QTesla.Params
 (** qTesla often uses [pos] as a variable name, so we define a transparent synonym *)
 unfold let positive = pos
 
+unfold let u16positive = n:uint16{uint_v n > 0}
+
+(** Set this parameter to be the machine word size in bits. *)
+unfold let params_w = 64
+
 (** 
 * Computes ceil(log2 n) using the equation
 * ceil(log2 n) = floor(log2 (2 * n - 1)
@@ -32,6 +38,9 @@ let log2 n =
 (** Computes ceil(a / b) *)
 val ceil_div: nat -> pos -> nat
 let ceil_div a b = if a % b = 0 then a / b else 1 + a / b
+
+val bytelen: n:nat -> nat 
+let bytelen n = if n = 0 then 1 else ceil_div (log2 (n + 1)) 8
 
 (** ceil(log_2 q) *)
 unfold let computed_ceil_log_q = normalize_term (log2 params_q)
@@ -279,9 +288,88 @@ let genA #seedALen seedA =
 // gaussSampler is assumed because it has floating point math we can't
 // yet model in F*. random_bytes is assumed because it needs to come from
 // an underlying system source.
-assume val gaussSampler: rand: (lbytes params_kappa) -> nonce: nat{nonce > 0} -> poly_t
+//assume val gaussSampler: rand: (lbytes params_kappa) -> nonce: nat{nonce > 0} -> poly_t
 
 assume val random_bytes: n: size_nat -> lbytes n
+
+assume val berSampler: r: (lbytes (params_w / 8)) -> t:nat -> bit:nat{bit = 0 \/ bit = 1}
+
+val gaussSampler_doloop3: 
+    rand: (lbytes params_kappa) 
+  -> nonce: u16positive
+  -> fuel: nat
+  -> Tot (option (tuple2 nat u16positive)) (decreases fuel)
+let rec gaussSampler_doloop3 rand nonce fuel =
+  assert_norm(bytelen params_xi < max_size_t); // Need to prove this is a size_nat for use with cshake128_frodo.
+  if fuel = 0 then None else
+  let y = nat_from_bytes_le (cshake128_frodo params_kappa rand nonce (bytelen params_xi)) in
+  assert(uint_v nonce > 0);
+  assert(uint_v nonce + uint_v (u16 1) > 0);
+  let nonce = nonce +. (u16 1) in
+  assume(uint_v nonce % pow2 16 <> 0); // TODO 
+  if (10000 * y) < (params_xi - 10000)
+  then Some (y, nonce)
+  else gaussSampler_doloop3 rand nonce (fuel - 1)
+
+assume val gaussSampler_doloop3_oracle:
+    rand: (lbytes params_kappa) 
+  -> nonce: u16positive
+  -> Tot (fuel:nat{Some? (gaussSampler_doloop3 rand nonce fuel)})
+
+// TODO: need to bound this computation. Why are we guaranteed to hit a
+// valid entry in the cdt?
+val gaussSampler_doloop10: r: nat -> x:nat{x <= FStar.List.Tot.Base.length cdt_list} -> Tot int (decreases (FStar.List.Tot.Base.length cdt_list - x))
+let rec gaussSampler_doloop10 r x =
+  if (x >= FStar.List.Tot.Base.length cdt_list) then -1 else
+  match nth cdt_list x with
+  | None -> -1
+  | Some y -> if r < y
+             then x
+             else gaussSampler_doloop10 r (x + 1)
+
+type scaled = int
+
+// In some parameter sets, param_xi is not an integer. F* doesn't have a
+// theory for floating point or even fixed-point decimal math. Therefore we
+// fake fixed-point arithmetic with integers by scaling everything by 10,000,
+// as params_xi has at most four decimal places. params_xi is set already
+// scaled, addends are scaled by 10,000, and results are divided by 10,000
+// before being returned.
+val gaussSampler_doloop2: rand: (lbytes params_kappa) -> nonce: u16positive -> fuel:nat -> Tot (option int) (decreases fuel)
+let rec gaussSampler_doloop2 rand nonce fuel =
+    if fuel = 0 then None else
+    let y, nonce = Some?.v (gaussSampler_doloop3 rand nonce (gaussSampler_doloop3_oracle rand nonce)) in
+    let r = nat_from_bytes_le (cshake128_frodo params_kappa rand nonce (params_w / 8)) in
+    let nonce = nonce +. (u16 1) in
+    let x = 0 in
+    let x = gaussSampler_doloop10 r x in
+    let z:scaled = params_xi * x + (y * 10000) in
+    let r = cshake128_frodo params_kappa rand nonce (params_w / 8) in
+    let nonce = nonce +. (u16 1) in
+    if (berSampler r (y * ((10000 * y) + (2 * params_xi * x))) = 0)
+    then gaussSampler_doloop2 rand nonce (fuel - 1)
+    else let z:int = z / 10000 in // remove scaling factor
+         let b = nat_from_bytes_le (random_bytes 1) in
+         if z = 0 \/ b % 2 = 0 
+	 then gaussSampler_doloop2 rand nonce (fuel - 1)
+	 else Some ((-1)^(b % 2) * z)
+	 
+assume val gaussSampler_doloop2_oracle: 
+    rand (lbytes params_kappa) 
+  -> nonce: positive 
+  -> Tot (fuel:nat{Some? (gaussSampler_doloop2 rand nonce fuel)})
+
+val gaussSampler: rand: (lbytes params_kappa) -> nonce: positive -> Tot int
+let gaussSampler rand nonce =
+    let nonce = nonce *. 256 in
+    let fuel = gaussSampler_doloop2_oracle rand nonce in
+    Some?.v (gaussSampler_doloop2 rand nonce fuel)
+
+val gaussSampler_poly: rand (lbytes params_kappa) -> nonce: positive -> Tot poly_t
+let gaussSampler_poly rand nonce =
+    let p = create_poly in
+    repeati params_n i (fun i (p:poly_t) ->
+                        Seq.upd p i (gaussSampler rand nonce)) p
 
 // Termination is probabilistic due to the need to get the right sort
 // of output from the sampler, and so we use the fuel method again.
@@ -293,7 +381,7 @@ val keygen_sample_while:
   -> Tot (option (tuple2 poly_t positive)) (decreases fuel)
 let rec keygen_sample_while seed nonce checkFn fuel =
   if fuel = 0 then None else
-  let s = gaussSampler seed nonce in
+  let s = gaussSampler_poly seed nonce in
   if checkFn s then Some (s, nonce)
                else keygen_sample_while seed (nonce + 1) checkFn (fuel - 1)
 
