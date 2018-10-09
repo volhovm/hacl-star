@@ -303,11 +303,9 @@ let rec gaussSampler_doloop3 rand nonce fuel =
   assert_norm(bytelen params_xi < max_size_t); // Need to prove this is a size_nat for use with cshake128_frodo.
   if fuel = 0 then None else
   let y = nat_from_bytes_le (cshake128_frodo params_kappa rand nonce (bytelen params_xi)) in
-  assert(uint_v nonce > 0);
-  assert(uint_v nonce + uint_v (u16 1) > 0);
   let nonce = nonce +. (u16 1) in
   assume(uint_v nonce % pow2 16 <> 0); // TODO 
-  if (10000 * y) < (params_xi - 10000)
+  if y < params_xi - 1
   then Some (y, nonce)
   else gaussSampler_doloop3 rand nonce (fuel - 1)
 
@@ -318,76 +316,76 @@ assume val gaussSampler_doloop3_oracle:
 
 // TODO: need to bound this computation. Why are we guaranteed to hit a
 // valid entry in the cdt?
-val gaussSampler_doloop10: r: nat -> x:nat{x <= FStar.List.Tot.Base.length cdt_list} -> Tot int (decreases (FStar.List.Tot.Base.length cdt_list - x))
+val gaussSampler_doloop10: r: nat -> x:nat{x <= FStar.List.Tot.Base.length cdt_list} -> Tot (res:nat{res < FStar.List.Tot.Base.length cdt_list}) (decreases (FStar.List.Tot.Base.length cdt_list - x))
 let rec gaussSampler_doloop10 r x =
-  if (x >= FStar.List.Tot.Base.length cdt_list) then -1 else
-  match nth cdt_list x with
-  | None -> -1
-  | Some y -> if r < y
-             then x
-             else gaussSampler_doloop10 r (x + 1)
+  assume(Some? (nth cdt_list x));
+  assert_norm(0 < FStar.List.Tot.Base.length cdt_list); // Actually needed.
+  if (x >= FStar.List.Tot.Base.length cdt_list) then 0 else
+  let y = Some?.v (nth cdt_list x) in
+  if r < y
+  then x
+  else gaussSampler_doloop10 r (x + 1)
 
-type scaled = int
-
-// In some parameter sets, param_xi is not an integer. F* doesn't have a
-// theory for floating point or even fixed-point decimal math. Therefore we
-// fake fixed-point arithmetic with integers by scaling everything by 10,000,
-// as params_xi has at most four decimal places. params_xi is set already
-// scaled, addends are scaled by 10,000, and results are divided by 10,000
-// before being returned.
-val gaussSampler_doloop2: rand: (lbytes params_kappa) -> nonce: u16positive -> fuel:nat -> Tot (option int) (decreases fuel)
+val gaussSampler_doloop2: rand: (lbytes params_kappa) -> nonce: u16positive -> fuel:nat -> Tot (option field_t) (decreases fuel)
 let rec gaussSampler_doloop2 rand nonce fuel =
     if fuel = 0 then None else
     let y, nonce = Some?.v (gaussSampler_doloop3 rand nonce (gaussSampler_doloop3_oracle rand nonce)) in
     let r = nat_from_bytes_le (cshake128_frodo params_kappa rand nonce (params_w / 8)) in
     let nonce = nonce +. (u16 1) in
+    assume(uint_v nonce % pow2 16 <> 0); // TODO 
     let x = 0 in
     let x = gaussSampler_doloop10 r x in
-    let z:scaled = params_xi * x + (y * 10000) in
+    let z:nat = params_xi * x + y in
+    assume(z < params_q); // TODO: Patrick tells us this is true.
     let r = cshake128_frodo params_kappa rand nonce (params_w / 8) in
     let nonce = nonce +. (u16 1) in
-    if (berSampler r (y * ((10000 * y) + (2 * params_xi * x))) = 0)
+    assume(uint_v nonce % pow2 16 <> 0); // TODO 
+    if (berSampler r (y * (y + 2 * params_xi * x)) = 0)
     then gaussSampler_doloop2 rand nonce (fuel - 1)
-    else let z:int = z / 10000 in // remove scaling factor
-         let b = nat_from_bytes_le (random_bytes 1) in
-         if z = 0 \/ b % 2 = 0 
+    else let b:nat = nat_from_bytes_le (random_bytes 1) in
+         if z = 0 && b % 2 = 0
 	 then gaussSampler_doloop2 rand nonce (fuel - 1)
-	 else Some ((-1)^(b % 2) * z)
+	 else if b % 2 = 0
+	      then Some z
+	      else Some ((-1) * z)
 	 
 assume val gaussSampler_doloop2_oracle: 
-    rand (lbytes params_kappa) 
-  -> nonce: positive 
+    rand: (lbytes params_kappa) 
+  -> nonce: u16positive 
   -> Tot (fuel:nat{Some? (gaussSampler_doloop2 rand nonce fuel)})
 
-val gaussSampler: rand: (lbytes params_kappa) -> nonce: positive -> Tot int
+val gaussSampler: rand: (lbytes params_kappa) -> nonce: u16positive -> Tot field_t
 let gaussSampler rand nonce =
-    let nonce = nonce *. 256 in
+    let nonce = nonce *. (u16 256) in
+    assume(uint_v nonce % maxint U16 <> 0);
     let fuel = gaussSampler_doloop2_oracle rand nonce in
     Some?.v (gaussSampler_doloop2 rand nonce fuel)
 
-val gaussSampler_poly: rand (lbytes params_kappa) -> nonce: positive -> Tot poly_t
+val gaussSampler_poly: rand: (lbytes params_kappa) -> nonce: u16positive -> Tot poly_t
 let gaussSampler_poly rand nonce =
     let p = create_poly in
-    repeati params_n i (fun i (p:poly_t) ->
+    repeati params_n (fun i (p:poly_t) ->
                         Seq.upd p i (gaussSampler rand nonce)) p
 
 // Termination is probabilistic due to the need to get the right sort
 // of output from the sampler, and so we use the fuel method again.
 val keygen_sample_while: 
     seed: lbytes params_kappa 
-  -> nonce: positive 
+  -> nonce: u16positive 
   -> checkFn: (poly_t -> bool) 
   -> fuel: nat 
-  -> Tot (option (tuple2 poly_t positive)) (decreases fuel)
+  -> Tot (option (tuple2 poly_t u16positive)) (decreases fuel)
 let rec keygen_sample_while seed nonce checkFn fuel =
   if fuel = 0 then None else
   let s = gaussSampler_poly seed nonce in
   if checkFn s then Some (s, nonce)
-               else keygen_sample_while seed (nonce + 1) checkFn (fuel - 1)
+               else let nonce = nonce +. (u16 1) in
+	            assume(uint_v nonce % maxint U16 <> 0);
+	            keygen_sample_while seed nonce checkFn (fuel - 1)
 
 assume val keygen_sample_oracle: 
     seed: lbytes params_kappa
-  -> nonce: nat{nonce > 0} 
+  -> nonce: u16positive
   -> checkFn: (poly_t -> bool) 
   -> Tot (fuel:nat{Some? (keygen_sample_while seed nonce checkFn fuel)})
 
@@ -399,10 +397,10 @@ let keygen_sampleE_while seedE nonce =
 
 val keygen_sampleE_step: 
     seedE:lbytes (params_kappa * params_k) 
-  -> nonce:positive 
+  -> nonce:u16positive 
   -> e:polys_t 
   -> i:size_nat{i <= Seq.length e} 
-  -> Tot (tuple2 polys_t positive) (decreases (Seq.length e - i))
+  -> Tot (tuple2 polys_t u16positive) (decreases (Seq.length e - i))
 let rec keygen_sampleE_step seedE nonce e i =
   if i = Seq.length e then 
     e, nonce
@@ -414,8 +412,8 @@ let rec keygen_sampleE_step seedE nonce e i =
 
 val keygen_sampleE: 
     seedE:(lbytes (params_kappa * params_k)) 
-  -> nonce:positive 
-  -> tuple2 polys_t positive
+  -> nonce:u16positive 
+  -> tuple2 polys_t u16positive
 let keygen_sampleE seedE nonce = 
   let e = create_polys in
   keygen_sampleE_step seedE nonce e 0
@@ -467,7 +465,7 @@ let qTesla_keygen =
   let seedY = Lib.Sequence.sub seedbuf seedY_begin seedY_len in
 
   let a = genA seedA in
-  let nonce = 1 in
+  let nonce = (u16 1) in
   let s, nonce = keygen_sampleS_while seedS nonce in
   let e, nonce = keygen_sampleE seedE nonce in
   let t = keygen_computeT a s e in
