@@ -19,8 +19,6 @@ open QTesla.Params
 (** qTesla often uses [pos] as a variable name, so we define a transparent synonym *)
 unfold let positive = pos
 
-unfold let u16positive = n:uint16{uint_v n > 0}
-
 (** Set this parameter to be the machine word size in bits. *)
 unfold let params_w = 64
 
@@ -207,6 +205,21 @@ let prf2 #mLen seedY r m =
   let concatenation = concat (concat seedY r) m in
   params_xof (length concatenation) concatenation params_kappa
 
+// qTESLA's spec uses natural numbers that it increments as nonces for
+// cSHAKE, but the implementation takes uint16s. Instead of junking the
+// spec up with statements about the nonces staying within the range of
+// a uint16, we encapulsate it here.
+val cshake128_qtesla:
+    input_len:size_nat
+  -> input:lbytes input_len
+  -> nonce:nat
+  -> output_len:size_nat
+  -> lbytes output_len
+let cshake128_qtesla input_len input nonce output_len =
+  assume(nonce < maxint U16);
+  let cstm = u16 nonce in
+  cshake128_frodo input_len input cstm output_len
+
 val genA_getC: 
     cBuf:bytes 
   -> cPos:size_nat{(cPos+1) * computed_b <= length cBuf} 
@@ -231,7 +244,7 @@ val genA_while:
     #seedALen:size_nat 
   -> seedA: lbytes seedALen 
   -> cBuf: bytes{length cBuf >= 2} 
-  -> s:uint16 
+  -> s:nat 
   -> a:polys_t 
   -> pos: size_nat{(pos+1) * computed_b <= length cBuf} 
   -> bPrime:size_nat{bPrime >= 1 /\ params_rateXOF * bPrime = length cBuf} 
@@ -245,8 +258,8 @@ let rec genA_while #seedALen seedA cBuf s a pos bPrime i fuel =
   then 
     let s, pos, bPrime, cBuf =
       if pos > ((params_rateXOF * bPrime) / computed_b) - 4 then 
-        let s, pos, bPrime = add_mod s (u16 1), 0, 1 in
-        let cBuf = cshake128_frodo seedALen seedA s (params_rateXOF * bPrime) in
+        let s, pos, bPrime = s + 1, 0, 1 in
+        let cBuf = cshake128_qtesla seedALen seedA s (params_rateXOF * bPrime) in
         s, pos, bPrime, cBuf
       else 
         s, pos, bPrime, cBuf 
@@ -266,7 +279,7 @@ val genA_oracle:
     #seedALen:size_nat 
   -> seedA: lbytes seedALen 
   -> cBuf: bytes 
-  -> s:uint16 
+  -> s:nat 
   -> a:polys_t 
   -> pos: size_nat{(pos+1) * computed_b < length cBuf} 
   -> bPrime:size_nat{bPrime >= 1 /\ params_rateXOF * bPrime = length cBuf} 
@@ -280,38 +293,35 @@ let genA #seedALen seedA =
   let i = 0 in
   let pos = 0 in
   let a = create_polys in
-  let fuel = genA_oracle seedA cBuf (u16 0) a pos bPrime i in
-  let res = genA_while seedA cBuf (u16 0) a pos bPrime i fuel in
+  let fuel = genA_oracle seedA cBuf 0 a pos bPrime i in
+  let res = genA_while seedA cBuf 0 a pos bPrime i fuel in
   Some?.v res
 
 // Nonce is called "nonce" to avoid confusion; in spec it is S.
 // gaussSampler is assumed because it has floating point math we can't
 // yet model in F*. random_bytes is assumed because it needs to come from
 // an underlying system source.
-//assume val gaussSampler: rand: (lbytes params_kappa) -> nonce: nat{nonce > 0} -> poly_t
-
 assume val random_bytes: n: size_nat -> lbytes n
 
 assume val berSampler: r: (lbytes (params_w / 8)) -> t:nat -> bit:nat{bit = 0 \/ bit = 1}
 
 val gaussSampler_doloop3: 
     rand: (lbytes params_kappa) 
-  -> nonce: u16positive
+  -> nonce: positive
   -> fuel: nat
-  -> Tot (option (tuple2 nat u16positive)) (decreases fuel)
+  -> Tot (option (tuple2 nat positive)) (decreases fuel)
 let rec gaussSampler_doloop3 rand nonce fuel =
   assert_norm(bytelen params_xi < max_size_t); // Need to prove this is a size_nat for use with cshake128_frodo.
   if fuel = 0 then None else
-  let y = nat_from_bytes_le (cshake128_frodo params_kappa rand nonce (bytelen params_xi)) in
-  let nonce = nonce +. (u16 1) in
-  assume(uint_v nonce % pow2 16 <> 0); // TODO 
+  let y = nat_from_bytes_le (cshake128_qtesla params_kappa rand nonce (bytelen params_xi)) in
+  let nonce = nonce + 1 in
   if y < params_xi - 1
   then Some (y, nonce)
   else gaussSampler_doloop3 rand nonce (fuel - 1)
 
 assume val gaussSampler_doloop3_oracle:
     rand: (lbytes params_kappa) 
-  -> nonce: u16positive
+  -> nonce: positive
   -> Tot (fuel:nat{Some? (gaussSampler_doloop3 rand nonce fuel)})
 
 // TODO: need to bound this computation. Why are we guaranteed to hit a
@@ -326,20 +336,18 @@ let rec gaussSampler_doloop10 r x =
   then x
   else gaussSampler_doloop10 r (x + 1)
 
-val gaussSampler_doloop2: rand: (lbytes params_kappa) -> nonce: u16positive -> fuel:nat -> Tot (option field_t) (decreases fuel)
+val gaussSampler_doloop2: rand: (lbytes params_kappa) -> nonce: positive -> fuel:nat -> Tot (option field_t) (decreases fuel)
 let rec gaussSampler_doloop2 rand nonce fuel =
     if fuel = 0 then None else
     let y, nonce = Some?.v (gaussSampler_doloop3 rand nonce (gaussSampler_doloop3_oracle rand nonce)) in
-    let r = nat_from_bytes_le (cshake128_frodo params_kappa rand nonce (params_w / 8)) in
-    let nonce = nonce +. (u16 1) in
-    assume(uint_v nonce % pow2 16 <> 0); // TODO 
+    let r = nat_from_bytes_le (cshake128_qtesla params_kappa rand nonce (params_w / 8)) in
+    let nonce = nonce + 1 in
     let x = 0 in
     let x = gaussSampler_doloop10 r x in
     let z:nat = params_xi * x + y in
     assume(z < params_q); // TODO: Patrick tells us this is true.
-    let r = cshake128_frodo params_kappa rand nonce (params_w / 8) in
-    let nonce = nonce +. (u16 1) in
-    assume(uint_v nonce % pow2 16 <> 0); // TODO 
+    let r = cshake128_qtesla params_kappa rand nonce (params_w / 8) in
+    let nonce = nonce + 1 in
     if (berSampler r (y * (y + 2 * params_xi * x)) = 0)
     then gaussSampler_doloop2 rand nonce (fuel - 1)
     else let b:nat = nat_from_bytes_le (random_bytes 1) in
@@ -351,17 +359,16 @@ let rec gaussSampler_doloop2 rand nonce fuel =
 	 
 assume val gaussSampler_doloop2_oracle: 
     rand: (lbytes params_kappa) 
-  -> nonce: u16positive 
+  -> nonce: positive 
   -> Tot (fuel:nat{Some? (gaussSampler_doloop2 rand nonce fuel)})
 
-val gaussSampler: rand: (lbytes params_kappa) -> nonce: u16positive -> Tot field_t
+val gaussSampler: rand: (lbytes params_kappa) -> nonce: positive -> Tot field_t
 let gaussSampler rand nonce =
-    let nonce = nonce *. (u16 256) in
-    assume(uint_v nonce % maxint U16 <> 0);
+    let nonce = nonce * (pow2 8) in
     let fuel = gaussSampler_doloop2_oracle rand nonce in
     Some?.v (gaussSampler_doloop2 rand nonce fuel)
 
-val gaussSampler_poly: rand: (lbytes params_kappa) -> nonce: u16positive -> Tot poly_t
+val gaussSampler_poly: rand: (lbytes params_kappa) -> nonce: positive -> Tot poly_t
 let gaussSampler_poly rand nonce =
     let p = create_poly in
     repeati params_n (fun i (p:poly_t) ->
@@ -371,21 +378,20 @@ let gaussSampler_poly rand nonce =
 // of output from the sampler, and so we use the fuel method again.
 val keygen_sample_while: 
     seed: lbytes params_kappa 
-  -> nonce: u16positive 
+  -> nonce: positive 
   -> checkFn: (poly_t -> bool) 
   -> fuel: nat 
-  -> Tot (option (tuple2 poly_t u16positive)) (decreases fuel)
+  -> Tot (option (tuple2 poly_t positive)) (decreases fuel)
 let rec keygen_sample_while seed nonce checkFn fuel =
   if fuel = 0 then None else
   let s = gaussSampler_poly seed nonce in
   if checkFn s then Some (s, nonce)
-               else let nonce = nonce +. (u16 1) in
-	            assume(uint_v nonce % maxint U16 <> 0);
+               else let nonce = nonce + 1 in
 	            keygen_sample_while seed nonce checkFn (fuel - 1)
 
 assume val keygen_sample_oracle: 
     seed: lbytes params_kappa
-  -> nonce: u16positive
+  -> nonce: positive
   -> checkFn: (poly_t -> bool) 
   -> Tot (fuel:nat{Some? (keygen_sample_while seed nonce checkFn fuel)})
 
@@ -397,10 +403,10 @@ let keygen_sampleE_while seedE nonce =
 
 val keygen_sampleE_step: 
     seedE:lbytes (params_kappa * params_k) 
-  -> nonce:u16positive 
+  -> nonce:positive 
   -> e:polys_t 
   -> i:size_nat{i <= Seq.length e} 
-  -> Tot (tuple2 polys_t u16positive) (decreases (Seq.length e - i))
+  -> Tot (tuple2 polys_t positive) (decreases (Seq.length e - i))
 let rec keygen_sampleE_step seedE nonce e i =
   if i = Seq.length e then 
     e, nonce
@@ -412,8 +418,8 @@ let rec keygen_sampleE_step seedE nonce e i =
 
 val keygen_sampleE: 
     seedE:(lbytes (params_kappa * params_k)) 
-  -> nonce:u16positive 
-  -> tuple2 polys_t u16positive
+  -> nonce:positive 
+  -> tuple2 polys_t positive
 let keygen_sampleE seedE nonce = 
   let e = create_polys in
   keygen_sampleE_step seedE nonce e 0
@@ -465,7 +471,7 @@ let qTesla_keygen =
   let seedY = Lib.Sequence.sub seedbuf seedY_begin seedY_len in
 
   let a = genA seedA in
-  let nonce = (u16 1) in
+  let nonce = 1 in
   let s, nonce = keygen_sampleS_while seedS nonce in
   let e, nonce = keygen_sampleE seedE nonce in
   let t = keygen_computeT a s e in
@@ -473,14 +479,14 @@ let qTesla_keygen =
   let pk = (seedA, t) in
   sk, pk
 
-let ySampler_XOF = cshake128_frodo
+let ySampler_XOF = cshake128_qtesla
 
 val ySampler_while: 
     rand: lbytes params_kappa 
   -> cBuf: bytes 
   -> p: size_nat 
   -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = length cBuf} 
-  -> sPrime: uint16 
+  -> sPrime: nat 
   -> i: size_nat{i <= params_n} 
   -> y: poly_t 
   -> fuel:nat 
@@ -491,7 +497,7 @@ let rec ySampler_while rand cBuf pos nPrime sPrime i y fuel =
   if i < params_n
   then let sPrime, pos, nPrime, cBuf =
     if pos >= nPrime 
-    then let sPrime, pos, nPrime = (add_mod sPrime (u16 1)), 0, params_rateXOF / b in
+    then let sPrime, pos, nPrime = sPrime + 1, 0, params_rateXOF / b in
          let cBuf = ySampler_XOF (length rand) rand sPrime params_rateXOF in
          sPrime, pos, nPrime, cBuf
     else sPrime, pos, nPrime, cBuf in
@@ -511,16 +517,16 @@ val ySampler_oracle:
   -> cBuf: bytes 
   -> pos: size_nat 
   -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = length cBuf} 
-  -> sPrime: uint16 
+  -> sPrime: nat 
   -> i: size_nat{i <= params_n} 
   -> y: poly_t 
   -> Tot (fuel:nat{Some? (ySampler_while rand cBuf pos nPrime sPrime i y fuel)})
 
-val ySampler: lbytes params_kappa -> uint16 -> poly_t
+val ySampler: rand: (lbytes params_kappa) -> nonce: positive -> poly_t
 let ySampler rand nonce =
   let b = computed_ySampler_b in
   let y = create_poly in
-  let pos, nPrime, sPrime = 0, params_n, (mul_mod nonce (u16 256)) in
+  let pos, nPrime, sPrime = 0, params_n, nonce * 256 in
   let cBuf = ySampler_XOF (length rand) rand sPrime (b * nPrime) in
   let i = 0 in
   let fuel = ySampler_oracle rand cBuf pos nPrime sPrime i y in
@@ -707,7 +713,7 @@ let test_w w =
     (lInfiniteNorm (fnL (Seq.index w i))) >= ((pow2 (params_d - 1)) - params_Le) ||
     (lInfiniteNorm (Seq.index w i)) >= (params_q / 2) - params_Le) res
     
-val qtesla_sign_step4: #mLen: size_nat{params_k * params_n + mLen <= max_size_t} -> m: (lbytes mLen) -> sk: qtesla_sk -> r: (lbytes params_kappa) -> rand: (lbytes params_kappa) -> counter:uint16 -> fuel:nat -> Tot (option qtesla_sig) (decreases fuel)
+val qtesla_sign_step4: #mLen: size_nat{params_k * params_n + mLen <= max_size_t} -> m: (lbytes mLen) -> sk: qtesla_sk -> r: (lbytes params_kappa) -> rand: (lbytes params_kappa) -> counter:positive -> fuel:nat -> Tot (option qtesla_sig) (decreases fuel)
 let rec qtesla_sign_step4 #mLen m sk r rand counter fuel =
   if fuel = 0 then None else
   let s, e, seedA, seedY = sk in
@@ -722,14 +728,14 @@ let rec qtesla_sign_step4 #mLen m sk r rand counter fuel =
   let c = enc cPrime in
   let z = y `poly_add` (s `poly_mul` c) in
   if test_rejection z
-  then qtesla_sign_step4 m sk r rand (add_mod counter (u16 1)) (fuel - 1)
+  then qtesla_sign_step4 m sk r rand (counter + 1) (fuel - 1)
   else let w:polys_t = create_polys in
        let w:polys_t = repeati params_k 
        (fun i (w:polys_t) -> 
 	 let (wi:poly_t) = ((Seq.index v i) `poly_sub` ((Seq.index e i) `poly_mul` c)) `poly_mod_pm` params_q in
 	 Seq.upd w i wi) w in
        if test_w w
-       then qtesla_sign_step4 m sk r rand (add_mod counter (u16 1)) (fuel - 1)
+       then qtesla_sign_step4 m sk r rand (counter + 1) (fuel - 1)
        else Some (z, cPrime)
 
 assume 
@@ -739,13 +745,13 @@ val qtesla_sign_oracle:
   -> sk: qtesla_sk 
   -> r: (lbytes params_kappa) 
   -> rand: (lbytes params_kappa) 
-  -> counter:uint16 
+  -> counter:positive 
   -> Tot (fuel:nat{Some? (qtesla_sign_step4 #mLen m sk r rand counter fuel)})
 
 val qtesla_sign: #mLen: size_nat{params_k * params_n + mLen <= max_size_t} -> m: (lbytes mLen) -> sk: qtesla_sk -> Tot qtesla_sig
 let qtesla_sign #mLen m sk =
   let s, e, seedA, seedY = sk in
-  let counter = (u16 0) in
+  let counter = 1 in
   let r = random_bytes params_kappa in
   let rand = prf2 seedY r m in
   let fuel = qtesla_sign_oracle m sk r rand counter in
