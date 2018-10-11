@@ -5,7 +5,7 @@ open Lib.IntTypes
 let params_lambda = 95 // security parameter
 let params_kappa = 32  // output length of hash function in bytes (spec lists them in bits, so convert)
 let params_n = 1024    // Dimension
-let params_xi = 100000 // Gaussian sampler scaling parameter, multiplied by 10000. 
+let params_xi = 10     // Gaussian sampler scaling parameter
 let params_k = 4       // #R-LWE samples (number of polynomials in e, t, a, etc)
 let params_q = 485978113 // modulus
 let params_h = 25      // # of nonzero entries of output elements of Enc
