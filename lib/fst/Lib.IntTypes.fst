@@ -15,9 +15,34 @@ let pow2_values n =
     assert_norm (pow2 64 = 0x10000000000000000);
     assert_norm (pow2 128 = 0x100000000000000000000000000000000)
 
-let sec_int_t (t:inttype) = pub_int_t t
 
-let sec_int_v #t (u:sec_int_t t) = pub_int_v #t u
+(* PUBLIC Machine Integers *)
+
+unfold inline_for_extraction 
+let pub_int_t (t:inttype) = machine_int_t t
+
+unfold inline_for_extraction
+let pub_int_v (#t:inttype) (x:pub_int_t t) : (n:nat{n <= maxint t}) = machine_int_v #t x
+
+(* SECRET Machine Integers *)
+
+inline_for_extraction let sec_int_t (t:inttype) = machine_int_t t
+
+unfold inline_for_extraction let sec_int_v #t (u:sec_int_t t) = machine_int_v #t u
+
+(* GENERIC (unsigned) Machine Integers *)
+
+inline_for_extraction
+let uint_t (t:inttype) (l:secrecy_level) =
+  match l with
+  | PUB -> pub_int_t t
+  | SEC -> sec_int_t t
+
+inline_for_extraction 
+let uint_v #t #l (u:uint_t t l) : n:nat{n <= maxint t} =
+  match l with
+  | PUB -> pub_int_v #t u
+  | SEC -> sec_int_v #t u
 
 let uintv_extensionality #t #l a b =
   match t with
@@ -28,9 +53,11 @@ let uintv_extensionality #t #l a b =
   | U64  -> UInt64.v_inj a b
   | U128 -> UInt128.v_inj a b
 
+
 (* Declared in .fsti: uint8, uint16, uint32, uint64, uint128 *)
 
 let secret #t x = x
+let public #t x = x
 
 let u8 x : uint8  = UInt8.uint_to_t x
 
@@ -115,6 +142,9 @@ let cast #t #l t' l' u  =
   | U128, U128 -> u
 
 #reset-options "--z3rlimit 100"
+
+let to_secret #t u = u
+
 
 let add_mod #t #l a b =
   match t with

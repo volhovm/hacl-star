@@ -56,10 +56,9 @@ inline_for_extraction
 unfold let maxint (t:inttype) =
   modulus t - 1
 
-(* PUBLIC Machine Integers *)
-
+(* Machine Integers *)
 inline_for_extraction
-unfold let pub_int_t (t:inttype) =
+unfold let machine_int_t (t:inttype) =
   match t with
   | U1 -> u:UInt8.t{UInt8.v u < 2}
   | U8 -> UInt8.t
@@ -68,8 +67,8 @@ unfold let pub_int_t (t:inttype) =
   | U64 -> UInt64.t
   | U128 -> UInt128.t
 
-inline_for_extraction
-let pub_int_v #t (x:pub_int_t t) : (n:nat{n <= maxint t}) =
+unfold inline_for_extraction
+let machine_int_v #t (x:machine_int_t t) : (n:nat{n <= maxint t}) =
   match t with
   | U1 -> UInt8.v x
   | U8 -> UInt8.v x
@@ -78,31 +77,21 @@ let pub_int_v #t (x:pub_int_t t) : (n:nat{n <= maxint t}) =
   | U64 -> UInt64.v x
   | U128 -> UInt128.v x
 
-(* SECRET Machine Integers *)
 
+(* Integers with Public/Secret secrecy levels *)
 type secrecy_level =
   | SEC
   | PUB
 
 inline_for_extraction
-val sec_int_t: t:inttype -> Type0
+val uint_t: t:inttype -> l:secrecy_level -> Type0
 
 inline_for_extraction
-val sec_int_v: #t:inttype -> u:sec_int_t t -> n:nat{n <= maxint t}
+val uint_v: #t:inttype -> #l:secrecy_level -> uint_t t l -> n:nat{n <= maxint t} 
 
-(* GENERIC (unsigned) Machine Integers *)
-
-inline_for_extraction
-let uint_t (t:inttype) (l:secrecy_level) =
-  match l with
-  | PUB -> pub_int_t t
-  | SEC -> sec_int_t t
-
-unfold
-let uint_v #t #l (u:uint_t t l) : n:nat{n <= maxint t} =
-  match l with
-  | PUB -> pub_int_v #t u
-  | SEC -> sec_int_v #t u
+// Shorter abbreviation for uint_v
+unfold inline_for_extraction
+let v (#t:inttype) (#l:secrecy_level) (u:uint_t t l): n:nat{n <= maxint t}  = uint_v #t #l u
 
 val uintv_extensionality:
    #t:inttype
@@ -164,7 +153,10 @@ unfold type pub_uint128 = uint_t U128 PUB
 ///
 
 inline_for_extraction
-val secret: #t:inttype -> u:uint_t t PUB -> v:uint_t t SEC{uint_v v == uint_v u}
+val secret: #t:inttype -> u:machine_int_t t -> v:uint_t t SEC{uint_v v == machine_int_v u}
+
+inline_for_extraction
+val public: #t:inttype -> u:machine_int_t t -> v:uint_t t PUB{uint_v v == machine_int_v u}
 
 inline_for_extraction
 val u8: (n:nat{n <= maxint U8}) -> u:uint8{uint_v #U8 u == n}
@@ -190,14 +182,14 @@ unfold type size_nat = n:nat{n <= max_size_t}
 inline_for_extraction
 val size: n:size_nat -> u:size_t{uint_v u == n}
 
-inline_for_extraction
-let size_v (s:size_t) : n:size_nat{uint_v s == n} = pub_int_v s
+unfold inline_for_extraction
+let size_v (s:size_t) : n:size_nat{uint_v s == n} = uint_v s
 
 inline_for_extraction
 val byte: n:nat{n < 256} -> u:byte_t{uint_v u == n}
 
 inline_for_extraction
-let byte_v (s:byte_t) : n:size_nat{uint_v s == n} = pub_int_v (s <: pub_int_t U8)
+let byte_v (s:byte_t) : n:size_nat{uint_v s == n} = uint_v s
 
 inline_for_extraction
 val size_to_uint32: s:size_t -> u:uint32{u == u32 (size_v s)}
@@ -212,6 +204,9 @@ inline_for_extraction
 val cast: #t:inttype -> #l:secrecy_level
           -> t':inttype -> l':secrecy_level {PUB? l \/ SEC? l'}
           -> u1:uint_t t l -> u2:uint_t t' l'{uint_v u2 == uint_v u1 % modulus t'}
+
+inline_for_extraction
+val to_secret: #t:inttype -> u:uint_t t PUB -> v:uint_t t SEC{uint_v v == uint_v u}
 
 inline_for_extraction
 let to_u8 #t #l u : uint8 = cast #t #l U8 SEC u
@@ -520,9 +515,4 @@ inline_for_extraction
 let (>=.) #t = gte #t
 
 
-inline_for_extraction
-let p_t (t:inttype) = 
-  match t with
-  | U32 -> UInt32.t
-  | _ -> UInt64.t
 
