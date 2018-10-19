@@ -34,6 +34,12 @@ inline_for_extraction let size_block (a:alg) : size_nat = size_block_w * (size_w
 inline_for_extraction let size_const_iv : size_nat = 8
 inline_for_extraction let size_const_sigma : size_nat = 160
 
+inline_for_extraction
+let max_output (a:alg) =
+  match a with
+  | Blake2S -> 32
+  | Blake2B -> 64
+
 
 (* Definition of base types *)
 inline_for_extraction
@@ -62,7 +68,8 @@ let nat_to_limb (a:alg) (x:nat{x <= max_limb a}) : xl:limb_t a{uint_v xl == x} =
   | U64 -> u128 x
 
 inline_for_extraction
-let word_to_limb (a:alg) (x:word_t a{uint_v x <= max_limb a}) : xl:limb_t a{uint_v xl == uint_v x} =
+let word_to_limb (a:alg) (x:word_t a{uint_v x <= max_limb a})
+: (xl:limb_t a{uint_v xl == uint_v x /\ uint_v xl == uint_v (nat_to_limb a (uint_v x))}) =
   match (wt a) with
   | U32 -> to_u64 x
   | U64 -> to_u128 x
@@ -97,11 +104,11 @@ let rTable (a:alg) : rtable_t a =
 
 [@"opaque_to_smt"]
 inline_for_extraction
-let list_iv_S: l:List.Tot.llist size_t 8 =
+let list_iv_S: l:List.Tot.llist (uint_t U32 PUB) 8 =
   [@inline_let]
   let l = [
-    0x6A09E667ul; 0xBB67AE85ul; 0x3C6EF372ul; 0xA54FF53Aul;
-    0x510E527Ful; 0x9B05688Cul; 0x1F83D9ABul; 0x5BE0CD19ul] in
+    public 0x6A09E667ul; public 0xBB67AE85ul; public 0x3C6EF372ul; public 0xA54FF53Aul;
+    public 0x510E527Ful; public 0x9B05688Cul; public 0x1F83D9ABul; public 0x5BE0CD19ul] in
   assert_norm(List.Tot.length l == 8);
   l
 
@@ -110,10 +117,10 @@ inline_for_extraction
 let list_iv_B: List.Tot.llist (uint_t U64 PUB) 8 =
   [@inline_let]
   let l = [
-    0x6A09E667F3BCC908uL; 0xBB67AE8584CAA73BuL;
-    0x3C6EF372FE94F82BuL; 0xA54FF53A5F1D36F1uL;
-    0x510E527FADE682D1uL; 0x9B05688C2B3E6C1FuL;
-    0x1F83D9ABFB41BD6BuL; 0x5BE0CD19137E2179uL] in
+    public 0x6A09E667F3BCC908uL; public 0xBB67AE8584CAA73BuL;
+    public 0x3C6EF372FE94F82BuL; public 0xA54FF53A5F1D36F1uL;
+    public 0x510E527FADE682D1uL; public 0x9B05688C2B3E6C1FuL;
+    public 0x1F83D9ABFB41BD6BuL; public 0x5BE0CD19137E2179uL] in
   assert_norm(List.Tot.length l == 8);
   l
 
@@ -268,7 +275,7 @@ val blake2_compress1:
   Tot (vector_ws a)
 
 let blake2_compress1 a wv s m offset flag =
-  let iv = map secret (ivTable a) in
+  let iv = map to_secret (ivTable a) in
   let wv = update_sub wv 0 8 s in
   let wv = update_sub wv 8 8 iv in
   let low_offset = limb_to_word a offset in
@@ -346,11 +353,11 @@ let blake2_update_block a prev d s =
 val blake2_init_hash:
     a:alg
   -> kk:size_nat{kk <= 32}
-  -> nn:size_nat{1 <= nn /\ nn <= 32} ->
+  -> nn:size_nat{1 <= nn /\ nn <= max_output a} ->
   Tot (hash_ws a)
 
 let blake2_init_hash a kk nn =
-  let s = map secret (ivTable a) in
+  let s = map to_secret (ivTable a) in
   let s0 = s.[0] in
   let s0' = s0 ^. (nat_to_word a 0x01010000) ^. ((nat_to_word a kk) <<. (size 8)) ^. (nat_to_word a nn) in
   s.[0] <- s0'
@@ -359,7 +366,7 @@ val blake2_init:
     a:alg
   -> kk:size_nat{kk <= 32}
   -> k:lbytes kk
-  -> nn:size_nat{1 <= nn /\ nn <= 32} ->
+  -> nn:size_nat{1 <= nn /\ nn <= max_output a} ->
   Tot (hash_ws a)
 
 let blake2_init a kk k nn =
@@ -404,7 +411,7 @@ let blake2_update a s d kk =
 val blake2_finish:
     a:alg
   -> s:hash_ws a
-  -> nn:size_nat{1 <= nn /\ nn <= 32} ->
+  -> nn:size_nat{1 <= nn /\ nn <= max_output a} ->
   Tot (lbytes nn)
 
 let blake2_finish a s nn =
@@ -417,7 +424,7 @@ val blake2:
   -> d:bytes
   -> kk:size_nat{kk <= 32 /\ (if kk = 0 then length d <= max_limb a else length d + (size_block a) <= max_limb a)}
   -> k:lbytes kk
-  -> nn:size_nat{1 <= nn /\ nn <= 32} ->
+  -> nn:size_nat{1 <= nn /\ nn <= max_output a} ->
   Tot (lbytes nn)
 
 let blake2 a d kk k nn =
@@ -440,7 +447,7 @@ val blake2b:
     d:bytes
   -> kk:size_nat{kk <= 32 /\ (if kk = 0 then length d < pow2 128 else length d + 128  < pow2 128)}
   -> k:lbytes kk
-  -> nn:size_nat{1 <= nn /\ nn <= 32} ->
+  -> nn:size_nat{1 <= nn /\ nn <= 64} ->
   Tot (lbytes nn)
 
 let blake2b d kk k n = blake2 Blake2B d kk k n
