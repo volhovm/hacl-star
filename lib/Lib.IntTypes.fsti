@@ -87,7 +87,7 @@ inline_for_extraction
 val uint_t: t:inttype -> l:secrecy_level -> Type0
 
 inline_for_extraction
-val uint_v: #t:inttype -> #l:secrecy_level -> uint_t t l -> n:nat{n <= maxint t} 
+val uint_v: #t:inttype -> #l:secrecy_level -> uint_t t l -> n:nat{n <= maxint t}
 
 // Shorter abbreviation for uint_v
 unfold inline_for_extraction
@@ -513,6 +513,3 @@ let (>.) #t = gt #t
 
 inline_for_extraction
 let (>=.) #t = gte #t
-
-
-

@@ -365,7 +365,7 @@ val memset:
     (requires fun h0 -> live h0 b)
     (ensures  fun h0 _ h1 ->
       modifies1 b h0 h1 /\
-      as_seq #a #(v len) h1 (gsub b 0ul len) == Seq.create (v len) w /\
+      as_seq #a #(v len) h1 (gsub b (size 0) len) == Seq.create (v len) w /\
       as_seq #a #(blen - v len) h1 (gsub b len (size blen -! len)) ==
       as_seq #a #(blen - v len) h0 (gsub b len (size blen -! len)))
 
@@ -670,6 +670,3 @@ val loop_blocks:
       B.modifies (B.loc_buffer write) h0 h1 /\
       as_seq h1 write ==
       Seq.repeat_blocks #a #(Seq.lseq b blen) (v blocksize) (as_seq h0 inp) spec_f spec_l (as_seq h0 write))
- 
-
-

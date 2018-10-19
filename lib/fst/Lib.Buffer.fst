@@ -81,7 +81,7 @@ let icopy #a #len o clen i =
   assert (Seq.slice #a #len (B.as_seq h1 o) 0 len == Seq.slice #a #len (B.as_seq h0 i) 0 len)
 
 let memset #a #blen b init len =
-  B.fill #a b init len
+  B.fill #a b init (size_to_UInt32 len)
 
 let update_sub #a #len dst start n src =
   let h0 = ST.get () in
@@ -131,7 +131,7 @@ let salloc1 #a #res h len x footprint spec spec_inv impl =
   push_frame();
   let h1 = ST.get() in
   B.fresh_frame_modifies h0 h1;
-  let b = B.alloca x len in
+  let b = B.alloca x (size_to_UInt32 len) in
   let h2 = ST.get() in
   let r = impl b in
   let h3 = ST.get() in

@@ -18,7 +18,7 @@ let pow2_values n =
 
 (* PUBLIC Machine Integers *)
 
-unfold inline_for_extraction 
+unfold inline_for_extraction
 let pub_int_t (t:inttype) = machine_int_t t
 
 unfold inline_for_extraction
@@ -38,7 +38,7 @@ let uint_t (t:inttype) (l:secrecy_level) =
   | PUB -> pub_int_t t
   | SEC -> sec_int_t t
 
-inline_for_extraction 
+inline_for_extraction
 let uint_v #t #l (u:uint_t t l) : n:nat{n <= maxint t} =
   match l with
   | PUB -> pub_int_v #t u
@@ -422,4 +422,3 @@ let gte #t x y =
   | U32 -> UInt32.gte x y
   | U64 -> UInt64.gte x y
   | U128 -> UInt128.gte x y
-
