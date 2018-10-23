@@ -14,6 +14,8 @@ open Lib.RawIntTypes
 open Spec.SHA3
 open QTesla.Params
 
+module Loops = Lib.LoopCombinators
+
 #reset-options "--z3rlimit 50 --max_fuel 0 --max_ifuel 1"
 
 (** qTesla often uses [pos] as a variable name, so we define a transparent synonym *)
@@ -138,14 +140,14 @@ let poly_pointwise_mul a b = map2 fmul a b
 val ntt: poly_t -> poly_t
 let ntt p =
   let np = p in
-  repeati params_k (fun i (np:poly_t) ->
-		 Seq.upd np i (repeati params_k (fun j x -> x ++ ((computed_phi ^^ j) ** (Seq.index p j) ** (computed_omega ^^ (i * j)))) 0)) np
+  Loops.repeati params_k (fun i (np:poly_t) ->
+		 Seq.upd np i (Loops.repeati params_k (fun j x -> x ++ ((computed_phi ^^ j) ** (Seq.index p j) ** (computed_omega ^^ (i * j)))) 0)) np
 
 val inv_ntt: poly_t -> poly_t
 let inv_ntt p =
   let np = p in
-  repeati params_n (fun i (np:poly_t) ->
-		 Seq.upd np i (computed_n_inv ** (computed_phi_inv ^^ i) ** repeati params_n (fun j x -> x ++ ((Seq.index p j) ** (computed_omega_inv ^^ (i * j)))) 0)) np
+  Loops.repeati params_n (fun i (np:poly_t) ->
+		 Seq.upd np i (computed_n_inv ** (computed_phi_inv ^^ i) ** Loops.repeati params_n (fun j x -> x ++ ((Seq.index p j) ** (computed_omega_inv ^^ (i * j)))) 0)) np
 
 (* a * b (mod q); a, b \in \mathcal{R}_q/<x^n+1> *)
 (* qTESLA specific assumption: a is always in NTT form, and b is always in standard form. Use poly_mul for two polynomials in standard form. *)
@@ -196,7 +198,7 @@ val prf1: lbytes params_kappa -> lbytes (params_kappa * (params_k+3))
 let prf1 preseed = params_xof params_kappa preseed (params_kappa * (params_k+3))
 
 val prf2: 
-    #mLen:size_nat{mLen < maxint SIZE - 2 * params_kappa} 
+    #mLen:size_nat{mLen < max_size_t - 2 * params_kappa} 
   -> seedY:lbytes params_kappa 
   -> r:lbytes params_kappa 
   -> m:lbytes mLen 
@@ -221,7 +223,7 @@ let cshake128_qtesla input_len input nonce output_len =
   cshake128_frodo input_len input cstm output_len
 
 val genA_getC: 
-    cBuf:bytes 
+    cBuf:bytes{length cBuf < max_size_t} 
   -> cPos:size_nat{(cPos+1) * computed_b <= length cBuf} 
   -> size_nat
 let genA_getC cBuf cPos = 
@@ -243,7 +245,7 @@ So at their suggestion this code takes a different approach: We define the funct
 val genA_while: 
     #seedALen:size_nat 
   -> seedA: lbytes seedALen 
-  -> cBuf: bytes{length cBuf >= 2} 
+  -> cBuf: bytes{length cBuf < max_size_t /\ length cBuf >= 2} 
   -> s:nat 
   -> a:polys_t 
   -> pos: size_nat{(pos+1) * computed_b <= length cBuf} 
@@ -278,7 +280,7 @@ assume
 val genA_oracle: 
     #seedALen:size_nat 
   -> seedA: lbytes seedALen 
-  -> cBuf: bytes 
+  -> cBuf: bytes{length cBuf < max_size_t /\ length cBuf >= 2} 
   -> s:nat 
   -> a:polys_t 
   -> pos: size_nat{(pos+1) * computed_b < length cBuf} 
@@ -371,7 +373,7 @@ let gaussSampler rand nonce =
 val gaussSampler_poly: rand: (lbytes params_kappa) -> nonce: positive -> Tot poly_t
 let gaussSampler_poly rand nonce =
     let p = create_poly in
-    repeati params_n (fun i (p:poly_t) ->
+    Loops.repeati params_n (fun i (p:poly_t) ->
                         Seq.upd p i (gaussSampler rand nonce)) p
 
 // Termination is probabilistic due to the need to get the right sort
@@ -426,7 +428,7 @@ let keygen_sampleE seedE nonce =
 
 val poly_mod: f:poly_t -> n:nat{2 <= n /\ n <= params_q} -> poly_t
 let poly_mod f n =
-  repeati (Seq.length f)
+  Loops.repeati (Seq.length f)
   (fun i (f:poly_t) ->
     let fi = (Seq.index f i) % n in
     Seq.upd f i fi) f
@@ -483,7 +485,7 @@ let ySampler_XOF = cshake128_qtesla
 
 val ySampler_while: 
     rand: lbytes params_kappa 
-  -> cBuf: bytes 
+  -> cBuf: bytes{length cBuf < max_size_t /\ length cBuf >= 2} 
   -> p: size_nat 
   -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = length cBuf} 
   -> sPrime: nat 
@@ -514,7 +516,7 @@ let rec ySampler_while rand cBuf pos nPrime sPrime i y fuel =
 assume 
 val ySampler_oracle: 
     rand: lbytes params_kappa 
-  -> cBuf: bytes 
+  -> cBuf: bytes{length cBuf < max_size_t /\ length cBuf >= 2} 
   -> pos: size_nat 
   -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = length cBuf} 
   -> sPrime: nat 
@@ -539,8 +541,8 @@ val hashH:
   -> lbytes params_kappa
 let hashH #mlen v m =
   let w = Lib.Sequence.create (params_k * params_n + mlen) (u8 0) in
-  let w = repeati params_k
-    (fun i w -> repeati params_n
+  let w = Loops.repeati params_k
+    (fun i w -> Loops.repeati params_n
       (fun j w -> let vij:field_t = (Seq.index (Seq.index v i) j) in
                assert_norm(vij % (pow2 params_d) >= 0);
 	       assert_norm(vij % (pow2 params_d) < pow2 params_d);
@@ -557,7 +559,7 @@ let hashH #mlen v m =
 	       w.[i * params_n + j] <- wi
       ) w
     ) w in
-  let w = repeati mlen
+  let w = Loops.repeati mlen
     (fun i w -> w.[params_k * params_n + i] <- m.[i]) w in
   let cPrime = params_hash_shake (length w) w params_kappa in
   cPrime
@@ -644,7 +646,7 @@ let intL n =
 // mod_pm: R_q x Z -> R_q
 val poly_mod_pm: poly_t -> n:nat{n >= 2} -> poly_t
 let poly_mod_pm f n =
-  repeati (Seq.length f)
+  Loops.repeati (Seq.length f)
   (fun i (f:poly_t) ->
     let fi = (Seq.index f i) `mod_pm` n in
     Seq.upd f i fi) f
@@ -665,7 +667,7 @@ let intM c =
 // [*]_M: R_q -> R_q
 val fnM: f: poly_t -> Tot poly_t
 let fnM f =
-  repeati (Seq.length f)
+  Loops.repeati (Seq.length f)
   (fun i (f:poly_t) ->
     let fi = intM (Seq.index f i) in
     Seq.upd f i fi) f
@@ -673,7 +675,7 @@ let fnM f =
 // [*]_M applied to a set of polynomials f_1, ..., f_k
 val polysM: p: polys_t -> Tot polys_t
 let polysM p =
-  repeati (Seq.length p)
+  Loops.repeati (Seq.length p)
   (fun i (p:polys_t) ->
     let pi = fnM (Seq.index p i) in
     Seq.upd p i pi) p
@@ -682,14 +684,14 @@ let polysM p =
 val test_rejection: z:poly_t -> Tot bool
 let test_rejection z =
   let (res:bool) = false in
-  repeati params_n
+  Loops.repeati params_n
   (fun i res -> res || ((abs (Seq.index z i)) > (params_B - params_Ls))) res
 
 // Returns true if the polynomial is rejected. Used in verification.
 val test_z: z:poly_t -> Tot bool
 let test_z z =
   let (res:bool) = false in
-  repeati params_n
+  Loops.repeati params_n
   (fun i res -> res || 
              ((Seq.index z i) < -(params_B - params_Ls)) ||
 	     ((Seq.index z i) > (params_B - params_Ls))) res
@@ -702,13 +704,13 @@ let max x y = if x >= y then x else y
 val lInfiniteNorm: p:poly_t -> Tot field_t
 let lInfiniteNorm p =
   let maxVal:field_t = (abs (Seq.index p 0)) in
-  repeati (params_n - 1)
+  Loops.repeati (params_n - 1)
   (fun i (maxVal:field_t) -> max maxVal (abs (Seq.index p (i+1)))) maxVal
  
 val test_w: w:polys_t -> Tot bool
 let test_w w =
   let (res:bool) = false in
-  repeati params_k
+  Loops.repeati params_k
   (fun i res -> res || 
     (lInfiniteNorm (fnL (Seq.index w i))) >= ((pow2 (params_d - 1)) - params_Le) ||
     (lInfiniteNorm (Seq.index w i)) >= (params_q / 2) - params_Le) res
@@ -720,7 +722,7 @@ let rec qtesla_sign_step4 #mLen m sk r rand counter fuel =
   let y = ySampler rand counter in
   let a = genA seedA in
   let v:polys_t = Seq.create params_k (Seq.create params_n 0) in
-  let v = repeati params_k 
+  let v = Loops.repeati params_k 
     (fun i (v:polys_t) -> 
       let vi:poly_t = ((Seq.index a i) `poly_ntt_mul` y) `poly_mod_pm` params_q in
       Seq.upd v i vi) v in
@@ -730,7 +732,7 @@ let rec qtesla_sign_step4 #mLen m sk r rand counter fuel =
   if test_rejection z
   then qtesla_sign_step4 m sk r rand (counter + 1) (fuel - 1)
   else let w:polys_t = create_polys in
-       let w:polys_t = repeati params_k 
+       let w:polys_t = Loops.repeati params_k 
        (fun i (w:polys_t) -> 
 	 let (wi:poly_t) = ((Seq.index v i) `poly_sub` ((Seq.index e i) `poly_mul` c)) `poly_mod_pm` params_q in
 	 Seq.upd w i wi) w in
@@ -773,7 +775,7 @@ let qtesla_verify #mLen m sig pk =
   let c = enc cPrime in
   let a = genA seedA in
   let w = create_polys in
-  let w = repeati params_k
+  let w = Loops.repeati params_k
     (fun i (w:polys_t) -> 
       let ai = Seq.index a i in
       let ti = Seq.index t i in
