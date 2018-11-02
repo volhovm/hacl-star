@@ -1,13 +1,10 @@
 module Spec.QTesla
 
 open FStar.List.Tot
-open FStar.Seq
-open FStar.List.Tot
 open FStar.Math.Lemmas
 open FStar.Mul
 
 open Lib.IntTypes
-open Lib.Sequence
 open Lib.ByteSequence
 open Lib.RawIntTypes
 
@@ -15,6 +12,8 @@ open Spec.SHA3
 open QTesla.Params
 
 module Loops = Lib.LoopCombinators
+module Seq = Lib.Sequence
+module FSeq = FStar.Seq
 
 #reset-options "--z3rlimit 50 --max_fuel 0 --max_ifuel 1"
 
@@ -71,7 +70,7 @@ let qtesla_sk = poly_t & polys_t & (lbytes params_kappa) & (lbytes params_kappa)
 let qtesla_pk = (lbytes params_kappa) & polys_t
 let qtesla_sig = poly_t & (lbytes params_kappa)
 
-val to_lseq: #a:Type0 -> s:Seq.seq a -> l:Seq.lseq a (Seq.length s){l == s}
+val to_lseq: #a:Type0 -> s:Seq.seq a{Seq.length s <= max_size_t} -> l:Seq.lseq a (Seq.length s){l == s}
 let to_lseq #a s = s
 
 let create_poly : poly_t = to_lseq (Seq.create params_n 0)
@@ -169,8 +168,13 @@ let rec sum l =
   | [] -> 0
   | hd :: tl -> hd + sum tl
 
-val sort_coefficients: poly_t -> poly_t
-let sort_coefficients p = Seq.sort_lseq (<=) p
+val sort_lseq: #a:eqtype -> #n:size_nat -> (f:FStar.Seq.tot_ord a) -> (s:Seq.lseq a n) -> s':Seq.lseq a n{FSeq.sorted f s' /\ FSeq.permutation a s s'}
+let sort_lseq #a #n f s = 
+  let fs:FSeq.lseq a n = s in
+  FSeq.sort_lseq #a #n f fs
+
+val sort_coefficients: p:poly_t -> poly_t
+let sort_coefficients p = sort_lseq (<=) p
   
 val poly_max_sum_helper: sorted:poly_t -> h:nat{h < Seq.length sorted} -> int
 let rec poly_max_sum_helper sorted h =
@@ -182,7 +186,7 @@ let rec poly_max_sum_helper sorted h =
 val poly_max_sum: p:poly_t -> h:nat{h < Seq.length p} -> int
 let poly_max_sum p h =
   let sorted = sort_coefficients p in
-  perm_len sorted p;
+  FSeq.perm_len sorted p;
   poly_max_sum_helper sorted h
   
 // Sum the h largest coefficients of s, and return true if bounded by L_s
@@ -204,8 +208,8 @@ val prf2:
   -> m:lbytes mLen 
   -> lbytes params_kappa
 let prf2 #mLen seedY r m =
-  let concatenation = concat (concat seedY r) m in
-  params_xof (length concatenation) concatenation params_kappa
+  let concatenation = Seq.concat (Seq.concat seedY r) m in
+  params_xof (Seq.length concatenation) concatenation params_kappa
 
 // qTESLA's spec uses natural numbers that it increments as nonces for
 // cSHAKE, but the implementation takes uint16s. Instead of junking the
@@ -223,11 +227,11 @@ let cshake128_qtesla input_len input nonce output_len =
   cshake128_frodo input_len input cstm output_len
 
 val genA_getC: 
-    cBuf:bytes{length cBuf < max_size_t} 
-  -> cPos:size_nat{(cPos+1) * computed_b <= length cBuf} 
+    cBuf:bytes{Seq.length cBuf < max_size_t} 
+  -> cPos:size_nat{(cPos+1) * computed_b <= Seq.length cBuf} 
   -> size_nat
 let genA_getC cBuf cPos = 
-  let subbuffer = slice (to_lbytes cBuf) (cPos * computed_b) ((cPos+1) * computed_b) in
+  let subbuffer = Seq.slice (to_lbytes cBuf) (cPos * computed_b) ((cPos+1) * computed_b) in
   nat_from_bytes_le subbuffer
 
 val genA_updateA: polys_t -> i:nat{i < params_k * params_n} -> field_t -> polys_t
@@ -245,11 +249,11 @@ So at their suggestion this code takes a different approach: We define the funct
 val genA_while: 
     #seedALen:size_nat 
   -> seedA: lbytes seedALen 
-  -> cBuf: bytes{length cBuf < max_size_t /\ length cBuf >= 2} 
+  -> cBuf: bytes{Seq.length cBuf < max_size_t /\ Seq.length cBuf >= 2} 
   -> s:nat 
   -> a:polys_t 
-  -> pos: size_nat{(pos+1) * computed_b <= length cBuf} 
-  -> bPrime:size_nat{bPrime >= 1 /\ params_rateXOF * bPrime = length cBuf} 
+  -> pos: size_nat{(pos+1) * computed_b <= Seq.length cBuf} 
+  -> bPrime:size_nat{bPrime >= 1 /\ params_rateXOF * bPrime = Seq.length cBuf} 
   -> i:nat 
   -> fuel:nat 
   -> Tot (option polys_t) (decreases %[(params_k * params_n - i); fuel])
@@ -280,11 +284,11 @@ assume
 val genA_oracle: 
     #seedALen:size_nat 
   -> seedA: lbytes seedALen 
-  -> cBuf: bytes{length cBuf < max_size_t /\ length cBuf >= 2} 
+  -> cBuf: bytes{Seq.length cBuf < max_size_t /\ Seq.length cBuf >= 2} 
   -> s:nat 
   -> a:polys_t 
-  -> pos: size_nat{(pos+1) * computed_b < length cBuf} 
-  -> bPrime:size_nat{bPrime >= 1 /\ params_rateXOF * bPrime = length cBuf} 
+  -> pos: size_nat{(pos+1) * computed_b < Seq.length cBuf} 
+  -> bPrime:size_nat{bPrime >= 1 /\ params_rateXOF * bPrime = Seq.length cBuf} 
   -> i:nat 
   -> Tot (fuel:nat{Some? (genA_while #seedALen seedA cBuf s a pos bPrime i fuel)})
   
@@ -413,7 +417,7 @@ let rec keygen_sampleE_step seedE nonce e i =
   if i = Seq.length e then 
     e, nonce
   else 
-    let seedEi = Lib.Sequence.sub seedE (i * params_kappa) params_kappa in
+    let seedEi = Seq.sub seedE (i * params_kappa) params_kappa in
     let ei, nonce = keygen_sampleE_while seedEi nonce in
     let e = Seq.upd e i ei in
     keygen_sampleE_step seedE nonce e (i + 1)
@@ -458,19 +462,19 @@ let qTesla_keygen =
   let seedbuf = prf1 preseed in
   let seedS_begin = 0 in
   let seedS_len = params_kappa in
-  let seedS = Lib.Sequence.sub seedbuf seedS_begin seedS_len in
+  let seedS = Seq.sub seedbuf seedS_begin seedS_len in
 
   let seedE_begin = seedS_begin + seedS_len in
   let seedE_len = params_k * params_kappa in
-  let seedE = Lib.Sequence.sub seedbuf seedE_begin seedE_len in
+  let seedE = Seq.sub seedbuf seedE_begin seedE_len in
 
   let seedA_begin = seedE_begin + seedE_len in
   let seedA_len = params_kappa in
-  let seedA = Lib.Sequence.sub seedbuf seedA_begin seedA_len in
+  let seedA = Seq.sub seedbuf seedA_begin seedA_len in
 
   let seedY_begin = seedA_begin + seedA_len in
   let seedY_len = params_kappa in
-  let seedY = Lib.Sequence.sub seedbuf seedY_begin seedY_len in
+  let seedY = Seq.sub seedbuf seedY_begin seedY_len in
 
   let a = genA seedA in
   let nonce = 1 in
@@ -485,9 +489,9 @@ let ySampler_XOF = cshake128_qtesla
 
 val ySampler_while: 
     rand: lbytes params_kappa 
-  -> cBuf: bytes{length cBuf < max_size_t /\ length cBuf >= 2} 
+  -> cBuf: bytes{Seq.length cBuf < max_size_t /\ Seq.length cBuf >= 2} 
   -> p: size_nat 
-  -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = length cBuf} 
+  -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = Seq.length cBuf} 
   -> sPrime: nat 
   -> i: size_nat{i <= params_n} 
   -> y: poly_t 
@@ -500,10 +504,10 @@ let rec ySampler_while rand cBuf pos nPrime sPrime i y fuel =
   then let sPrime, pos, nPrime, cBuf =
     if pos >= nPrime 
     then let sPrime, pos, nPrime = sPrime + 1, 0, params_rateXOF / b in
-         let cBuf = ySampler_XOF (length rand) rand sPrime params_rateXOF in
+         let cBuf = ySampler_XOF (Seq.length rand) rand sPrime params_rateXOF in
          sPrime, pos, nPrime, cBuf
     else sPrime, pos, nPrime, cBuf in
-    let yi = (nat_from_bytes_le (slice (to_lbytes cBuf) (pos * b) ((pos + 1) * b))) % (pow2 computed_ySampler_modulus) - params_B in
+    let yi = (nat_from_bytes_le (Seq.slice (to_lbytes cBuf) (pos * b) ((pos + 1) * b))) % (pow2 computed_ySampler_modulus) - params_B in
     assert(yi < pow2 computed_ySampler_modulus);
     assert_norm(pow2 computed_ySampler_modulus < params_q);
     assert(yi < params_q);
@@ -516,9 +520,9 @@ let rec ySampler_while rand cBuf pos nPrime sPrime i y fuel =
 assume 
 val ySampler_oracle: 
     rand: lbytes params_kappa 
-  -> cBuf: bytes{length cBuf < max_size_t /\ length cBuf >= 2} 
+  -> cBuf: bytes{Seq.length cBuf < max_size_t /\ Seq.length cBuf >= 2} 
   -> pos: size_nat 
-  -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = length cBuf} 
+  -> nPrime: size_nat{computed_ySampler_b * nPrime <= max_size_t /\ computed_ySampler_b * nPrime = Seq.length cBuf} 
   -> sPrime: nat 
   -> i: size_nat{i <= params_n} 
   -> y: poly_t 
@@ -529,7 +533,7 @@ let ySampler rand nonce =
   let b = computed_ySampler_b in
   let y = create_poly in
   let pos, nPrime, sPrime = 0, params_n, nonce * 256 in
-  let cBuf = ySampler_XOF (length rand) rand sPrime (b * nPrime) in
+  let cBuf = ySampler_XOF (Seq.length rand) rand sPrime (b * nPrime) in
   let i = 0 in
   let fuel = ySampler_oracle rand cBuf pos nPrime sPrime i y in
   Some?.v (ySampler_while rand cBuf pos nPrime sPrime i y fuel)
@@ -540,7 +544,7 @@ val hashH:
   -> lbytes mlen 
   -> lbytes params_kappa
 let hashH #mlen v m =
-  let w = Lib.Sequence.create (params_k * params_n + mlen) (u8 0) in
+  let w = Seq.create (params_k * params_n + mlen) (u8 0) in
   let w = Loops.repeati params_k
     (fun i w -> Loops.repeati params_n
       (fun j w -> let vij:field_t = (Seq.index (Seq.index v i) j) in
@@ -556,12 +560,12 @@ let hashH #mlen v m =
 	       (* TODO: Patrick tells us the above math guarantees wiInt is < 2^8. We should prove this properly. Assume it for now. *)
 	       assume (0 <= wiInt /\ wiInt < maxint U8);
 	       let wi = u8 wiInt in
-	       w.[i * params_n + j] <- wi
+	       Seq.upd w (i * params_n + j) wi // w.[i * params_n + j] <- wi
       ) w
     ) w in
   let w = Loops.repeati mlen
-    (fun i w -> w.[params_k * params_n + i] <- m.[i]) w in
-  let cPrime = params_hash_shake (length w) w params_kappa in
+    (fun i w -> Seq.upd w (params_k * params_n + i) (*w.[params_k * params_n + i] <- *) (Seq.index m i) (*m.[i]*)) w in
+  let cPrime = params_hash_shake (Seq.length w) w params_kappa in
   cPrime
 
 let signlist_elt = x:int{x = -1 \/ x == 1}
@@ -569,7 +573,7 @@ let signlist_t = Seq.lseq signlist_elt params_h
 
 val enc_while_getR: #rLen:size_nat -> rBuf:lbytes rLen -> i:nat{i < rLen} -> x:nat{x < 256}
 let enc_while_getR #rLen rBuf i =
-  let byte = slice rBuf i (i+1) in
+  let byte = Seq.slice rBuf i (i+1) in
   nat_from_bytes_le byte
 
 (* pos_list and sign_list aren't returned by this function in the spec, although they are used in the implementation. We compute them here for consistency but only return c. *)
