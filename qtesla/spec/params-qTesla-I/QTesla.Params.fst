@@ -16,8 +16,15 @@ let params_d = 21      // number of rounded bits
 let params_bGenA = 19  // number of blocks requested to SHAKE128 for GenA
 
 let params_rateXOF = 168
-let params_xof = Spec.SHA3.shake128        // extendable output function used in PRF1: use shake128 or shake256 depending on parameters chosen
-let params_hash_shake = Spec.SHA3.shake128 // hash function used in hash H: use shake128 or shake256 depending on parameters chosen
+
+let params_prf1 = Spec.SHA3.shake128
+let params_prf2 = params_prf1
+let params_genA_xof = Spec.QTesla.CShake.cshake128_qtesla
+let params_gaussSampler_xof = Spec.QTesla.CShake.cshake128_qtesla
+let params_enc_xof = Spec.QTesla.CShake.cshake128_qtesla
+let params_ysampler_xof = Spec.QTesla.CShake.cshake128_qtesla
+let params_hashG = Spec.SHA3.shake128
+let params_hashH_shake = Spec.SHA3.shake128
 
 // See the GenerateNTTConstants-Magma.txt script for computing these five
 // constants used in NTT.

@@ -15,7 +15,7 @@ module Loops = Lib.LoopCombinators
 module Seq = Lib.Sequence
 module FSeq = FStar.Seq
 
-#reset-options "--z3rlimit 50 --max_fuel 0 --max_ifuel 1"
+#reset-options "--z3rlimit 80 --max_fuel 0 --max_ifuel 1"
 
 (** qTesla often uses [pos] as a variable name, so we define a transparent synonym *)
 unfold let positive = pos
@@ -199,7 +199,7 @@ let checkE e = poly_max_sum e params_h <= params_Le
 
 // Given an input pre-seed of \kappa bytes, return a buffer of (\kappa * ((k+3)/8)) bytes extended by the XOF
 val prf1: lbytes params_kappa -> lbytes (params_kappa * (params_k+3))
-let prf1 preseed = params_xof params_kappa preseed (params_kappa * (params_k+3))
+let prf1 preseed = params_prf1 params_kappa preseed (params_kappa * (params_k+3))
 
 val prf2: 
     #mLen:size_nat{mLen < max_size_t - 2 * params_kappa} 
@@ -209,27 +209,12 @@ val prf2:
   -> lbytes params_kappa
 let prf2 #mLen seedY r m =
   let concatenation = Seq.concat (Seq.concat seedY r) m in
-  params_xof (Seq.length concatenation) concatenation params_kappa
-
-// qTESLA's spec uses natural numbers that it increments as nonces for
-// cSHAKE, but the implementation takes uint16s. Instead of junking the
-// spec up with statements about the nonces staying within the range of
-// a uint16, we encapulsate it here.
-val cshake128_qtesla:
-    input_len:size_nat
-  -> input:lbytes input_len
-  -> nonce:nat
-  -> output_len:size_nat
-  -> lbytes output_len
-let cshake128_qtesla input_len input nonce output_len =
-  assume(nonce < maxint U16);
-  let cstm = u16 nonce in
-  cshake128_frodo input_len input cstm output_len
+  params_prf2 (Seq.length concatenation) concatenation params_kappa
 
 val genA_getC: 
     cBuf:bytes{Seq.length cBuf < max_size_t} 
   -> cPos:size_nat{(cPos+1) * computed_b <= Seq.length cBuf} 
-  -> size_nat
+  -> nat
 let genA_getC cBuf cPos = 
   let subbuffer = Seq.slice (to_lbytes cBuf) (cPos * computed_b) ((cPos+1) * computed_b) in
   nat_from_bytes_le subbuffer
@@ -252,7 +237,7 @@ val genA_while:
   -> cBuf: bytes{Seq.length cBuf < max_size_t /\ Seq.length cBuf >= 2} 
   -> s:nat 
   -> a:polys_t 
-  -> pos: size_nat{(pos+1) * computed_b <= Seq.length cBuf} 
+  -> pos: size_nat
   -> bPrime:size_nat{bPrime >= 1 /\ params_rateXOF * bPrime = Seq.length cBuf} 
   -> i:nat 
   -> fuel:nat 
@@ -263,9 +248,9 @@ let rec genA_while #seedALen seedA cBuf s a pos bPrime i fuel =
   else if i < params_k * params_n
   then 
     let s, pos, bPrime, cBuf =
-      if pos > ((params_rateXOF * bPrime) / computed_b) - 4 then 
+      if pos > ((params_rateXOF * bPrime) / computed_b) - 1 then 
         let s, pos, bPrime = s + 1, 0, 1 in
-        let cBuf = cshake128_qtesla seedALen seedA s (params_rateXOF * bPrime) in
+        let cBuf = params_genA_xof seedALen seedA s (params_rateXOF * bPrime) in
         s, pos, bPrime, cBuf
       else 
         s, pos, bPrime, cBuf 
@@ -295,7 +280,7 @@ val genA_oracle:
 val genA: #seedALen:size_nat -> seedA:lbytes seedALen -> polys_t
 let genA #seedALen seedA =
   let bPrime = params_bGenA in
-  let cBuf = cshake128_frodo seedALen seedA (u16 0) (params_rateXOF * bPrime) in
+  let cBuf = params_genA_xof seedALen seedA 0 (params_rateXOF * bPrime) in
   let i = 0 in
   let pos = 0 in
   let a = create_polys in
@@ -319,7 +304,7 @@ val gaussSampler_doloop3:
 let rec gaussSampler_doloop3 rand nonce fuel =
   assert_norm(bytelen params_xi < max_size_t); // Need to prove this is a size_nat for use with cshake128_frodo.
   if fuel = 0 then None else
-  let y = nat_from_bytes_le (cshake128_qtesla params_kappa rand nonce (bytelen params_xi)) in
+  let y = nat_from_bytes_le (params_gaussSampler_xof params_kappa rand nonce (bytelen params_xi)) in
   let nonce = nonce + 1 in
   if y < params_xi - 1
   then Some (y, nonce)
@@ -346,13 +331,13 @@ val gaussSampler_doloop2: rand: (lbytes params_kappa) -> nonce: positive -> fuel
 let rec gaussSampler_doloop2 rand nonce fuel =
     if fuel = 0 then None else
     let y, nonce = Some?.v (gaussSampler_doloop3 rand nonce (gaussSampler_doloop3_oracle rand nonce)) in
-    let r = nat_from_bytes_le (cshake128_qtesla params_kappa rand nonce (params_w / 8)) in
+    let r = nat_from_bytes_le (params_gaussSampler_xof params_kappa rand nonce (params_w / 8)) in
     let nonce = nonce + 1 in
     let x = 0 in
     let x = gaussSampler_doloop10 r x in
     let z:nat = params_xi * x + y in
     assume(z < params_q); // TODO: Patrick tells us this is true.
-    let r = cshake128_qtesla params_kappa rand nonce (params_w / 8) in
+    let r = params_gaussSampler_xof params_kappa rand nonce (params_w / 8) in
     let nonce = nonce + 1 in
     if (berSampler r (y * (y + 2 * params_xi * x)) = 0)
     then gaussSampler_doloop2 rand nonce (fuel - 1)
@@ -485,8 +470,6 @@ let qTesla_keygen =
   let pk = (seedA, t) in
   sk, pk
 
-let ySampler_XOF = cshake128_qtesla
-
 val ySampler_while: 
     rand: lbytes params_kappa 
   -> cBuf: bytes{Seq.length cBuf < max_size_t /\ Seq.length cBuf >= 2} 
@@ -504,7 +487,7 @@ let rec ySampler_while rand cBuf pos nPrime sPrime i y fuel =
   then let sPrime, pos, nPrime, cBuf =
     if pos >= nPrime 
     then let sPrime, pos, nPrime = sPrime + 1, 0, params_rateXOF / b in
-         let cBuf = ySampler_XOF (Seq.length rand) rand sPrime params_rateXOF in
+         let cBuf = params_ysampler_xof (Seq.length rand) rand sPrime params_rateXOF in
          sPrime, pos, nPrime, cBuf
     else sPrime, pos, nPrime, cBuf in
     let yi = (nat_from_bytes_le (Seq.slice (to_lbytes cBuf) (pos * b) ((pos + 1) * b))) % (pow2 computed_ySampler_modulus) - params_B in
@@ -533,18 +516,18 @@ let ySampler rand nonce =
   let b = computed_ySampler_b in
   let y = create_poly in
   let pos, nPrime, sPrime = 0, params_n, nonce * 256 in
-  let cBuf = ySampler_XOF (Seq.length rand) rand sPrime (b * nPrime) in
+  let cBuf = params_ysampler_xof (Seq.length rand) rand sPrime (b * nPrime) in
   let i = 0 in
   let fuel = ySampler_oracle rand cBuf pos nPrime sPrime i y in
   Some?.v (ySampler_while rand cBuf pos nPrime sPrime i y fuel)
 
 val hashH: 
     #mlen: size_nat{params_k * params_n + mlen <= max_size_t} 
-  -> polys_t 
-  -> lbytes mlen 
+  -> v: polys_t 
+  -> mdig: lbytes mlen{mlen = 64} // 64 is hard-coded in the spec as the output of G provided here.
   -> lbytes params_kappa
-let hashH #mlen v m =
-  let w = Seq.create (params_k * params_n + mlen) (u8 0) in
+let hashH #mlen v mdig =
+  let w = Seq.create (params_k * params_n + 64) (u8 0) in
   let w = Loops.repeati params_k
     (fun i w -> Loops.repeati params_n
       (fun j w -> let vij:field_t = (Seq.index (Seq.index v i) j) in
@@ -564,8 +547,8 @@ let hashH #mlen v m =
       ) w
     ) w in
   let w = Loops.repeati mlen
-    (fun i w -> Seq.upd w (params_k * params_n + i) (*w.[params_k * params_n + i] <- *) (Seq.index m i) (*m.[i]*)) w in
-  let cPrime = params_hash_shake (Seq.length w) w params_kappa in
+    (fun i w -> Seq.upd w (params_k * params_n + i) (Seq.index mdig i)) w in
+  let cPrime = params_hashH_shake (Seq.length w) w params_kappa in
   cPrime
 
 let signlist_elt = x:int{x = -1 \/ x == 1}
@@ -584,17 +567,17 @@ val enc_while:
   -> sign_list: signlist_t 
   -> cnt: size_nat 
   -> c: poly_t 
-  -> s:uint16 
+  -> s: nat
   -> i: size_nat 
-  -> fuel:nat 
+  -> fuel: nat 
   -> Tot (option poly_t) (decreases %[(params_h - i); fuel])
 let rec enc_while cPrime rBuf pos_list sign_list cnt c s i fuel =
   if fuel = 0 then None else
   if i < params_h then 
     let cnt, s, rBuf =
     if cnt > (params_rateXOF - 3)
-    then let s, cnt = add_mod s (u16 1), 0 in // TODO: add_mod ok?
-	 let rBuf = cshake128_frodo params_kappa cPrime s params_rateXOF in
+    then let s, cnt = s + 1, 0 in // TODO: add_mod ok?
+	 let rBuf = params_enc_xof params_kappa cPrime s params_rateXOF in
 	 cnt, s, rBuf
     else cnt, s, rBuf in
   let pos = ((enc_while_getR rBuf cnt) * 256 + (enc_while_getR rBuf (cnt+1))) % params_n in
@@ -610,7 +593,7 @@ let rec enc_while cPrime rBuf pos_list sign_list cnt c s i fuel =
   let cnt = cnt + 3 in
   enc_while cPrime rBuf pos_list sign_list cnt c s i fuel
   else Some c
-	       
+
 assume 
 val enc_oracle: 
     cPrime: (lbytes params_kappa) 
@@ -619,15 +602,15 @@ val enc_oracle:
   -> sign_list: signlist_t 
   -> cnt: size_nat{cnt < params_rateXOF - 2} 
   -> c: poly_t 
-  -> s:uint16 
+  -> s: nat 
   -> i: size_nat 
-  -> Tot (fuel:nat{Some? (enc_while cPrime rBuf pos_list sign_list cnt c s i fuel)})
+  -> Tot (fuel: nat{Some? (enc_while cPrime rBuf pos_list sign_list cnt c s i fuel)})
 
 val enc: lbytes params_kappa -> poly_t
 let enc cPrime =
-  let s = u16 0 in
+  let s = 0 in
   let cnt = 0 in
-  let rBuf = cshake128_frodo params_kappa cPrime s params_rateXOF in
+  let rBuf = params_enc_xof params_kappa cPrime s params_rateXOF in
   let i = 0 in
   let c:poly_t = create_poly in
   let pos_list: Seq.lseq int params_h = Seq.create params_h 0 in
@@ -648,7 +631,7 @@ let intL n =
   mod_pm n (pow2 params_d)
   
 // mod_pm: R_q x Z -> R_q
-val poly_mod_pm: poly_t -> n:nat{n >= 2} -> poly_t
+val poly_mod_pm: poly_t -> n:nat{n >= 2 /\ n <= params_q} -> poly_t
 let poly_mod_pm f n =
   Loops.repeati (Seq.length f)
   (fun i (f:poly_t) ->
@@ -656,10 +639,12 @@ let poly_mod_pm f n =
     Seq.upd f i fi) f
 
 let fnL f = 
+  // These facts about 2^d need to be explicitly proven to satisfy the precondition on poly_mod_pm.
   assert_norm(pow2 params_d >= 2);
+  assert_norm(pow2 params_d <= params_q);
   poly_mod_pm f (pow2 params_d)
 
-#reset-options "--z3rlimit 50 --max_fuel 0"
+#reset-options "--z3rlimit 100 --max_fuel 0"
 
 // [*]_M: Z -> Z
 val intM: c: int -> field_t
@@ -718,6 +703,9 @@ let test_w w =
   (fun i res -> res || 
     (lInfiniteNorm (fnL (Seq.index w i))) >= ((pow2 (params_d - 1)) - params_Le) ||
     (lInfiniteNorm (Seq.index w i)) >= (params_q / 2) - params_Le) res
+
+val hashG: #mlen: size_nat -> m: lbytes mlen -> Tot (lbytes 64)
+let hashG #mlen m = params_hashG mlen m 64
     
 val qtesla_sign_step4: #mLen: size_nat{params_k * params_n + mLen <= max_size_t} -> m: (lbytes mLen) -> sk: qtesla_sk -> r: (lbytes params_kappa) -> rand: (lbytes params_kappa) -> counter:positive -> fuel:nat -> Tot (option qtesla_sig) (decreases fuel)
 let rec qtesla_sign_step4 #mLen m sk r rand counter fuel =
@@ -730,7 +718,7 @@ let rec qtesla_sign_step4 #mLen m sk r rand counter fuel =
     (fun i (v:polys_t) -> 
       let vi:poly_t = ((Seq.index a i) `poly_ntt_mul` y) `poly_mod_pm` params_q in
       Seq.upd v i vi) v in
-  let cPrime = hashH (polysM v) m in
+  let cPrime = hashH (polysM v) (hashG m) in
   let c = enc cPrime in
   let z = y `poly_add` (s `poly_mul` c) in
   if test_rejection z
@@ -759,7 +747,7 @@ let qtesla_sign #mLen m sk =
   let s, e, seedA, seedY = sk in
   let counter = 1 in
   let r = random_bytes params_kappa in
-  let rand = prf2 seedY r m in
+  let rand = prf2 seedY r (hashG m) in
   let fuel = qtesla_sign_oracle m sk r rand counter in
   let res = qtesla_sign_step4 m sk r rand counter fuel in
   Some?.v res
@@ -785,6 +773,6 @@ let qtesla_verify #mLen m sig pk =
       let ti = Seq.index t i in
       let wi = ((ai `poly_ntt_mul` z) `poly_sub` (ti `poly_mul` c)) `poly_mod_pm` params_q in
       Seq.upd w i wi) w in
-  if test_rejection z || not (compare cPrime (hashH (polysM w) m))
+  if test_rejection z || not (compare cPrime (hashH (polysM w) (hashG m)))
   then false
   else true
