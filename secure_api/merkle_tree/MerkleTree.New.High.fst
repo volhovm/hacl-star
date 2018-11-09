@@ -10,10 +10,13 @@ open FStar.Seq
 module List = FStar.List.Tot
 module S = FStar.Seq
 
-module U32 = FStar.UInt32
 module U8 = FStar.UInt8
-type uint32_t = U32.t
+module U32 = FStar.UInt32
+module U64 = FStar.UInt64
+
 type uint8_t = U8.t
+type uint32_t = U32.t
+type uint64_t = U64.t
 
 module EHS = EverCrypt.Hash
 module EHL = EverCrypt.Helpers
@@ -38,12 +41,12 @@ let hash_2 src1 src2 =
 
 /// High-level Merkle tree data structure
 
-let merkle_tree_size_lg = 32
+let merkle_tree_size_lg = 64
 
 noeq type merkle_tree =
 | MT: i:nat -> j:nat{j >= i && j < pow2 merkle_tree_size_lg} ->
-      hs:S.seq hash_seq{S.length hs = 32} ->
-      rhs_ok:bool -> rhs:hash_seq{S.length rhs = 32} ->
+      hs:S.seq hash_seq{S.length hs = 64} ->
+      rhs_ok:bool -> rhs:hash_seq{S.length rhs = 64} ->
       mroot:hash ->
       merkle_tree
 
@@ -58,33 +61,33 @@ let offset_of i =
   if i % 2 = 0 then i else i - 1
 
 val mt_wf_elts:
-  lv:nat{lv <= 32} ->
-  hs:hash_ss{S.length hs = 32} ->
+  lv:nat{lv <= 64} ->
+  hs:hash_ss{S.length hs = 64} ->
   i:nat -> j:nat{j >= i} ->
-  GTot Type0 (decreases (32 - lv))
+  GTot Type0 (decreases (64 - lv))
 let rec mt_wf_elts lv hs i j =
-  if lv = 32 then true
+  if lv = 64 then true
   else (let ofs = offset_of i in
        S.length (S.index hs lv) == j - ofs /\
        mt_wf_elts (lv + 1) hs (i / 2) (j / 2))
 
 val mt_wf_elts_equal:
-  lv:nat{lv <= 32} ->
-  hs1:hash_ss{S.length hs1 = 32} ->
-  hs2:hash_ss{S.length hs2 = 32} ->
+  lv:nat{lv <= 64} ->
+  hs1:hash_ss{S.length hs1 = 64} ->
+  hs2:hash_ss{S.length hs2 = 64} ->
   i:nat -> j:nat{j >= i} ->
   Lemma (requires (mt_wf_elts lv hs1 i j /\
-		  S.equal (S.slice hs1 lv 32) (S.slice hs2 lv 32)))
+		  S.equal (S.slice hs1 lv 64) (S.slice hs2 lv 64)))
 	(ensures (mt_wf_elts lv hs2 i j))
-	(decreases (32 - lv))
+	(decreases (64 - lv))
 let rec mt_wf_elts_equal lv hs1 hs2 i j =
-  if lv = 32 then ()
-  else (S.slice_slice hs1 lv 32 1 (32 - lv);
-       S.slice_slice hs2 lv 32 1 (32 - lv);
-       assert (S.equal (S.slice hs1 (lv + 1) 32)
-		       (S.slice hs2 (lv + 1) 32));
-       S.lemma_index_slice hs1 lv 32 0; 
-       S.lemma_index_slice hs2 lv 32 0;
+  if lv = 64 then ()
+  else (S.slice_slice hs1 lv 64 1 (64 - lv);
+       S.slice_slice hs2 lv 64 1 (64 - lv);
+       assert (S.equal (S.slice hs1 (lv + 1) 64)
+		       (S.slice hs2 (lv + 1) 64));
+       S.lemma_index_slice hs1 lv 64 0; 
+       S.lemma_index_slice hs2 lv 64 0;
        assert (S.index hs1 lv == S.index hs2 lv);
        mt_wf_elts_equal (lv + 1) hs1 hs2 (i / 2) (j / 2))
 
@@ -97,12 +100,12 @@ type wf_mt = mt:merkle_tree{mt_wf mt}
 /// Construction
 
 val mt_wf_elts_empty:
-  lv:nat{lv <= 32} ->
+  lv:nat{lv <= 64} ->
   Lemma (requires True)
-	(ensures (mt_wf_elts lv (S.create 32 S.empty) 0 0))
-	(decreases (32 - lv))
+	(ensures (mt_wf_elts lv (S.create 64 S.empty) 0 0))
+	(decreases (64 - lv))
 let rec mt_wf_elts_empty lv =
-  if lv = 32 then ()
+  if lv = 64 then ()
   else mt_wf_elts_empty (lv + 1)
 
 // NOTE: the public function is `create_mt` defined below, which
@@ -110,29 +113,29 @@ let rec mt_wf_elts_empty lv =
 val create_empty_mt: unit -> GTot wf_mt
 let create_empty_mt _ =
   mt_wf_elts_empty 0;
-  MT 0 0 (S.create 32 S.empty) false (S.create 32 hash_init) hash_init
+  MT 0 0 (S.create 64 S.empty) false (S.create 64 hash_init) hash_init
 
 /// Insertion
 
 val hash_ss_insert:
-  lv:nat{lv < 32} ->
+  lv:nat{lv < 64} ->
   i:nat ->
-  j:nat{i <= j /\ j < pow2 (32 - lv) - 1} ->
-  hs:hash_ss{S.length hs = 32 /\ mt_wf_elts lv hs i j} ->
+  j:nat{i <= j /\ j < pow2 (64 - lv) - 1} ->
+  hs:hash_ss{S.length hs = 64 /\ mt_wf_elts lv hs i j} ->
   v:hash ->
-  GTot (ihs:hash_ss{S.length ihs = 32 /\ mt_wf_elts (lv + 1) ihs (i / 2) (j / 2)})
+  GTot (ihs:hash_ss{S.length ihs = 64 /\ mt_wf_elts (lv + 1) ihs (i / 2) (j / 2)})
 let hash_ss_insert lv i j hs v =
   let ihs = S.upd hs lv (S.snoc (S.index hs lv) v) in
   mt_wf_elts_equal (lv + 1) hs ihs (i / 2) (j / 2);
   ihs
 
 val insert_:
-  lv:nat{lv < 32} ->
+  lv:nat{lv < 64} ->
   i:nat ->
-  j:nat{i <= j /\ j < pow2 (32 - lv) - 1} ->
-  hs:hash_ss{S.length hs = 32 /\ mt_wf_elts lv hs i j} ->
+  j:nat{i <= j /\ j < pow2 (64 - lv) - 1} ->
+  hs:hash_ss{S.length hs = 64 /\ mt_wf_elts lv hs i j} ->
   acc:hash ->
-  GTot (ihs:hash_ss{S.length ihs = 32})
+  GTot (ihs:hash_ss{S.length ihs = 64})
        (decreases j)
 let rec insert_ lv i j hs acc =
   let ihs = hash_ss_insert lv i j hs acc in
@@ -144,8 +147,8 @@ let rec insert_ lv i j hs acc =
 val insert_base:
   lv:nat -> i:nat -> j:nat -> hs:hash_ss -> acc:hash ->
   Lemma (requires (
-	  lv < 32 /\ i <= j /\ j < pow2 (32 - lv) - 1 /\
-	  S.length hs = 32 /\ mt_wf_elts lv hs i j /\
+	  lv < 64 /\ i <= j /\ j < pow2 (64 - lv) - 1 /\
+	  S.length hs = 64 /\ mt_wf_elts lv hs i j /\
 	  j % 2 <> 1))
 	(ensures (S.equal (insert_ lv i j hs acc)
 			  (hash_ss_insert lv i j hs acc)))
@@ -154,8 +157,8 @@ let insert_base lv i j hs acc = ()
 val insert_rec:
   lv:nat -> i:nat -> j:nat -> hs:hash_ss -> acc:hash ->
   Lemma (requires (
-	  lv < 32 /\ i <= j /\ j < pow2 (32 - lv) - 1 /\
-	  S.length hs = 32 /\ mt_wf_elts lv hs i j /\
+	  lv < 64 /\ i <= j /\ j < pow2 (64 - lv) - 1 /\
+	  S.length hs = 64 /\ mt_wf_elts lv hs i j /\
 	  j % 2 == 1))
 	(ensures (
 	  (mt_wf_elts_equal (lv + 1) hs
@@ -188,16 +191,16 @@ type path = S.seq hash
 // This function calculates the Merkle root as well, which is the final
 // accumulator value.
 val construct_rhs:
-  lv:nat{lv <= 32} ->
-  hs:hash_ss{S.length hs = 32} ->
-  rhs:hash_seq{S.length rhs = 32} ->
+  lv:nat{lv <= 64} ->
+  hs:hash_ss{S.length hs = 64} ->
+  rhs:hash_seq{S.length rhs = 64} ->
   i:nat ->
   j:nat{
-    i <= j /\ j < pow2 (32 - lv) /\
+    i <= j /\ j < pow2 (64 - lv) /\
     mt_wf_elts lv hs i j} ->
   acc:hash ->
   actd:bool ->
-  GTot (crhs:hash_seq{S.length crhs = 32} * hash) (decreases j)
+  GTot (crhs:hash_seq{S.length crhs = 64} * hash) (decreases j)
 let rec construct_rhs lv hs rhs i j acc actd =
   let ofs = offset_of i in
   if j = 0 then (rhs, acc)
@@ -211,12 +214,12 @@ let rec construct_rhs lv hs rhs i j acc actd =
          construct_rhs (lv + 1) hs nrhs (i / 2) (j / 2) nacc true))
 
 val construct_rhs_even:
-  lv:nat{lv <= 32} ->
-  hs:hash_ss{S.length hs = 32} ->
-  rhs:hash_seq{S.length rhs = 32} ->
+  lv:nat{lv <= 64} ->
+  hs:hash_ss{S.length hs = 64} ->
+  rhs:hash_seq{S.length rhs = 64} ->
   i:nat ->
   j:nat{
-    i <= j /\ j < pow2 (32 - lv) /\
+    i <= j /\ j < pow2 (64 - lv) /\
     mt_wf_elts lv hs i j} ->
   acc:hash ->
   actd:bool ->
@@ -226,12 +229,12 @@ val construct_rhs_even:
 let construct_rhs_even lv hs rhs i j acc actd = ()
 
 val construct_rhs_odd:
-  lv:nat{lv <= 32} ->
-  hs:hash_ss{S.length hs = 32} ->
-  rhs:hash_seq{S.length rhs = 32} ->
+  lv:nat{lv <= 64} ->
+  hs:hash_ss{S.length hs = 64} ->
+  rhs:hash_seq{S.length rhs = 64} ->
   i:nat ->
   j:nat{
-    i <= j /\ j < pow2 (32 - lv) /\
+    i <= j /\ j < pow2 (64 - lv) /\
     mt_wf_elts lv hs i j} ->
   acc:hash ->
   actd:bool ->
@@ -295,17 +298,17 @@ let rec mt_path_length k j actd =
        mt_path_length (k / 2) (j / 2) nactd)
 
 val mt_get_path_step:
-  lv:nat{lv <= 32} ->
-  hs:hash_ss{S.length hs = 32} ->
-  rhs:hash_seq{S.length rhs = 32} ->
+  lv:nat{lv <= 64} ->
+  hs:hash_ss{S.length hs = 64} ->
+  rhs:hash_seq{S.length rhs = 64} ->
   i:nat ->
   j:nat{
-    j <> 0 /\ i <= j /\ j < pow2 (32 - lv) /\
+    j <> 0 /\ i <= j /\ j < pow2 (64 - lv) /\
     mt_wf_elts lv hs i j} ->
   k:nat{i <= k && k <= j} ->
   p:path ->
   actd:bool ->
-  GTot path (decreases (32 - lv))
+  GTot path (decreases (64 - lv))
 let mt_get_path_step lv hs rhs i j k p actd =
   let ofs = offset_of i in
   if k % 2 = 1
@@ -320,18 +323,18 @@ let mt_get_path_step lv hs rhs i j k p actd =
 // Construct a Merkle path for a given index `k`, hashes `hs`, 
 // and rightmost hashes `rhs`.
 val mt_get_path_:
-  lv:nat{lv <= 32} ->
-  hs:hash_ss{S.length hs = 32} ->
-  rhs:hash_seq{S.length rhs = 32} ->
+  lv:nat{lv <= 64} ->
+  hs:hash_ss{S.length hs = 64} ->
+  rhs:hash_seq{S.length rhs = 64} ->
   i:nat -> 
   j:nat{
-    i <= j /\ j < pow2 (32 - lv) /\
+    i <= j /\ j < pow2 (64 - lv) /\
     mt_wf_elts lv hs i j} ->
   k:nat{i <= k && k <= j} ->
   p:path ->
   actd:bool ->
   GTot (np:path{S.length np = S.length p + mt_path_length k j actd})
-       (decreases (32 - lv))
+       (decreases (64 - lv))
 let rec mt_get_path_ lv hs rhs i j k p actd =
   let ofs = offset_of i in
   if j = 0 then p
@@ -357,14 +360,14 @@ let mt_get_path mt idx drt =
   root)
 
 val mt_flush_to_:
-  lv:nat{lv < 32} ->
-  hs:hash_ss{S.length hs = 32} ->
+  lv:nat{lv < 64} ->
+  hs:hash_ss{S.length hs = 64} ->
   pi:nat ->
   i:nat{i >= pi} ->
   j:nat{
-    j >= i /\ j < pow2 (32 - lv) /\
+    j >= i /\ j < pow2 (64 - lv) /\
     mt_wf_elts lv hs pi j} ->
-  GTot (fhs:hash_ss{S.length fhs = 32}) (decreases i)
+  GTot (fhs:hash_ss{S.length fhs = 64}) (decreases i)
 let rec mt_flush_to_ lv hs pi i j =
   let oi = offset_of i in
   let opi = offset_of pi in
@@ -377,12 +380,12 @@ let rec mt_flush_to_ lv hs pi i j =
        mt_flush_to_ (lv + 1) nhs (pi / 2) (i / 2) (j / 2))
 
 val mt_flush_to_rec:
-  lv:nat{lv < 32} ->
-  hs:hash_ss{S.length hs = 32} ->
+  lv:nat{lv < 64} ->
+  hs:hash_ss{S.length hs = 64} ->
   pi:nat ->
   i:nat{i >= pi} ->
   j:nat{
-    j >= i /\ j < pow2 (32 - lv) /\
+    j >= i /\ j < pow2 (64 - lv) /\
     mt_wf_elts lv hs pi j} ->
   Lemma (requires (offset_of i <> offset_of pi))
         (ensures (mt_flush_to_ lv hs pi i j ==

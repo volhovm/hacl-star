@@ -188,7 +188,7 @@ let vector_irepr #a rg =
 val vector_r_init_p:
   #a:Type -> #rg:regional a -> v:rvector rg -> GTot Type0
 let vector_r_init_p #a #rg v =
-  V.size_of v = 0ul
+  V.size_of v = 0UL
 
 val vector_r_init: 
   #a:Type -> #rg:regional a -> r:erid ->
@@ -206,7 +206,7 @@ let vector_r_init #a #rg r =
   let nrid = new_region_ r in
   let r_init = Rgl?.r_init rg in
   let ia = r_init nrid in
-  V.create_reserve 1ul ia r
+  V.create_reserve 1UL ia r
 
 val vector_r_free:
   #a:Type -> #rg:regional a -> v:rvector rg ->
