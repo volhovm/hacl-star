@@ -56,6 +56,7 @@ FSTARR = $(FSTAR_HOME)/bin/fstar.exe $(OTHERFLAGS) \
 
 ENABLE_HINTS = --use_hints
 #--use_hint_hashes --record_hints --query_stats
+ENABLE_HINTS = --use_hints --use_hint_hashes --record_hints --query_stats
 
 %.fst-in:
 	@echo --cache_checked_modules --cache_dir $(CACHE_DIR) \
@@ -67,7 +68,7 @@ ENABLE_HINTS = --use_hints
 	$(FSTAR_INCLUDES) \
 	$(ENABLE_HINTS) --hint_file $(HINT_DIR)/$(basename $@).fsti.hints
 
-ROOTS = MerkleTree.New.Low.fst
+ROOTS = MerkleTree.New.Low.fst LowStar.Monotonic.Buffer.Generic.fst LowStar.Monotonic.Buffer.Generic.fsti
 
 # We don't want to delete .krml files during extraction.
 .PRECIOUS: %.krml

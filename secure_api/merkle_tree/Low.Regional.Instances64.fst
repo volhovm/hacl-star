@@ -1,39 +1,40 @@
-module Low.Regional.Instances
+module Low.Regional.Instances64
 
 open FStar.All
 open FStar.Integers
 open LowStar.Buffer
-open Low.Regional
-open Low.RVector
+open Low.Regional64
+open Low.RVector64
 
 module HH = FStar.Monotonic.HyperHeap
 module HS = FStar.HyperStack
 module HST = FStar.HyperStack.ST
 module MHS = FStar.Monotonic.HyperStack
 module S = FStar.Seq
-module B = LowStar.Buffer.Generic
-module V = Low.Vector
-module RV = Low.RVector
+module B = LowStar.Buffer64
+module V = Low.Vector64
+module RV = Low.RVector64
 
-let size_t = V.size_t
-let index_t = V.index_t
-let sz0 = V.sz0
-let sz1 = V.sz1
+let size_t = FStar.UInt64.t
+let index_t = size_t
+let sz0 = 0UL
+let sz1 = 1UL
+let size2nat = FStar.UInt64.v
 
 
 /// `LowStar.Buffer` is regional
 
 val buffer_region_of:
-  #a:Type -> v:B.buffer #64 a -> GTot HH.rid
+  #a:Type -> v:B.buffer a -> GTot HH.rid
 let buffer_region_of #a v =
   B.frameOf v
 
-val buffer_dummy: a:Type -> Tot (B.buffer #64 a)
+val buffer_dummy: a:Type -> Tot (B.buffer a)
 let buffer_dummy _ = B.null
 
 val buffer_r_inv:
   #a:Type -> len:size_t{len > sz0} ->
-  h:HS.mem -> v:B.buffer #64 a -> GTot Type0
+  h:HS.mem -> v:B.buffer a -> GTot Type0
 let buffer_r_inv #a len h v =
   B.live h v /\ B.freeable v /\ 
   B.len v = len
@@ -51,7 +52,7 @@ let buffer_repr a len = s:S.seq a{S.length s = len}
 val buffer_r_repr:
   #a:Type -> len:size_t{len > sz0} ->
   h:HS.mem -> v:B.buffer a{buffer_r_inv len h v} -> 
-  GTot (buffer_repr a (V.size2nat len))
+  GTot (buffer_repr a (size2nat len))
 let buffer_r_repr #a len h v = B.as_seq h v
 
 val buffer_r_sep:
@@ -71,12 +72,12 @@ let buffer_r_sep #a len v p h0 h1 =
 
 val buffer_irepr: 
   #a:Type0 -> ia:a -> len:size_t{len > sz0} ->
-  Ghost.erased (buffer_repr a (V.size2nat len))
+  Ghost.erased (buffer_repr a (size2nat len))
 let buffer_irepr #a ia len =
-  Ghost.hide (S.create (V.size2nat len) ia)
+  Ghost.hide (S.create (size2nat len) ia)
 
 val buffer_r_init_p:
-  #a:Type0 -> v:B.buffer #64 a -> GTot Type0
+  #a:Type0 -> v:B.buffer a -> GTot Type0
 let buffer_r_init_p #a v =
   True
 
@@ -121,13 +122,13 @@ let buffer_copy #a len src dst =
 
 val buffer_regional:
   #a:Type -> ia:a -> len:size_t{len > sz0} ->
-  regional (B.buffer #64 a)
+  regional (B.buffer a)
 let buffer_regional #a ia len =
   Rgl (buffer_region_of #a)
       (buffer_dummy a)
       (buffer_r_inv #a len)
       (buffer_r_inv_reg #a len)
-      (buffer_repr a (V.size2nat len))
+      (buffer_repr a (size2nat len))
       (buffer_r_repr #a len)
       (buffer_r_sep #a len)
       (buffer_irepr #a ia len)

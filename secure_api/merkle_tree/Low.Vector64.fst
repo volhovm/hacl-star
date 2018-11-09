@@ -1,4 +1,4 @@
-module Low.Vector
+module Low.Vector64
 
 open FStar.All
 open FStar.Integers
@@ -10,32 +10,31 @@ module HST = FStar.HyperStack.ST
 module MHS = FStar.Monotonic.HyperStack
 module S = FStar.Seq
 
-module B = LowStar.Buffer.Generic
+type size_t = UInt64.t
+type index_t = size_t
 
-type size_t = B.size_t #64
-type index_t = B.index_t #64
+let max_size: size_t = 18446744073709551615UL
+let sz0: size_t = 0UL
+let sz1: size_t = 1UL
+let index2nat (x:index_t): nat = UInt64.v x
 
-//let max_size: size_t = 4294967295ul
-let max_size: size_t = UInt.to_uint_t 64 18446744073709551615
-let sz0: size_t = UInt.zero 64
-let sz1: size_t = UInt.one 64
-let index2nat (x:index_t): Tot nat = x
-let size2nat (x:size_t): Tot nat = x
+module SZMOD = FStar.UInt64
+module SZBUF = LowStar.Buffer64
 
-let modifies = B.modifies
-let loc = B.loc
-let loc_none = B.loc_none
-let loc_buffer #a #rrel #rel = B.loc_buffer #64 #a #rrel #rel
-let loc_union = B.loc_union
-let loc_disjoint = B.loc_disjoint
-let loc_includes = B.loc_includes
+let modifies = SZBUF.modifies
+let loc = SZBUF.loc
+let loc_none = SZBUF.loc_none
+let loc_buffer #a #rrel #rel = SZBUF.loc_buffer #a #rrel #rel
+let loc_union = SZBUF.loc_union
+let loc_disjoint = SZBUF.loc_disjoint
+let loc_includes = SZBUF.loc_includes
 
 /// Abstract vector type
 
 noeq type vector_str a =
 | Vec: sz:size_t ->
        cap:size_t{cap >= sz} ->
-       vs:B.buffer a{B.length #64 vs = size2nat cap} -> 
+       vs:SZBUF.buffer a{SZBUF.len vs = cap} -> 
        vector_str a
 
 val vector (a: Type0): Tot Type0
@@ -45,9 +44,9 @@ let vector a = vector_str a
 
 val as_seq: 
   HS.mem -> #a:Type -> vec:vector a -> 
-  GTot (s:S.seq a{S.length s = size2nat (Vec?.sz vec)})
+  GTot (s:S.seq a{S.length s = SZMOD.v (Vec?.sz vec)})
 let as_seq h #a vec =
-  B.as_seq h (B.gsub (Vec?.vs vec) sz0 (Vec?.sz vec))
+  SZBUF.as_seq h (SZBUF.gsub (Vec?.vs vec) sz0 (Vec?.sz vec))
 
 /// Capacity
 
@@ -71,11 +70,11 @@ unfold let is_full #a vstr =
 
 unfold val live: #a:Type -> HS.mem -> vector a -> GTot Type0
 unfold let live #a h vec =
-  B.live h (Vec?.vs vec)
+  SZBUF.live h (Vec?.vs vec)
 
 unfold val freeable: #a:Type -> vector a -> GTot Type0
 unfold let freeable #a vec =
-  B.freeable (Vec?.vs vec)
+  SZBUF.freeable (Vec?.vs vec)
 
 unfold val loc_vector: #a:Type -> vector a -> GTot loc
 unfold let loc_vector #a vec =
@@ -83,17 +82,17 @@ unfold let loc_vector #a vec =
 
 unfold val loc_addr_of_vector: #a:Type -> vector a -> GTot loc
 unfold let loc_addr_of_vector #a vec =
-  B.loc_addr_of_buffer (Vec?.vs vec)
+  SZBUF.loc_addr_of_buffer (Vec?.vs vec)
 
 val loc_vector_within:
   #a:Type -> vec:vector a -> 
   i:index_t -> j:index_t{i <= j && j <= size_of vec} -> 
-  GTot loc (decreases (size2nat (j - i)))
+  GTot loc (decreases (SZMOD.v (j - i)))
 // unfold let loc_vector_within #a vec i j =
-//   loc_buffer (B.gsub (Vec?.vs vec) i (j - i))
+//   loc_buffer (SZBUF.gsub (Vec?.vs vec) i (j - i))
 let rec loc_vector_within #a vec i j =
   if i = j then loc_none
-  else loc_union (loc_buffer (B.gsub (Vec?.vs vec) i sz1))
+  else loc_union (loc_buffer (SZBUF.gsub (Vec?.vs vec) i sz1))
 		 (loc_vector_within vec (i + sz1) j)
 
 val loc_vector_within_includes_:
@@ -104,17 +103,17 @@ val loc_vector_within_includes_:
   Lemma (requires True)
 	(ensures (loc_includes (loc_vector_within vec i j1)
 			       (loc_vector_within vec i j2)))
-	(decreases (size2nat (j1 - i)))
+	(decreases (SZMOD.v (j1 - i)))
 let rec loc_vector_within_includes_ #a vec i j1 j2 =
   if i = j1 then ()
   else if i = j2 then ()
   else begin
     loc_vector_within_includes_ vec (i + sz1) j1 j2;
-    B.loc_includes_union_l (loc_buffer (B.gsub (Vec?.vs vec) i sz1))
+    SZBUF.loc_includes_union_l (loc_buffer (SZBUF.gsub (Vec?.vs vec) i sz1))
     			 (loc_vector_within vec (i + sz1) j1)
     			 (loc_vector_within vec (i + sz1) j2);
-    B.loc_includes_union_r (loc_vector_within vec i j1)
-			 (loc_buffer (B.gsub (Vec?.vs vec) i sz1))
+    SZBUF.loc_includes_union_r (loc_vector_within vec i j1)
+			 (loc_buffer (SZBUF.gsub (Vec?.vs vec) i sz1))
 			 (loc_vector_within vec (i + sz1) j2)
   end
 
@@ -125,13 +124,13 @@ val loc_vector_within_includes:
   Lemma (requires True)
 	(ensures (loc_includes (loc_vector_within vec i1 j1)
 			       (loc_vector_within vec i2 j2)))
-	(decreases (size2nat (j1 - i1)))
+	(decreases (SZMOD.v (j1 - i1)))
 let rec loc_vector_within_includes #a vec i1 j1 i2 j2 =
   if i1 = j1 then ()
   else if i1 = i2 then loc_vector_within_includes_ vec i1 j1 j2
   else begin
     loc_vector_within_includes vec (i1 + sz1) j1 i2 j2;
-    B.loc_includes_union_l (loc_buffer (B.gsub (Vec?.vs vec) i1 sz1))
+    SZBUF.loc_includes_union_l (loc_buffer (SZBUF.gsub (Vec?.vs vec) i1 sz1))
 			 (loc_vector_within vec (i1 + sz1) j1)
 			 (loc_vector_within vec i2 j2)
   end
@@ -142,7 +141,7 @@ val loc_vector_within_included:
   Lemma (requires True)
 	(ensures (loc_includes (loc_vector vec)
 			       (loc_vector_within vec i j)))
-	(decreases (size2nat (j - i)))
+	(decreases (SZMOD.v (j - i)))
 let rec loc_vector_within_included #a vec i j =
   if i = j then ()
   else loc_vector_within_included vec (i + sz1) j
@@ -153,9 +152,9 @@ val loc_vector_within_disjoint_:
   i2:index_t{i1 < i2} ->
   j2:index_t{i2 <= j2 && j2 <= size_of vec} ->
   Lemma (requires True)
-	(ensures (loc_disjoint (loc_buffer (B.gsub (Vec?.vs vec) i1 sz1))
+	(ensures (loc_disjoint (loc_buffer (SZBUF.gsub (Vec?.vs vec) i1 sz1))
 			       (loc_vector_within vec i2 j2)))
-	(decreases (size2nat (j2 - i2)))
+	(decreases (SZMOD.v (j2 - i2)))
 let rec loc_vector_within_disjoint_ #a vec i1 i2 j2 =
   if i2 = j2 then ()
   else loc_vector_within_disjoint_ vec i1 (i2 + sz1) j2
@@ -167,7 +166,7 @@ val loc_vector_within_disjoint:
   Lemma (requires True)
 	(ensures (loc_disjoint (loc_vector_within vec i1 j1)
 			       (loc_vector_within vec i2 j2)))
-	(decreases (size2nat (j1 - i1)))
+	(decreases (SZMOD.v (j1 - i1)))
 let rec loc_vector_within_disjoint #a vec i1 j1 i2 j2 =
   if i1 = j1 then ()
   else (loc_vector_within_disjoint_ vec i1 i2 j2;
@@ -180,19 +179,19 @@ val loc_vector_within_union_rev:
 	(ensures (loc_vector_within vec i j ==
 		 loc_union (loc_vector_within vec i (j - sz1))
 			   (loc_vector_within vec (j - sz1) j)))
-	(decreases (size2nat (j - i)))
+	(decreases (SZMOD.v (j - i)))
 let rec loc_vector_within_union_rev #a vec i j =
   if i = j - sz1 then ()
   else begin
     loc_vector_within_union_rev vec (i + sz1) j;
-    B.loc_union_assoc (loc_buffer (B.gsub (Vec?.vs vec) i sz1))
+    SZBUF.loc_union_assoc (loc_buffer (SZBUF.gsub (Vec?.vs vec) i sz1))
 		    (loc_vector_within vec (i + sz1) (j - sz1))
 		    (loc_vector_within vec (j - sz1) j)
   end
 
 unfold val frameOf: #a:Type -> vector a -> Tot HH.rid
 unfold let frameOf #a vec =
-  B.frameOf (Vec?.vs vec)
+  SZBUF.frameOf (Vec?.vs vec)
 
 unfold val hmap_dom_eq: h0:HS.mem -> h1:HS.mem -> GTot Type0
 unfold let hmap_dom_eq h0 h1 =
@@ -210,9 +209,8 @@ val modifies_as_seq:
 	SMTPat (loc_disjoint (loc_vector vec) dloc);
 	SMTPat (modifies dloc h0 h1)]
 let modifies_as_seq #a vec dloc h0 h1 =
-  B.modifies_buffer_elim (Vec?.vs vec) dloc h0 h1
+  SZBUF.modifies_buffer_elim (Vec?.vs vec) dloc h0 h1
 
-#set-options "--z3rlimit 10"
 val modifies_as_seq_within:
   #a:Type -> vec:vector a -> 
   i:index_t -> j:index_t{i <= j && j <= size_of vec} ->
@@ -220,32 +218,31 @@ val modifies_as_seq_within:
   Lemma (requires (live h0 vec /\ 
 		  loc_disjoint (loc_vector_within vec i j) dloc /\
 		  modifies dloc h0 h1))
-	(ensures (S.slice (as_seq h0 vec) (size2nat i) (size2nat j) == 
-		 S.slice (as_seq h1 vec) (size2nat i) (size2nat j)))
-	(decreases (size2nat (j - i)))
+	(ensures (S.slice (as_seq h0 vec) (SZMOD.v i) (SZMOD.v j) == 
+		 S.slice (as_seq h1 vec) (SZMOD.v i) (SZMOD.v j)))
+	(decreases (SZMOD.v (j - i)))
 	[SMTPat (live h0 vec); 
 	SMTPat (loc_disjoint (loc_vector_within vec i j) dloc);
 	SMTPat (modifies dloc h0 h1)]
 let rec modifies_as_seq_within #a vec i j dloc h0 h1 =
   if i = j then ()
   else begin
-    B.modifies_buffer_elim (B.gsub (Vec?.vs vec) i sz1) dloc h0 h1;
+    SZBUF.modifies_buffer_elim (SZBUF.gsub (Vec?.vs vec) i sz1) dloc h0 h1;
     modifies_as_seq_within vec (i + sz1) j dloc h0 h1;
-    assert (S.equal (S.slice (as_seq h0 vec) (size2nat i) (size2nat j))
-		    (S.append (S.slice (as_seq h0 vec) (size2nat i) (size2nat i + 1))
-			      (S.slice (as_seq h0 vec) (size2nat i + 1) (size2nat j))));
-    assert (S.equal (S.slice (as_seq h1 vec) (size2nat i) (size2nat j))
-		    (S.append (S.slice (as_seq h1 vec) (size2nat i) (size2nat i + 1))
-			      (S.slice (as_seq h1 vec) (size2nat i + 1) (size2nat j))))
+    assert (S.equal (S.slice (as_seq h0 vec) (SZMOD.v i) (SZMOD.v j))
+		    (S.append (S.slice (as_seq h0 vec) (SZMOD.v i) (SZMOD.v i + 1))
+			      (S.slice (as_seq h0 vec) (SZMOD.v i + 1) (SZMOD.v j))));
+    assert (S.equal (S.slice (as_seq h1 vec) (SZMOD.v i) (SZMOD.v j))
+		    (S.append (S.slice (as_seq h1 vec) (SZMOD.v i) (SZMOD.v i + 1))
+			      (S.slice (as_seq h1 vec) (SZMOD.v i + 1) (SZMOD.v j))))
   end
-#reset-options
 
 /// Construction
 
 val create_empty: 
   a:Type -> Tot (vec:vector a{size_of vec = sz0})
 let create_empty a =
-  Vec sz0 sz0 B.null
+  Vec sz0 sz0 SZBUF.null
 
 val create_empty_as_seq_empty:
   a:Type -> h:HS.mem ->
@@ -265,9 +262,9 @@ val create_rid:
 	   Set.equal (Map.domain (MHS.get_hmap h0))
                      (Map.domain (MHS.get_hmap h1)) /\
 	   size_of vec = len /\
-	   S.equal (as_seq h1 vec) (S.create (size2nat len) v)))
+	   S.equal (as_seq h1 vec) (S.create (SZMOD.v len) v)))
 let create_rid #a len v rid =
-  Vec len len (B.malloc rid v len)
+  Vec len len (SZBUF.malloc rid v len)
 
 val create: 
   #a:Type -> len:size_t{len > sz0} -> v:a -> 
@@ -280,7 +277,7 @@ val create:
 	   Set.equal (Map.domain (MHS.get_hmap h0))
                      (Map.domain (MHS.get_hmap h1)) /\
 	   size_of vec = len /\
-	   S.equal (as_seq h1 vec) (S.create (size2nat len) v)))
+	   S.equal (as_seq h1 vec) (S.create (SZMOD.v len) v)))
 let create #a len v =
   create_rid len v HH.root
 
@@ -297,18 +294,18 @@ val create_reserve:
 	   size_of vec = sz0 /\
 	   S.equal (as_seq h1 vec) S.empty))
 let create_reserve #a len ia rid =
-  Vec sz0 len (B.malloc rid ia len)
+  Vec sz0 len (SZBUF.malloc rid ia len)
 
 val create_by_buffer:
   #a:Type -> len:size_t{len > sz0} ->
-  buf:B.buffer a{B.len buf = len} ->
+  buf:SZBUF.buffer a{SZBUF.len buf = len} ->
   HST.ST (vector a)
-	 (requires (fun h0 -> B.live h0 buf))
+	 (requires (fun h0 -> SZBUF.live h0 buf))
 	 (ensures (fun h0 vec h1 -> 
-	   frameOf vec = B.frameOf buf /\ loc_vector vec == loc_buffer buf /\
+	   frameOf vec = SZBUF.frameOf buf /\ loc_vector vec == loc_buffer buf /\
 	   live h1 vec /\ h0 == h1 /\
 	   size_of vec = len /\
-	   S.equal (as_seq h1 vec) (B.as_seq h0 buf)))
+	   S.equal (as_seq h1 vec) (SZBUF.as_seq h0 buf)))
 let create_by_buffer #a len buf =
   Vec len len buf
 
@@ -320,7 +317,7 @@ val free:
     (requires (fun h0 -> live h0 vec /\ freeable vec))
     (ensures (fun h0 _ h1 -> modifies (loc_addr_of_vector vec) h0 h1))
 let free #a vec =  
-  B.free (Vec?.vs vec)
+  SZBUF.free (Vec?.vs vec)
 
 /// Element access
 
@@ -328,16 +325,16 @@ val get:
   #a:Type -> h:HS.mem -> vec:vector a -> 
   i:index_t{i < size_of vec} -> GTot a
 let get #a h vec i =
-  S.index (as_seq h vec) (size2nat i)
+  S.index (as_seq h vec) (SZMOD.v i)
 
 val index: 
   #a:Type -> vec:vector a -> i:index_t -> 
   HST.ST a
     (requires (fun h0 -> live h0 vec /\ i < size_of vec))
     (ensures (fun h0 v h1 -> 
-      h0 == h1 /\ S.index (as_seq h1 vec) (size2nat i) == v))
+      h0 == h1 /\ S.index (as_seq h1 vec) (SZMOD.v i) == v))
 let index #a vec i =
-  B.index (Vec?.vs vec) i
+  SZBUF.index (Vec?.vs vec) i
 
 val front:
   #a:Type -> vec:vector a{size_of vec > sz0} ->
@@ -346,16 +343,16 @@ val front:
     (ensures (fun h0 v h1 -> 
       h0 == h1 /\ S.index (as_seq h1 vec) 0 == v))
 let front #a vec =
-  B.index (Vec?.vs vec) sz0
+  SZBUF.index (Vec?.vs vec) sz0
 
 val back:
   #a:Type -> vec:vector a{size_of vec > sz0} ->
   HST.ST a
     (requires (fun h0 -> live h0 vec))
     (ensures (fun h0 v h1 -> 
-      h0 == h1 /\ S.index (as_seq h1 vec) (size2nat (size_of vec) - 1) == v))
+      h0 == h1 /\ S.index (as_seq h1 vec) (SZMOD.v (size_of vec) - 1) == v))
 let back #a vec =
-  B.index (Vec?.vs vec) (size_of vec - sz1)
+  SZBUF.index (Vec?.vs vec) (size_of vec - sz1)
 
 /// Operations
 
@@ -387,13 +384,13 @@ val assign:
       hmap_dom_eq h0 h1 /\
       modifies (loc_vector_within #a vec i (i + sz1)) h0 h1 /\
       get h1 vec i == v /\
-      S.equal (as_seq h1 vec) (S.upd (as_seq h0 vec) (size2nat i) v)))
+      S.equal (as_seq h1 vec) (S.upd (as_seq h0 vec) (SZMOD.v i) v)))
 #reset-options "--z3rlimit 10"
 let assign #a vec i v =
   let hh0 = HST.get () in
-  // NOTE: `B.upd (Vec?.vs vec) i v` makes more sense, 
+  // NOTE: `SZBUF.upd (Vec?.vs vec) i v` makes more sense, 
   //       but the `modifies` postcondition is coarse-grained.
-  B.upd (B.sub (Vec?.vs vec) i sz1) sz0 v;
+  SZBUF.upd (SZBUF.sub (Vec?.vs vec) i sz1) sz0 v;
   let hh1 = HST.get () in
   loc_vector_within_disjoint vec sz0 i i (i + sz1);
   modifies_as_seq_within 
@@ -401,13 +398,13 @@ let assign #a vec i v =
   loc_vector_within_disjoint vec i (i + sz1) (i + sz1) (size_of vec);
   modifies_as_seq_within 
     vec (i + sz1) (size_of vec) (loc_vector_within #a vec i (i + sz1)) hh0 hh1;
-  slice_append (as_seq hh1 vec) 0 (size2nat i) (size2nat i + 1);
-  slice_append (as_seq hh1 vec) 0 (size2nat i + 1) (size2nat (size_of vec));
-  slice_append (S.upd (as_seq hh0 vec) (size2nat i) v) 0 (size2nat i) (size2nat i + 1);
-  slice_append (S.upd (as_seq hh0 vec) (size2nat i) v) 0 (size2nat i + 1) (size2nat (size_of vec))
+  slice_append (as_seq hh1 vec) 0 (SZMOD.v i) (SZMOD.v i + 1);
+  slice_append (as_seq hh1 vec) 0 (SZMOD.v i + 1) (SZMOD.v (size_of vec));
+  slice_append (S.upd (as_seq hh0 vec) (SZMOD.v i) v) 0 (SZMOD.v i) (SZMOD.v i + 1);
+  slice_append (S.upd (as_seq hh0 vec) (SZMOD.v i) v) 0 (SZMOD.v i + 1) (SZMOD.v (size_of vec))
 
 private val resize_ratio: size_t
-private let resize_ratio = UInt.to_uint_t 64 2 // 2ul
+private let resize_ratio = 2UL
 
 private val new_capacity: cap:size_t{cap > sz0} -> Tot size_t
 private let new_capacity cap =
@@ -436,13 +433,13 @@ let insert #a vec v =
   let vs = Vec?.vs vec in
   if sz = cap 
   then (let ncap = new_capacity cap in
-       let nvs = B.malloc (B.frameOf vs) v ncap in
-       B.blit vs sz0 nvs sz0 sz;
-       B.upd nvs sz v;
-       B.free vs;
+       let nvs = SZBUF.malloc (SZBUF.frameOf vs) v ncap in
+       SZBUF.blit vs sz0 nvs sz0 sz;
+       SZBUF.upd nvs sz v;
+       SZBUF.free vs;
        Vec (sz + sz1) ncap nvs)
   else
-    (B.upd vs sz v;
+    (SZBUF.upd vs sz v;
     Vec (sz + sz1) cap vs)
 
 val flush:
@@ -460,14 +457,14 @@ val flush:
       			  (loc_vector fvec)) h0 h1 /\
       size_of fvec = size_of vec - i /\
       S.equal (as_seq h1 fvec) 
-	      (S.slice (as_seq h0 vec) (size2nat i) (size2nat (size_of vec)))))
+	      (S.slice (as_seq h0 vec) (SZMOD.v i) (SZMOD.v (size_of vec)))))
 let flush #a vec ia i =
   let fsz = Vec?.sz vec - i in
   let asz = if Vec?.sz vec = i then sz1 else fsz in
   let vs = Vec?.vs vec in
-  let fvs = B.malloc (B.frameOf vs) ia asz in
-  B.blit vs i fvs sz0 fsz;
-  B.free vs;
+  let fvs = SZBUF.malloc (SZBUF.frameOf vs) ia asz in
+  SZBUF.blit vs i fvs sz0 fsz;
+  SZBUF.free vs;
   Vec fsz asz fvs
 
 /// Iteration
@@ -482,18 +479,18 @@ let rec fold_left_seq #a #b seq f ib =
 
 val fold_left_buffer:
   #a:Type -> #b:Type0 -> len:size_t ->
-  buf:B.buffer a{B.len buf = len} ->
+  buf:SZBUF.buffer a{SZBUF.len buf = len} ->
   f:(b -> a -> Tot b) -> ib:b ->
   HST.ST b
-    (requires (fun h0 -> B.live h0 buf))
+    (requires (fun h0 -> SZBUF.live h0 buf))
     (ensures (fun h0 v h1 -> 
       h0 == h1 /\
-      v == fold_left_seq (B.as_seq h0 buf) f ib))
-    (decreases (B.length buf))
+      v == fold_left_seq (SZBUF.as_seq h0 buf) f ib))
+    (decreases (SZBUF.length buf))
 let rec fold_left_buffer #a #b len buf f ib =
   if len = sz0 then ib
-  else (fold_left_buffer (len - sz1) (B.sub buf sz1 (len - sz1)) 
-			 f (f ib (B.index buf sz0)))
+  else (fold_left_buffer (len - sz1) (SZBUF.sub buf sz1 (len - sz1)) 
+			 f (f ib (SZBUF.index buf sz0)))
 
 val fold_left:
   #a:Type -> #b:Type0 -> vec:vector a -> 
@@ -504,7 +501,7 @@ val fold_left:
       h0 == h1 /\
       v == fold_left_seq (as_seq h0 vec) f ib))
 let fold_left #a #b vec f ib =
-  fold_left_buffer (Vec?.sz vec) (B.sub (Vec?.vs vec) sz0 (Vec?.sz vec)) f ib
+  fold_left_buffer (Vec?.sz vec) (SZBUF.sub (Vec?.vs vec) sz0 (Vec?.sz vec)) f ib
 
 val forall_seq:
   #a:Type -> seq:S.seq a ->
@@ -515,18 +512,18 @@ let forall_seq #a seq i j p =
     p (S.index seq idx)
 
 val forall_buffer:
-  #a:Type -> h:HS.mem -> buf:B.buffer a ->
-  i:nat -> j:nat{i <= j && j <= B.length #64 buf} ->
+  #a:Type -> h:HS.mem -> buf:SZBUF.buffer a ->
+  i:nat -> j:nat{i <= j && j <= SZBUF.length buf} ->
   p:(a -> GTot Type0) -> GTot Type0
 let forall_buffer #a h buf i j p =
-  forall_seq (B.as_seq h buf) i j p
+  forall_seq (SZBUF.as_seq h buf) i j p
 
 val forall_: 
   #a:Type -> h:HS.mem -> vec:vector a ->
   i:index_t -> j:index_t{i <= j && j <= size_of vec} ->
   p:(a -> Tot Type0) -> GTot Type0
 let forall_ #a h vec i j p =
-  forall_seq (as_seq h vec) (size2nat i) (size2nat j) p
+  forall_seq (as_seq h vec) (SZMOD.v i) (SZMOD.v j) p
 
 val forall_all:
   #a:Type -> h:HS.mem -> vec:vector a ->
@@ -543,18 +540,18 @@ let forall2_seq #a seq i j p =
     p (S.index seq k) (S.index seq l)
 
 val forall2_buffer:
-  #a:Type -> h:HS.mem -> buf:B.buffer a ->
-  i:nat -> j:nat{i <= j && j <= B.length #64 buf} ->
+  #a:Type -> h:HS.mem -> buf:SZBUF.buffer a ->
+  i:nat -> j:nat{i <= j && j <= SZBUF.length buf} ->
   p:(a -> a -> GTot Type0) -> GTot Type0
 let forall2_buffer #a h buf i j p =
-  forall2_seq (B.as_seq h buf) i j p
+  forall2_seq (SZBUF.as_seq h buf) i j p
 
 val forall2:
   #a:Type -> h:HS.mem -> vec:vector a -> 
   i:index_t -> j:index_t{i <= j && j <= size_of vec} ->
   p:(a -> a -> GTot Type0) -> GTot Type0
 let forall2 #a h vec i j p =
-  forall2_seq (as_seq h vec) (size2nat i) (size2nat j) p
+  forall2_seq (as_seq h vec) (SZMOD.v i) (SZMOD.v j) p
 
 val forall2_all:
   #a:Type -> h:HS.mem -> vec:vector a -> 
@@ -583,8 +580,8 @@ val forall2_seq_ok:
 let forall2_seq_ok #a seq i j k l p = ()
 
 val get_as_seq_index:
-  #a:Type -> h:HS.mem -> buf:B.buffer a -> i:index_t{i < B.len buf} ->
-  Lemma (B.get h buf (size2nat i) == S.index (B.as_seq h (B.gsub buf i sz1)) 0)
+  #a:Type -> h:HS.mem -> buf:SZBUF.buffer a -> i:index_t{i < SZBUF.len buf} ->
+  Lemma (SZBUF.get h buf (SZMOD.v i) == S.index (SZBUF.as_seq h (SZBUF.gsub buf i sz1)) 0)
 let get_as_seq_index #a h buf i = ()
 
 val get_preserved:
@@ -645,8 +642,8 @@ val forall_preserved:
 	(ensures (forall_ h1 vec i j p))
 let forall_preserved #a vec i j p dloc h0 h1 =
   modifies_as_seq_within vec i j dloc h0 h1;
-  assert (S.slice (as_seq h0 vec) (size2nat i) (size2nat j) ==
-	 S.slice (as_seq h1 vec) (size2nat i) (size2nat j))
+  assert (S.slice (as_seq h0 vec) (SZMOD.v i) (SZMOD.v j) ==
+	 S.slice (as_seq h1 vec) (SZMOD.v i) (SZMOD.v j))
 
 val forall2_extend:
   #a:Type -> h:HS.mem -> vec:vector a ->

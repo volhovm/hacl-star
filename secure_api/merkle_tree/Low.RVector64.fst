@@ -1,19 +1,19 @@
-module Low.RVector
+module Low.RVector64
 
 open FStar.All
 open FStar.Integers
 open FStar.Classical
 open LowStar.Modifies
-open Low.Regional
-open Low.Vector
+open Low.Regional64
+open Low.Vector64
 
 module HH = FStar.Monotonic.HyperHeap
 module HS = FStar.HyperStack
 module HST = FStar.HyperStack.ST
 module MHS = FStar.Monotonic.HyperStack
 module S = FStar.Seq
-module B = LowStar.Buffer.Generic
-module V = Low.Vector
+module B = LowStar.Buffer64
+module V = Low.Vector64
 
 
 /// Utilities
@@ -51,7 +51,7 @@ noeq type copyable a (rg: regional a) =
     	  HH.disjoint (Rgl?.region_of rg src)
 		      (Rgl?.region_of rg dst)))
     	(ensures (fun h0 _ h1 ->
-    	  B.modifies (B.loc_all_regions_from 
+    	  modifies (B.loc_all_regions_from 
 		     false (Rgl?.region_of rg dst)) h0 h1 /\
     	  Rgl?.r_inv rg h1 dst /\
     	  Rgl?.r_repr rg h1 dst == Rgl?.r_repr rg h0 src))) ->
@@ -60,7 +60,7 @@ noeq type copyable a (rg: regional a) =
 type rvector #a (rg:regional a) = V.vector a
 
 val loc_rvector:
-  #a:Type0 -> #rg:regional a -> rv:rvector rg -> GTot B.loc
+  #a:Type0 -> #rg:regional a -> rv:rvector rg -> GTot loc
 let loc_rvector #a #rg rv =
   B.loc_all_regions_from false (V.frameOf rv)
 
@@ -161,14 +161,14 @@ let rv_elems_inv_live_region #a #rg h rv i j =
 val rs_loc_elem:
   #a:Type0 -> rg:regional a ->
   rs:S.seq a -> i:nat{i < S.length rs} ->
-  GTot B.loc
+  GTot loc
 let rs_loc_elem #a rg rs i =
   B.loc_all_regions_from false (Rgl?.region_of rg (S.index rs i))
 
 val rs_loc_elems:
   #a:Type0 -> rg:regional a ->
   rs:S.seq a -> i:nat -> j:nat{i <= j && j <= S.length rs} -> 
-  GTot B.loc (decreases j)
+  GTot loc (decreases j)
 let rec rs_loc_elems #a rg rs i j =
   if i = j then loc_none
   else loc_union (rs_loc_elems rg rs i (j - 1))

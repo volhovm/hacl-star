@@ -1,4 +1,4 @@
-module Low.Regional
+module Low.Regional64
 
 open FStar.All
 open FStar.Integers
@@ -9,7 +9,7 @@ module HH = FStar.Monotonic.HyperHeap
 module HS = FStar.HyperStack
 module HST = FStar.HyperStack.ST
 module MHS = FStar.Monotonic.HyperStack
-module B = LowStar.Buffer.Generic
+module B = LowStar.Buffer64
 
 /// Regionality
 
@@ -39,7 +39,7 @@ noeq type regional a =
     repr: Type0 ->
     r_repr: (h:HS.mem -> v:a{r_inv h v} -> GTot repr) ->
 
-    // A core separation lemma, saying that the invariant and represenation
+    // A core separation lemma, saying that the invariant and representation
     // are preserved when an orthogonal state transition happens.
     r_sep:
       (v:a -> p:B.loc -> h:HS.mem -> h':HS.mem ->
@@ -76,5 +76,6 @@ noeq type regional a =
 	(requires (fun h0 -> r_inv h0 v))
 	(ensures (fun h0 _ h1 ->
 	  B.modifies (B.loc_all_regions_from false (region_of v)) h0 h1))) ->
+
     regional a
 
