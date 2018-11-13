@@ -201,18 +201,21 @@ let ubuffer_preserved'
   (frameOf b' == r /\ as_addr b' == a /\ ubuffer_of_buffer' b' == b /\ live h b') ==>
   (live h' b' /\ Seq.equal (as_seq h' b') (as_seq h b'))
 
+val ubuffer_preserved (#r: HS.rid) (#a: nat) (b: LMB.ubuffer r a) (h h' : HS.mem) : GTot Type0
+let ubuffer_preserved = ubuffer_preserved'
+
 val ubuffer_of_buffer (#a:Type0) (#rrel:srel a) (#rel:srel a) (b:mbuffer a rrel rel) :Tot (LMB.ubuffer (frameOf b) (as_addr b))
 let ubuffer_of_buffer #_ #_ #_ b = ubuffer_of_buffer' b
 
 val ubuffer_preserved_elim (#a:Type0) (#rrel:srel a) (#rel:srel a) (b:mbuffer a rrel rel) (h h':HS.mem)
-  :Lemma (requires (LMB.ubuffer_preserved #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) h h' /\ live h b))
+  :Lemma (requires (ubuffer_preserved #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) h h' /\ live h b))
          (ensures (live h' b /\ as_seq h b == as_seq h' b))
-let ubuffer_preserved_elim #a #rrel #rel b h h' = admit()
+let ubuffer_preserved_elim #a #rrel #rel b h h' = ()
 
 let unused_in_ubuffer_preserved (#a:Type0) (#rrel:srel a) (#rel:srel a)
   (b:mbuffer a rrel rel) (h h':HS.mem)
   : Lemma (requires (b `unused_in` h))
-          (ensures (LMB.ubuffer_preserved #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) h h'))
+          (ensures (ubuffer_preserved #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) h h'))
   = Classical.move_requires (fun b -> live_not_unused_in h b) b;
     live_null a rrel rel h;
     null_unique b;
@@ -244,7 +247,7 @@ let modifies_1_preserves_mreferences (#a:Type0) (#rrel:srel a) (#rel:srel a) (b:
 let modifies_1_preserves_ubuffers (#a:Type0) (#rrel:srel a) (#rel:srel a) (b:mbuffer a rrel rel) (h1 h2:HS.mem)
   : GTot Type0
   = forall (b':LMB.ubuffer (frameOf b) (as_addr b)).
-      (LMB.ubuffer_disjoint #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) b') ==> LMB.ubuffer_preserved #(frameOf b) #(as_addr b) b' h1 h2
+      (LMB.ubuffer_disjoint #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) b') ==> ubuffer_preserved #(frameOf b) #(as_addr b) b' h1 h2
 
 let modifies_1_preserves_livenesses (#a:Type0) (#rrel:srel a) (#rel:srel a) (b:mbuffer a rrel rel) (h1 h2:HS.mem)
   : GTot Type0
@@ -288,7 +291,7 @@ let modifies_1_mreference #_ #_ #_ _ _ _ #_ #_ _ = ()
 val modifies_1_ubuffer (#a:Type0) (#rrel:srel a) (#rel:srel a)
   (b:mbuffer a rrel rel) (h1 h2:HS.mem) (b':LMB.ubuffer (frameOf b) (as_addr b))
   : Lemma (requires (modifies_1 b h1 h2 /\ LMB.ubuffer_disjoint #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) b'))
-          (ensures  (LMB.ubuffer_preserved #(frameOf b) #(as_addr b) b' h1 h2))
+          (ensures  (ubuffer_preserved #(frameOf b) #(as_addr b) b' h1 h2))
 let modifies_1_ubuffer #_ #_ #_ _ _ _ _ = ()
 
 val modifies_1_null (#a:Type0) (#rrel:srel a) (#rel:srel a)
@@ -395,13 +398,23 @@ let loc_disjoint_buffer #_ #_ #_ #_ #_ #_ b1 b2 =
 let loc_disjoint_gsub_buffer #_ #_ #_ b i1 len1 sub_rel1 i2 len2 sub_rel2 =
   loc_disjoint_buffer (mgsub sub_rel1 b i1 len1) (mgsub sub_rel2 b i2 len2)
 
-let modifies_buffer_elim #_ #_ #_ b p h h' =
+//  :Lemma (requires (LMB.loc_disjoint (loc_buffer b) p /\ live h b /\ LMB.modifies p h h'))
+//         (ensures  (live h' b /\ (as_seq h b == as_seq h' b)))
+
+let modifies_buffer_elim #a #rrel #rel b p h h' =
   if g_is_null b
   then
     assert (as_seq h b `Seq.equal` as_seq h' b)
   else begin
-    MG.modifies_aloc_elim #_ #LMB.cls #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) p h h' ;
-    ubuffer_preserved_elim b h h'
+    MG.modifies_aloc_elim #_ #LMB.cls #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) p h h' ;    
+    assert (LMB.loc_disjoint (loc_buffer b) p /\ live h b /\ LMB.modifies p h h');
+    assert (live h b);
+    assert (forall (t':Type0) (rrel rel:srel t') (b':mbuffer t' rrel rel) .
+                   (frameOf b' == (frameOf b) /\ as_addr b' == (as_addr b) /\ ubuffer_of_buffer' b' == (ubuffer_of_buffer b) /\ live h b') ==>
+                   (LMB.live h' b' /\ Seq.equal (as_seq h' b') (as_seq h b')));
+    assert (ubuffer_preserved #(frameOf b) #(as_addr b) (ubuffer_of_buffer b) h h');
+    ubuffer_preserved_elim b h h';
+    assert (live h' b)
   end
 
 let address_liveness_insensitive_buffer #_ #_ #_ b =

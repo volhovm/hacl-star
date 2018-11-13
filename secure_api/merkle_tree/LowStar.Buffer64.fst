@@ -2,13 +2,8 @@ module LowStar.Buffer64
 
 include LowStar.Monotonic.Buffer64
 
-module P = FStar.Preorder
-module G = FStar.Ghost
 module Seq = FStar.Seq
-
-module HS = FStar.HyperStack
 module HST = FStar.HyperStack.ST
-
 module LMB = LowStar.Monotonic.Buffer
 
 (*
@@ -78,6 +73,7 @@ let rec assign_list #a (l: list a): assign_list_t l
       let h0 = HST.get () in
       assign_list tl b_tl;
       let h1 = HST.get () in
+      modifies_buffer_elim b_hd (loc_buffer b_tl) h0 h1;
       assert (as_seq h1 b_hd == as_seq h0 b_hd);
       assert (get h1 b_hd 0 == hd);
       assert (as_seq h1 b_tl == Seq.seq_of_list tl);

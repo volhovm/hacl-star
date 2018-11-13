@@ -8,7 +8,7 @@ module HH = FStar.Monotonic.HyperHeap
 module HS = FStar.HyperStack
 module HST = FStar.HyperStack.ST
 module MHS = FStar.Monotonic.HyperStack
-module B = LowStar.Buffer64
+module B = LowStar.Buffer.Generic
 module S = FStar.Seq
 module U64 = FStar.UInt64
 
@@ -20,72 +20,72 @@ let max_uint64 = 18446744073709551615UL
 
 /// Abstract vector type
 
-noeq type vector_str a =
-| Vec: sz:uint64_t ->
-       cap:uint64_t{cap >= sz} ->
-       vs:B.buffer a{B.len vs = cap} ->
-       vector_str a
+noeq type vector_str (a:Type0) (st:eqtype) =
+| Vec: sz:st ->
+       cap:st{B.size_at_least cap sz} ->
+       vs:B.buffer a st {B.len vs = cap} ->
+       vector_str a st
 
-val vector (a: Type0): Tot Type0
-let vector a = vector_str a
+val vector (a:Type0) (st:eqtype) : Tot Type0
+let vector a st = vector_str a st
 
 /// Specification
 
 val as_seq:
-  HS.mem -> #a:Type -> vec:vector a ->
-  GTot (s:S.seq a{S.length s = U64.v (Vec?.sz vec)})
-let as_seq h #a vec =
-  B.as_seq h (B.gsub (Vec?.vs vec) 0UL (Vec?.sz vec))
+  HS.mem -> #a:Type -> #st:eqtype-> vec:vector a st ->
+  GTot (s:S.seq a{S.length s = B.size2nat (Vec?.sz vec)})
+let as_seq h #a #st vec =
+  B.as_seq h (B.gsub (Vec?.vs vec) (B.index_zero (Vec?.vs vec)) (Vec?.sz vec))
 
 /// Capacity
 
-unfold val size_of: #a:Type -> vec:vector a -> Tot uint64_t
-unfold let size_of #a vec =
+unfold val size_of: #a:Type -> #st:eqtype -> vec:vector a st -> Tot st
+unfold let size_of #a #st vec =
   Vec?.sz vec
 
-unfold val capacity_of: #a:Type -> vec:vector a -> Tot uint64_t
-unfold let capacity_of #a vec =
+unfold val capacity_of: #a:Type -> #st:eqtype -> vec:vector a st -> Tot st
+unfold let capacity_of #a #st vec =
   Vec?.cap vec
 
-unfold val is_empty: #a:Type -> vec:vector a -> Tot bool
-unfold let is_empty #a vec =
-  size_of vec = 0UL
+unfold val is_empty: #a:Type -> #st:eqtype -> vec:vector a st -> Tot bool
+unfold let is_empty #a #st vec =
+  B.len_is_0 (Vec?.vs vec)
 
-unfold val is_full: #a:Type -> vstr:vector_str a -> GTot bool
-unfold let is_full #a vstr =
-  Vec?.sz vstr >= max_uint64
+unfold val is_full: #a:Type -> #st:eqtype -> vstr:vector_str a st -> Tot bool
+unfold let is_full #a #st vstr =
+  B.size_is_max (Vec?.sz vstr)
 
 /// Memory-related
 
-unfold val live: #a:Type -> HS.mem -> vector a -> GTot Type0
-unfold let live #a h vec =
+unfold val live: #a:Type -> #st:eqtype -> HS.mem -> vector a st -> GTot Type0
+unfold let live #a #st h vec =
   B.live h (Vec?.vs vec)
 
-unfold val freeable: #a:Type -> vector a -> GTot Type0
-unfold let freeable #a vec =
+unfold val freeable: #a:Type -> #st:eqtype -> vector a st -> GTot Type0
+unfold let freeable #a #st vec =
   B.freeable (Vec?.vs vec)
 
-unfold val loc_vector: #a:Type -> vector a -> GTot loc
-unfold let loc_vector #a vec =
+unfold val loc_vector: #a:Type -> #st:eqtype -> vector a st -> GTot B.loc
+unfold let loc_vector #a #st vec =
   B.loc_buffer (Vec?.vs vec)
 
-unfold val loc_addr_of_vector: #a:Type -> vector a -> GTot loc
-unfold let loc_addr_of_vector #a vec =
+unfold val loc_addr_of_vector: #a:Type -> #st:eqtype -> vector a st -> GTot B.loc
+unfold let loc_addr_of_vector #a #st vec =
   B.loc_addr_of_buffer (Vec?.vs vec)
 
 val loc_vector_within:
-  #a:Type -> vec:vector a ->
-  i:uint64_t -> j:uint64_t{i <= j && j <= size_of vec} ->
-  GTot loc (decreases (U64.v (j - i)))
+  #a:Type -> #st:eqtype -> vec:vector a st ->
+  i:st -> j:st{B.size_lte i j && B.size_lte j (size_of vec) } ->
+  GTot B.loc (decreases ((B.size2nat j - B.size2nat i)))
 // unfold let loc_vector_within #a vec i j =
 //   B.loc_buffer (B.gsub (Vec?.vs vec) i (j - i))
-let rec loc_vector_within #a vec i j =
-  if i = j then loc_none
-  else loc_union (B.loc_buffer (B.gsub (Vec?.vs vec) i 1UL))
-		 (loc_vector_within vec (i + 1UL) j)
+let rec loc_vector_within #a #st vec i j =
+  if i = j then B.loc_none
+  else B.loc_union (B.loc_buffer (B.gsub (Vec?.vs vec) i (B.size_one (Vec?.vs vec))))
+		 (loc_vector_within #a #st vec (B.size_inc i) j)
 
 val loc_vector_within_includes_:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i:uint64_t ->
   j1:uint64_t{i <= j1 && j1 <= size_of vec} ->
   j2:uint64_t{i <= j2 && j2 <= j1} ->
@@ -107,7 +107,7 @@ let rec loc_vector_within_includes_ #a vec i j1 j2 =
   end
 
 val loc_vector_within_includes:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i1:uint64_t -> j1:uint64_t{i1 <= j1 && j1 <= size_of vec} ->
   i2:uint64_t{i1 <= i2} -> j2:uint64_t{i2 <= j2 && j2 <= j1} ->
   Lemma (requires True)
@@ -125,7 +125,7 @@ let rec loc_vector_within_includes #a vec i1 j1 i2 j2 =
   end
 
 val loc_vector_within_included:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i <= j && j <= size_of vec} ->
   Lemma (requires True)
 	(ensures (loc_includes (loc_vector vec)
@@ -136,7 +136,7 @@ let rec loc_vector_within_included #a vec i j =
   else loc_vector_within_included vec (i + 1UL) j
 
 val loc_vector_within_disjoint_:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i1:uint64_t ->
   i2:uint64_t{i1 < i2} ->
   j2:uint64_t{i2 <= j2 && j2 <= size_of vec} ->
@@ -149,7 +149,7 @@ let rec loc_vector_within_disjoint_ #a vec i1 i2 j2 =
   else loc_vector_within_disjoint_ vec i1 (i2 + 1UL) j2
 
 val loc_vector_within_disjoint:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i1:uint64_t -> j1:uint64_t{i1 <= j1 && j1 <= size_of vec} ->
   i2:uint64_t{j1 <= i2} -> j2:uint64_t{i2 <= j2 && j2 <= size_of vec} ->
   Lemma (requires True)
@@ -162,7 +162,7 @@ let rec loc_vector_within_disjoint #a vec i1 j1 i2 j2 =
        loc_vector_within_disjoint vec (i1 + 1UL) j1 i2 j2)
 
 val loc_vector_within_union_rev:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i < j && j <= size_of vec} ->
   Lemma (requires True)
 	(ensures (loc_vector_within vec i j ==
@@ -178,8 +178,8 @@ let rec loc_vector_within_union_rev #a vec i j =
 		    (loc_vector_within vec (j - 1UL) j)
   end
 
-unfold val frameOf: #a:Type -> vector a -> Tot HH.rid
-unfold let frameOf #a vec =
+unfold val frameOf: #a:Type -> #st:eqtype -> vector a st -> Tot HH.rid
+unfold let frameOf #a #st vec =
   B.frameOf (Vec?.vs vec)
 
 unfold val hmap_dom_eq: h0:HS.mem -> h1:HS.mem -> GTot Type0
@@ -188,7 +188,7 @@ unfold let hmap_dom_eq h0 h1 =
 	    (Map.domain (MHS.get_hmap h1))
 
 val modifies_as_seq:
-  #a:Type -> vec:vector a -> dloc:loc ->
+  #a:Type -> #st:eqtype -> vec:vector a st -> dloc:loc ->
   h0:HS.mem -> h1:HS.mem ->
   Lemma (requires (live h0 vec /\
 		  loc_disjoint (loc_vector vec) dloc /\
@@ -201,7 +201,7 @@ let modifies_as_seq #a vec dloc h0 h1 =
   B.modifies_buffer_elim (Vec?.vs vec) dloc h0 h1
 
 val modifies_as_seq_within:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i <= j && j <= size_of vec} ->
   dloc:loc -> h0:HS.mem -> h1:HS.mem ->
   Lemma (requires (live h0 vec /\
@@ -301,23 +301,23 @@ let create_by_buffer #a len buf =
 /// Destruction
 
 val free:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   HST.ST unit
     (requires (fun h0 -> live h0 vec /\ freeable vec))
     (ensures (fun h0 _ h1 -> modifies (loc_addr_of_vector vec) h0 h1))
-let free #a vec =
+let free #a #st vec =
   B.free (Vec?.vs vec)
 
 /// Element access
 
 val get:
-  #a:Type -> h:HS.mem -> vec:vector a ->
+  #a:Type -> h:HS.mem -> vec:vector a st ->
   i:uint64_t{i < size_of vec} -> GTot a
 let get #a h vec i =
   S.index (as_seq h vec) (U64.v i)
 
 val index:
-  #a:Type -> vec:vector a -> i:uint64_t ->
+  #a:Type -> #st:eqtype -> vec:vector a st -> i:uint64_t ->
   HST.ST a
     (requires (fun h0 -> live h0 vec /\ i < size_of vec))
     (ensures (fun h0 v h1 ->
@@ -326,33 +326,33 @@ let index #a vec i =
   B.index (Vec?.vs vec) i
 
 val front:
-  #a:Type -> vec:vector a{size_of vec > 0UL} ->
+  #a:Type -> #st:eqtype -> vec:vector a{size_of vec > 0UL} ->
   HST.ST a
     (requires (fun h0 -> live h0 vec))
     (ensures (fun h0 v h1 ->
       h0 == h1 /\ S.index (as_seq h1 vec) 0 == v))
-let front #a vec =
+let front #a #st vec =
   B.index (Vec?.vs vec) 0UL
 
 val back:
-  #a:Type -> vec:vector a{size_of vec > 0UL} ->
+  #a:Type -> #st:eqtype -> vec:vector a{size_of vec > 0UL} ->
   HST.ST a
     (requires (fun h0 -> live h0 vec))
     (ensures (fun h0 v h1 ->
       h0 == h1 /\ S.index (as_seq h1 vec) (U64.v (size_of vec) - 1) == v))
-let back #a vec =
+let back #a #st vec =
   B.index (Vec?.vs vec) (size_of vec - 1UL)
 
 /// Operations
 
 val clear:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   Tot (cvec:vector a{size_of cvec = 0UL})
-let clear #a vec =
+let clear #a #st vec =
   Vec 0UL (Vec?.cap vec) (Vec?.vs vec)
 
 val clear_as_seq_empty:
-  #a:Type -> h:HS.mem -> vec:vector a ->
+  #a:Type -> h:HS.mem -> vec:vector a st ->
   Lemma (S.equal (as_seq h (clear vec)) S.empty)
 	[SMTPat (as_seq h (clear vec))]
 let clear_as_seq_empty #a h vec = ()
@@ -365,7 +365,7 @@ private val slice_append:
 private let slice_append #a s i j k = ()
 
 val assign:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i:uint64_t -> v:a ->
   HST.ST unit
     (requires (fun h0 -> live h0 vec /\ i < size_of vec))
@@ -401,7 +401,7 @@ private let new_capacity cap =
   else cap * resize_ratio
 
 val insert:
-  #a:Type -> vec:vector a -> v:a ->
+  #a:Type -> #st:eqtype -> vec:vector a st -> v:a ->
   HST.ST (vector a)
     (requires (fun h0 ->
       live h0 vec /\ freeable vec /\ not (is_full vec) /\
@@ -432,7 +432,7 @@ let insert #a vec v =
     Vec (sz + 1UL) cap vs)
 
 val flush:
-  #a:Type -> vec:vector a -> ia:a ->
+  #a:Type -> #st:eqtype -> vec:vector a st -> ia:a ->
   i:uint64_t{i <= size_of vec} ->
   HST.ST (vector a)
     (requires (fun h0 ->
@@ -482,7 +482,7 @@ let rec fold_left_buffer #a #b len buf f ib =
 			 f (f ib (B.index buf 0UL)))
 
 val fold_left:
-  #a:Type -> #b:Type0 -> vec:vector a ->
+  #a:Type -> #b:Type0 -> vec:vector a st ->
   f:(b -> a -> Tot b) -> ib:b ->
   HST.ST b
     (requires (fun h0 -> live h0 vec))
@@ -508,14 +508,14 @@ let forall_buffer #a h buf i j p =
   forall_seq (B.as_seq h buf) i j p
 
 val forall_:
-  #a:Type -> h:HS.mem -> vec:vector a ->
+  #a:Type -> h:HS.mem -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i <= j && j <= size_of vec} ->
   p:(a -> Tot Type0) -> GTot Type0
 let forall_ #a h vec i j p =
   forall_seq (as_seq h vec) (U64.v i) (U64.v j) p
 
 val forall_all:
-  #a:Type -> h:HS.mem -> vec:vector a ->
+  #a:Type -> h:HS.mem -> vec:vector a st ->
   p:(a -> Tot Type0) -> GTot Type0
 let forall_all #a h vec p =
   forall_ h vec 0UL (size_of vec) p
@@ -536,14 +536,14 @@ let forall2_buffer #a h buf i j p =
   forall2_seq (B.as_seq h buf) i j p
 
 val forall2:
-  #a:Type -> h:HS.mem -> vec:vector a ->
+  #a:Type -> h:HS.mem -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i <= j && j <= size_of vec} ->
   p:(a -> a -> GTot Type0) -> GTot Type0
 let forall2 #a h vec i j p =
   forall2_seq (as_seq h vec) (U64.v i) (U64.v j) p
 
 val forall2_all:
-  #a:Type -> h:HS.mem -> vec:vector a ->
+  #a:Type -> h:HS.mem -> vec:vector a st ->
   p:(a -> a -> GTot Type0) -> GTot Type0
 let forall2_all #a h vec p =
   forall2 h vec 0UL (size_of vec) p
@@ -574,7 +574,7 @@ val get_as_seq_index:
 let get_as_seq_index #a h buf i = ()
 
 val get_preserved:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i:uint64_t{i < size_of vec} ->
   p:loc -> h0:HS.mem -> h1:HS.mem ->
   Lemma (requires (live h0 vec /\
@@ -586,7 +586,7 @@ let get_preserved #a vec i p h0 h1 =
   get_as_seq_index h1 (Vec?.vs vec) i
 
 private val get_preserved_within:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i <= j && j <= size_of vec} ->
   k:uint64_t{(k < i || j <= k) && k < size_of vec} ->
   h0:HS.mem -> h1:HS.mem ->
@@ -620,7 +620,7 @@ let forall_as_seq #a s0 s1 i j k p =
 	 S.index (S.slice s1 i j) (k - i))
 
 val forall_preserved:
-  #a:Type -> vec:vector a ->
+  #a:Type -> #st:eqtype -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i <= j && j <= size_of vec} ->
   p:(a -> Tot Type0) ->
   dloc:loc -> h0:HS.mem -> h1:HS.mem ->
@@ -635,7 +635,7 @@ let forall_preserved #a vec i j p dloc h0 h1 =
 	 S.slice (as_seq h1 vec) (U64.v i) (U64.v j))
 
 val forall2_extend:
-  #a:Type -> h:HS.mem -> vec:vector a ->
+  #a:Type -> h:HS.mem -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i <= j && j < size_of vec} ->
   p:(a -> a -> Tot Type0) ->
   Lemma (requires (forall2 h vec i j p /\
@@ -645,7 +645,7 @@ val forall2_extend:
 let forall2_extend #a h vec i j p = ()
 
 val forall2_forall_left:
-  #a:Type -> h:HS.mem -> vec:vector a ->
+  #a:Type -> h:HS.mem -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i <= j && j <= size_of vec} ->
   k:uint64_t{i <= k && k < j} ->
   p:(a -> a -> Tot Type0) ->
@@ -654,7 +654,7 @@ val forall2_forall_left:
 let forall2_forall_left #a h vec i j k p = ()
 
 val forall2_forall_right:
-  #a:Type -> h:HS.mem -> vec:vector a ->
+  #a:Type -> h:HS.mem -> vec:vector a st ->
   i:uint64_t -> j:uint64_t{i <= j && j <= size_of vec} ->
   k:uint64_t{i <= k && k < j} ->
   p:(a -> a -> Tot Type0) ->
