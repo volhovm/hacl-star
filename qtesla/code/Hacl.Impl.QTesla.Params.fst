@@ -54,26 +54,30 @@ unfold let op_Greater_Equals_Hat = IElem.op_Greater_Equals_Hat
 unfold let op_Less_Hat = IElem.op_Less_Hat
 unfold let op_Less_Equals_Hat = IElem.op_Less_Equals_Hat
 
-
-let params_n:size_t = size S.params_n
-let params_k:size_t = size S.params_k
-let params_q:elem = to_elem S.params_q
-let params_h:size_t = size S.params_h
-let params_Le:UI32.t = UI32.uint_to_t S.params_Le
-let params_Ls:UI32.t = UI32.uint_to_t S.params_Ls
-let params_d:size_t = size S.params_d
-let params_genA:size_t = size S.params_bGenA
-
-let params_barr_mult:I64.t = I64.int_to_t S.params_barr_mult
-let params_barr_div:UI32.t = UI32.uint_to_t S.params_barr_div
-let params_qinv:I64.t = I64.int_to_t S.params_qinv
-let params_q_log:size_t = size S.params_q_log
-let params_r2_invn:I64.t = I64.int_to_t S.params_r2_invn
+/// Parameters in QTesla.Params aren't marked as unfold or inline_for_extraction;
+/// so we need to normalize them here
+let params_n = size (normalize_term S.params_n)
+let params_k = size (normalize_term S.params_k)
+let params_q = to_elem (normalize_term S.params_q)
+let params_h = size (normalize_term S.params_h)
+let params_Le  = UI32.uint_to_t (normalize_term S.params_Le)
+let params_Ls = UI32.uint_to_t (normalize_term S.params_Ls)
+let params_d = size (normalize_term S.params_d)
+let params_genA = size (normalize_term S.params_bGenA)
+let params_barr_mult= I64.int_to_t (normalize_term S.params_barr_mult)
+let params_barr_div = UI32.uint_to_t (normalize_term S.params_barr_div)
+let params_qinv = I64.int_to_t (normalize_term S.params_qinv)
+let params_q_log = size (normalize_term S.params_q_log) // TODO: this can be computed
+let params_r2_invn = I64.int_to_t (normalize_term S.params_r2_invn)
 
 // TODO Parameterize.
+inline_for_extraction noextract
 let params_gaussSampler_xof = SHA3.cshake128_frodo
+
+inline_for_extraction noextract
 let params_hashG = SHA3.shake128_hacl
+
 let params_hmbytes = size 64
 
-let crypto_secretkeybytes = (size 2) *. (size (I16.n / 8)) *. params_n +. (size 2) *. crypto_seedbytes
-let crypto_bytes = ((params_n *. params_d +. (size 7)) /. (size 8)) +. crypto_c_bytes
+let crypto_secretkeybytes = normalize_term ((size 2 *. size (I16.n / 8)) *. params_n +. (size 2) *. crypto_seedbytes)
+let crypto_bytes = normalize_term (((params_n *. params_d +. size 7) /. (size 8)) +. crypto_c_bytes)

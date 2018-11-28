@@ -2,28 +2,29 @@ module QTesla.Params
 
 open Lib.IntTypes
 
-let params_lambda = 95 // security parameter
-let params_kappa = 32 // output length of hash function in bytes (spec lists them in bits, so convert)
-let params_n = 512 // Dimension
-let params_xi = 27     // Gaussian sampler scaling parameter
-let params_k = 1       // #R-LWE samples (number of polynomials in e, t, a, etc)
-let params_q = 4205569 // modulus
+#reset-options "--max_fuel 0 --max_ifuel 0"
+
+let params_lambda = 95
+let params_kappa = 32
+let params_n = 512
+let params_xi = 27
+let params_k = 1
+let params_q = 4205569
 let params_q_log = 23
 let params_qinv = 3098553343
 let params_barr_mult = 1021
 let params_barr_div = 32
 let params_r2_invn = 113307
-let params_h = 30      // # of nonzero entries of output elements of Enc
-let params_Le = 1586   // bound on e_i for checkE
-let params_Ls = 1586   // bound on s for checkS
-let params_B = 1048575 // interval the randomness is chosing from during signing
-let params_d = 21      // number of rounded bits
-let params_bGenA = 19  // number of blocks requested to SHAKE128 for GenA
-
+let params_h = 30
+let params_Le = 1586
+let params_Ls = 1586
+let params_B = 1048575
+let params_d = 21
+let params_bGenA = 19
 let params_rateXOF = 168
 
 let params_prf1 = Spec.SHA3.shake128
-let params_prf2 = params_prf1
+let params_prf2 = Spec.SHA3.shake128
 let params_genA_xof = Spec.QTesla.CShake.cshake128_qtesla
 let params_gaussSampler_xof = Spec.QTesla.CShake.cshake128_qtesla
 let params_enc_xof = Spec.QTesla.CShake.cshake128_qtesla
@@ -40,7 +41,7 @@ let computed_omega_inv = 590666
 let computed_n_inv = 4197355
 
 // Generated using gaussSigma2Sample_table.magma from the submission package.
-unfold let cdt_list: list nat =
+let cdt_list: list nat =
   [02000000000000000000000000000000;
    03000000000000000000000000000000;
    03200000000000000000000000000000;
