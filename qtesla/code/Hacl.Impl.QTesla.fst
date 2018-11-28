@@ -343,7 +343,7 @@ let ntt a w =
             let cond () : Stack bool
               (requires fun h -> live h jFirst)
               (ensures fun h0 _ h1 -> live h1 jFirst)
-            = true in //jFirst.(size 0) <. params_n in
+            = jFirst.(size 0) <. params_n in
             while // Middle for loop
                 #(fun h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
                 #(fun _ h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
@@ -400,7 +400,7 @@ let nttinv a w =
             let cond () : Stack bool
               (requires fun h -> live h jFirst)
               (ensures fun h0 _ h1 -> live h1 jFirst)
-            = true in //jFirst.(size 0) <. params_n in
+            = jFirst.(size 0) <. params_n in
             C.Loops.while // Middle for loop
                 #(fun h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
                 #(fun _ h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
@@ -820,7 +820,7 @@ let crypto_sign #smlennat sm smlen m mlen sk =
                  #(fun _ h -> live h c /\ live h randomness /\  live h randomness_input /\
                      live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
                      live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk /\ live h k /\ live h break)
-                 (fun () -> k.(size 0) <. params_k (*&& not break.(size 0)*))
+                 (fun () -> k.(size 0) <. params_k && not break.(size 0))
                  (fun _ ->
                      let kVal:size_t = k.(size 0) in
                      let sk_offset:size_t = (params_n *. (kVal +. (size 1))) in
@@ -853,5 +853,3 @@ let crypto_sign #smlennat sm smlen m mlen sk =
                 )
            );
     pop_frame()
-
-
