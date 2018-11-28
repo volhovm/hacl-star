@@ -71,8 +71,12 @@ include .depend
 $(HINT_DIR):
 	mkdir -p $@
 
-# Admit SMT queries for modules in FStar namespace and prims
+# Admit SMT queries for modules in FStar, Lib, and prims
 $(CACHE_DIR)/FStar.%.checked $(CACHE_DIR)/prims.%.checked: | .depend $(HINT_DIR)
+	$(FSTAR) $< --admit_smt_queries true && \
+	touch $@
+
+$(CACHE_DIR)/Lib.%.checked: | .depend $(HINT_DIR)
 	$(FSTAR) $< --admit_smt_queries true && \
 	touch $@
 
