@@ -27,18 +27,18 @@ unfold let params_w = 64
 * Computes ceil(log2 n) using the equation
 * ceil(log2 n) = floor(log2 (2 * n - 1)
 *)
+private let rec floor_log2 (n:pos) : nat =
+  if n = 1 then 0
+  else 1 + floor_log2 (n / 2)
+
 val log2: pos -> nat
-let log2 n =
-  let rec floor_log2 (n:pos) : nat =
-    if n = 1 then 0
-    else 1 + floor_log2 (n / 2)
-  in floor_log2 (2 * n - 1)
+let log2 n = floor_log2 (2 * n - 1)
 
 (** Computes ceil(a / b) *)
 val ceil_div: nat -> pos -> nat
 let ceil_div a b = if a % b = 0 then a / b else 1 + a / b
 
-val bytelen: n:nat -> nat 
+val bytelen: nat -> nat 
 let bytelen n = if n = 0 then 1 else ceil_div (log2 (n + 1)) 8
 
 (** ceil(log_2 q) *)
