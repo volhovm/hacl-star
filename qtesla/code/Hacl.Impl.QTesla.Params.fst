@@ -37,6 +37,8 @@ unfold let elem_to_int16 = int64_to_int16
 unfold let int64_to_elem x = x
 unfold let uint64_to_elem = uint64_to_int64
 unfold let elem_to_int64 x = x
+unfold let int16_to_elem = int16_to_int64
+unfold let uint8_to_elem = uint8_to_int64
 
 unfold let op_Plus_Hat = IElem.op_Plus_Hat
 unfold let op_Subtraction_Hat = IElem.op_Subtraction_Hat
@@ -62,6 +64,8 @@ let params_q = to_elem (normalize_term S.params_q)
 let params_h = size (normalize_term S.params_h)
 let params_Le  = UI32.uint_to_t (normalize_term S.params_Le)
 let params_Ls = UI32.uint_to_t (normalize_term S.params_Ls)
+let params_B = I64.int_to_t (normalize_term S.params_B)
+let params_U = I64.int_to_t (normalize_term S.params_Ls)
 let params_d = size (normalize_term S.params_d)
 let params_genA = size (normalize_term S.params_bGenA)
 let params_barr_mult= I64.int_to_t (normalize_term S.params_barr_mult)
