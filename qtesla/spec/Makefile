@@ -1,7 +1,7 @@
 FSTAR_HOME ?= ../../../FStar
 HACL_HOME  ?= ../..
 
-VARIANT    ?= p-I
+VARIANT    ?= I
 
 CACHE_DIR  = .cache.$(VARIANT)
 HINT_DIR   = .hints.$(VARIANT)

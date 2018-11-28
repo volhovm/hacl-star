@@ -304,7 +304,8 @@ val gaussSampler_doloop3:
 let rec gaussSampler_doloop3 rand nonce fuel =
   assert_norm(bytelen params_xi < max_size_t); // Need to prove this is a size_nat for use with cshake128_frodo.
   if fuel = 0 then None else
-  let y = nat_from_bytes_le (params_gaussSampler_xof params_kappa rand nonce (bytelen params_xi)) in
+  let sample = params_gaussSampler_xof params_kappa rand nonce (bytelen params_xi) in
+  let y = nat_from_bytes_le sample in
   let nonce = nonce + 1 in
   if y < params_xi - 1
   then Some (y, nonce)
@@ -331,7 +332,8 @@ val gaussSampler_doloop2: rand: (lbytes params_kappa) -> nonce: positive -> fuel
 let rec gaussSampler_doloop2 rand nonce fuel =
     if fuel = 0 then None else
     let y, nonce = Some?.v (gaussSampler_doloop3 rand nonce (gaussSampler_doloop3_oracle rand nonce)) in
-    let r = nat_from_bytes_le (params_gaussSampler_xof params_kappa rand nonce (params_w / 8)) in
+    let sample = params_gaussSampler_xof params_kappa rand nonce (params_w / 8) in
+    let r = nat_from_bytes_le sample in
     let nonce = nonce + 1 in
     let x = 0 in
     let x = gaussSampler_doloop10 r x in
