@@ -46,7 +46,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "e468aee0334e2566ce97a05c73ee7dba"
+      "207a346e5d375b386bd241acd97a7497"
     ],
     [
       "Spec.QTesla.log2",
@@ -60,7 +60,7 @@
         "refinement_interpretation_Prims_Tm_refine_f048236b5f8051f83b495ea5eaa6127b"
       ],
       0,
-      "2d4b604e146cd6a1b23a4e407ad4aed7"
+      "47e36b06843a8081a64fd13c0bbb8d22"
     ],
     [
       "Spec.QTesla.ceil_div",
@@ -94,7 +94,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "8c7b0401d35ef793e21ea623c6bb8fef"
+      "334e95dc7e7c15e6fbe2800e94842df9"
     ],
     [
       "Spec.QTesla.bytelen",
@@ -107,7 +107,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "ecdf9ec284957587a85e6fb965d81b6b"
+      "98eec495510664917caffcde22ff6f43"
     ],
     [
       "Spec.QTesla.computed_ceil_log_q",
@@ -119,7 +119,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "fa4654f76b52148fc7084ffdc7063178"
+      "57b394d9dca11aee7b9902ab8b7f8f6c"
     ],
     [
       "Spec.QTesla.computed_b",
@@ -131,7 +131,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "9d173eeb9f68f66e3e500f8edda230f2"
+      "25d41b9f4748dc20f46620e74a5df760"
     ],
     [
       "Spec.QTesla.computed_ySampler_b",
@@ -148,7 +148,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "bd30ea3a5299137f6b19f273ac3bb9c3"
+      "f2d07d9121ad79b5128095baeb51a03c"
     ],
     [
       "Spec.QTesla.computed_ySampler_modulus",
@@ -160,7 +160,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "95b02e3a7603a2a0196057e42f014186"
+      "91dacc580bc9599eb253ff9fa72a14be"
     ],
     [
       "Spec.QTesla.poly_t",
@@ -182,7 +182,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "877ab084a5c8f1bf8e076d779304813c"
+      "930ad7dbef734912a4ce2dbc1a406e88"
     ],
     [
       "Spec.QTesla.polys_t",
@@ -206,7 +206,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "43aaca815b613f2eff56f6b415b4204b"
+      "449022b2f4b826b00cd5708949a082a8"
     ],
     [
       "Spec.QTesla.qtesla_sk",
@@ -228,7 +228,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "9c8aeb82509b2f06832e90cbaaa10a78"
+      "8edd3fd1b23fe3f3302f7900b1ed4ddb"
     ],
     [
       "Spec.QTesla.qtesla_pk",
@@ -250,7 +250,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "975c359aa8099d9376b9d196d4760d8c"
+      "7e0caa3cbf8f8c1bc9e722eeb6f6472b"
     ],
     [
       "Spec.QTesla.qtesla_sig",
@@ -272,7 +272,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "63abdabd7d4e9e88cd6a9bb776f933b7"
+      "f2db958450a36edec44138084c0494bf"
     ],
     [
       "Spec.QTesla.to_lseq",
@@ -284,7 +284,7 @@
         "refinement_interpretation_Lib.Sequence_Tm_refine_ff8e0fa852fa0f1742bd5488584ef6a0"
       ],
       0,
-      "e2350b9076773f4859dc907b176fc153"
+      "3d597b62aa70498040765442e8f2127c"
     ],
     [
       "Spec.QTesla.to_lseq",
@@ -293,7 +293,7 @@
       1,
       [ "@query", "equation_Lib.Sequence.length" ],
       0,
-      "d740678333fc836fa18e8af3e080e4d2"
+      "1591f5c9354874145cd67d4e15461337"
     ],
     [
       "Spec.QTesla.create_poly",
@@ -319,7 +319,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "0c6aa59f57c4d7cd4e7ffb2011d1ac86"
+      "8ec9eca06b2adf808ea6fa0760f4cbe6"
     ],
     [
       "Spec.QTesla.create_polys",
@@ -348,7 +348,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "da8a385b0a2232fb9e0aaf7e1754e292"
+      "78e0bb2c88b807109c3bfb4107e85a64"
     ],
     [
       "Spec.QTesla.fadd",
@@ -361,7 +361,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "e42fb3f96256e6a3971fb1f4b09c88eb"
+      "ba19e0f4bba6d3e0e626a5224baea57f"
     ],
     [
       "Spec.QTesla.fsub",
@@ -374,7 +374,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "720bc62dc6e643664d179871b8fce293"
+      "a66f2872325c921f156f1c28c8eb33ad"
     ],
     [
       "Spec.QTesla.fmul",
@@ -387,7 +387,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "be9ca11a386850da6dd2a7d2a36f24cf"
+      "68064ae00fb4a0392a0eb43c23020b1d"
     ],
     [
       "Spec.QTesla.fexp",
@@ -432,7 +432,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "9411180862910c28e628f27c02f54540"
+      "cdd0f9447b68c06fd2a00dea51f38025"
     ],
     [
       "Spec.QTesla.map2_step",
@@ -489,7 +489,7 @@
         "typing_tok_Lib.IntTypes.U32@tok", "well-founded-ordering-on-nat"
       ],
       0,
-      "4e3acdb6b2f24cfb4869037677dca19e"
+      "d4894151e93b8fe8411d2512c4590aa1"
     ],
     [
       "Spec.QTesla.map2",
@@ -515,7 +515,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "e3624d6be599f36c62912883ae52a320"
+      "8e22f5bf1cafcb1e22bac4f7aa2625f3"
     ],
     [
       "Spec.QTesla.ntt",
@@ -563,7 +563,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "8f164f61fcec74077eb9400d5167f58a"
+      "6a3109f8ef36d26818fb450468ce9a6d"
     ],
     [
       "Spec.QTesla.inv_ntt",
@@ -590,7 +590,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "9e40c1d4bc6fe77dac5d5d81e23a86da"
+      "9bdaf5712f8dcde2ea08ef1f159ad944"
     ],
     [
       "Spec.QTesla.sum",
@@ -606,7 +606,7 @@
         "function_token_typing_FStar.UInt32.n", "subterm_ordering_Prims.Cons"
       ],
       0,
-      "355c22318b4112a8906adf3c70d1ab5d"
+      "036b4962acd157b491d65c1e576416c6"
     ],
     [
       "Spec.QTesla.sort_lseq",
@@ -626,7 +626,7 @@
         "typing_FStar.Seq.Properties.sort_lseq"
       ],
       0,
-      "fbcefaa40b4d419934c28a965248b6b3"
+      "dffaf7d32257eed85e0212bdabdca867"
     ],
     [
       "Spec.QTesla.sort_coefficients",
@@ -659,7 +659,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "a2ac0e27ca8a61a91e50181627d07bd4"
+      "18639f4f0221f7a372f952201f5aba7f"
     ],
     [
       "Spec.QTesla.poly_max_sum_helper",
@@ -709,7 +709,7 @@
         "typing_tok_Lib.IntTypes.U32@tok", "well-founded-ordering-on-nat"
       ],
       0,
-      "e329d6e0f1e6889aa8111549eab7f127"
+      "0ad5de56367630cc67411348eb11680f"
     ],
     [
       "Spec.QTesla.poly_max_sum",
@@ -755,7 +755,7 @@
         "typing_Spec.QTesla.sort_lseq", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "352c0d4cae04fdb206b807746d505cde"
+      "76c90cbb4cacd169fe5df1e3cd1f3c8c"
     ],
     [
       "Spec.QTesla.checkS",
@@ -770,7 +770,7 @@
         "refinement_interpretation_Lib.Sequence_Tm_refine_d8d83307254a8900dd20598654272e42"
       ],
       0,
-      "1842068889464de48e2bd2483ee1f16f"
+      "ce17f0d50f4356d8c5f40ed384c49e7c"
     ],
     [
       "Spec.QTesla.checkE",
@@ -785,7 +785,7 @@
         "refinement_interpretation_Lib.Sequence_Tm_refine_d8d83307254a8900dd20598654272e42"
       ],
       0,
-      "aacc7bcd8e35f1875617b6fced723333"
+      "4872571de3f718ee30a98bb195edb0b0"
     ],
     [
       "Spec.QTesla.prf1",
@@ -809,7 +809,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "fb6eb75713971d20183e890ef7bb086c"
+      "7bf7816fa773433c419f4a00bd601dbe"
     ],
     [
       "Spec.QTesla.prf1",
@@ -831,7 +831,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "5a30dff36288e18ee163ee174e40a482"
+      "9fd37948327979276f0f8783efc3758d"
     ],
     [
       "Spec.QTesla.prf1",
@@ -856,7 +856,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "0f996bb5dde2b2b79c51ca35aaccbf0b"
+      "d9f7699de1ce9492d0853be42be964b6"
     ],
     [
       "Spec.QTesla.prf2",
@@ -875,7 +875,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_21ee19ce9f22f2d892ff906e873014be"
       ],
       0,
-      "d6cc3eb7b2745b0be76ef27101f3f30d"
+      "86f7f08731907a6bc85309215e9c9a1f"
     ],
     [
       "Spec.QTesla.prf2",
@@ -894,7 +894,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_21ee19ce9f22f2d892ff906e873014be"
       ],
       0,
-      "a745f3991c2f80742d55caf64485bb5f"
+      "45754ee5edf823483ea3357bf02d0571"
     ],
     [
       "Spec.QTesla.prf2",
@@ -913,7 +913,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_21ee19ce9f22f2d892ff906e873014be"
       ],
       0,
-      "b11e8dc53e66281ab48784c3f1c58602"
+      "7cebe1c05ffa7c828859fc25c564be3d"
     ],
     [
       "Spec.QTesla.genA_getC",
@@ -940,7 +940,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_87dda44faf14c577f178ab1930a9d3fe"
       ],
       0,
-      "e5c61de025e10b3cf88f23ad056bc405"
+      "ffe424bbbd3c4fe75226ae406194cac5"
     ],
     [
       "Spec.QTesla.genA_updateA",
@@ -981,7 +981,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "70332a494b5474d2c5e1b80dce9a63d8"
+      "1d19be0864e64593f5830481e3621835"
     ],
     [
       "Spec.QTesla.genA_while",
@@ -1054,7 +1054,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "215e33db925cc51f09aef97191b5b7af"
+      "5061dcd42e469560765f1915323d8320"
     ],
     [
       "Spec.QTesla.genA",
@@ -1084,7 +1084,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "cf4a45ae7041629a18cdef7cb0095976"
+      "59296a0a0ee4613372d303a2dcd0f023"
     ],
     [
       "Spec.QTesla.berSampler",
@@ -1105,7 +1105,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "2610996f1f448e8cd062ea33ec883df3"
+      "3ef83197581aeae79b21a9a7979d27fc"
     ],
     [
       "Spec.QTesla.gaussSampler_doloop3",
@@ -1127,7 +1127,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "7bedda8a1d665e7c64da9ac8d3188221"
+      "15073ae5b5fe14176c3258ca4f4cf564"
     ],
     [
       "Spec.QTesla.gaussSampler_doloop3",
@@ -1149,7 +1149,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "f0fc1b58b2495980e56f881d6e02e0ee"
+      "c78de799c33c44ec094b5b000ec65db9"
     ],
     [
       "Spec.QTesla.gaussSampler_doloop3",
@@ -1201,7 +1201,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "60bd68c4292ba3cbb961b97ff1b843a6"
+      "254785e82101a308a9e6a1ee08631a67"
     ],
     [
       "Spec.QTesla.gaussSampler_doloop3_oracle",
@@ -1223,7 +1223,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "265daddc8e63a7e91f122d2f4be11dbc"
+      "0e1b135a107c1ba6a854a172489df081"
     ],
     [
       "Spec.QTesla.gaussSampler_doloop10",
@@ -1234,18 +1234,19 @@
         "@MaxIFuel_assumption",
         "@fuel_correspondence_FStar.List.Tot.Base.length.fuel_instrumented",
         "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
-        "binder_x_8be58fb3c6b3b6d90d405c83f8071586_1",
+        "binder_x_a8ade98c9765a93653e4706254b7e66d_1",
         "equality_tok_Prims.LexTop@tok", "equation_FStar.UInt32.n",
-        "equation_Prims.nat", "function_token_typing_FStar.UInt32.n",
-        "int_inversion", "int_typing", "primitive_Prims.op_Addition",
+        "equation_Prims.nat", "equation_QTesla.Params.cdt_list",
+        "function_token_typing_FStar.UInt32.n", "int_inversion",
+        "int_typing", "primitive_Prims.op_Addition",
         "primitive_Prims.op_GreaterThanOrEqual",
         "primitive_Prims.op_Subtraction", "projection_inverse_BoxInt_proj_0",
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
-        "refinement_interpretation_Spec.QTesla_Tm_refine_9844e4f669b52d3b04eaedd17772e1ef",
+        "refinement_interpretation_Spec.QTesla_Tm_refine_0322a678ba8be1f675c47d6fbcb277fe",
         "well-founded-ordering-on-nat"
       ],
       0,
-      "d9968b3e062595c8ff33dc3223af5060"
+      "14a0b6c423570388e04cfc55d199c2b4"
     ],
     [
       "Spec.QTesla.gaussSampler_doloop2",
@@ -1267,7 +1268,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "c3635a6fef185b2c1fd2d46ccb3e698f"
+      "9186c5c9247d92d886f3b537e206eb65"
     ],
     [
       "Spec.QTesla.gaussSampler_doloop2",
@@ -1289,7 +1290,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "d69746d532dcda527bcdcfaf2d5a1728"
+      "49b1ed6cc6a4eb361a97749d6fb5bfea"
     ],
     [
       "Spec.QTesla.gaussSampler_doloop2",
@@ -1345,7 +1346,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
         "refinement_interpretation_Prims_Tm_refine_f048236b5f8051f83b495ea5eaa6127b",
         "refinement_interpretation_Spec.QTesla_Tm_refine_11798fd91b0258c229b04b9bd88ad13e",
-        "refinement_interpretation_Spec.QTesla_Tm_refine_3e83ab15873a4dcba8b5acc55c3d02b8",
+        "refinement_interpretation_Spec.QTesla_Tm_refine_5ec69b392d18c536c7a2f6f1921608e0",
         "refinement_interpretation_Spec.QTesla_Tm_refine_cffec87e7d0928c1f5e64ce0882ace65",
         "typing_FStar.List.Tot.Base.length", "typing_FStar.Seq.Base.length",
         "typing_FStar.UInt.fits", "typing_Lib.IntTypes.uint_v",
@@ -1354,7 +1355,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "ea5fe9ffb41d9db23d46dcc43800d0c0"
+      "157b9d16db74c55072684af1ad190d02"
     ],
     [
       "Spec.QTesla.gaussSampler_doloop2_oracle",
@@ -1376,7 +1377,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "fa3927f65e0a56c7109700ec760d64e7"
+      "098d53ad83bdb72a385f296ad5f23354"
     ],
     [
       "Spec.QTesla.gaussSampler",
@@ -1398,7 +1399,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "03245622189faa528b8a13d9fde5c573"
+      "a3f258d45821fe56c6730dd1c7ed0895"
     ],
     [
       "Spec.QTesla.gaussSampler",
@@ -1420,7 +1421,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "f6dacbb338d456d4851199d5121bafb6"
+      "fd7db18639c7a4e16fc493833716f5c3"
     ],
     [
       "Spec.QTesla.gaussSampler",
@@ -1443,7 +1444,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_4a9b40af8ec63aee90a4a1b8f7abb2d7"
       ],
       0,
-      "f3b9fe8eb6921820f700faebcb8193c7"
+      "0f375f8aa9f09612d3867220f9825287"
     ],
     [
       "Spec.QTesla.gaussSampler_poly",
@@ -1465,7 +1466,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "19c7ffbd156852c3b3f8281302edc489"
+      "279c32a5e759e3559262afc1342b6ca6"
     ],
     [
       "Spec.QTesla.gaussSampler_poly",
@@ -1487,7 +1488,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "1f379f0751ecccee5f21c203bff32dd1"
+      "0855a2c4bf24a9aafd2e31cba178ad15"
     ],
     [
       "Spec.QTesla.gaussSampler_poly",
@@ -1510,7 +1511,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "3da52215034ae1c6ba74abb5751de7c9"
+      "a902412be933c64d1577ede4159bd622"
     ],
     [
       "Spec.QTesla.keygen_sample_while",
@@ -1532,7 +1533,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "8fca9250906177bf981aa6573ff2f619"
+      "55e254d29a6bc4a597d6be2d3a9edd4e"
     ],
     [
       "Spec.QTesla.keygen_sample_while",
@@ -1554,7 +1555,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "0c45c2d827e8e7af492425d69f739552"
+      "d058b34bac6a9e03e505dde4e6d8d9e9"
     ],
     [
       "Spec.QTesla.keygen_sample_while",
@@ -1605,7 +1606,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "96edc1df39dab2ec89a03203844854c8"
+      "b0e40ad1ea8d92ca0b1028a9ea54d054"
     ],
     [
       "Spec.QTesla.keygen_sample_oracle",
@@ -1627,7 +1628,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "60742720a79cc923d4f2d5207e599af4"
+      "c1fece669826370ab1a9b5dffea7e1dc"
     ],
     [
       "Spec.QTesla.keygen_sampleS_while",
@@ -1649,7 +1650,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "cb13de4ad5f2014b353bf2eeb36dfa21"
+      "431b0961b65d80a68a4587da9dd4a9c6"
     ],
     [
       "Spec.QTesla.keygen_sampleS_while",
@@ -1665,7 +1666,7 @@
         "typing_Spec.QTesla.keygen_sample_oracle"
       ],
       0,
-      "a0ec6863309c77e5573a7e817fd7afa2"
+      "5795474374a52c50f13b22bb73c3bf9c"
     ],
     [
       "Spec.QTesla.keygen_sampleE_while",
@@ -1687,7 +1688,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "9c0cd675b7cc35e7f51af80e56a66179"
+      "8f5bae66e79e33ad77057c2d5b5adb0b"
     ],
     [
       "Spec.QTesla.keygen_sampleE_while",
@@ -1703,7 +1704,7 @@
         "typing_Spec.QTesla.keygen_sample_oracle"
       ],
       0,
-      "6e92ae290deb057b72c98a07db2f027f"
+      "2d2990dba724ca547c93a1c3ff2afb8a"
     ],
     [
       "Spec.QTesla.keygen_sampleE_step",
@@ -1725,7 +1726,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "4586c2213cb7494fec9a6ed6ad67bc70"
+      "727b35fffe164a2eac6616a82cca185a"
     ],
     [
       "Spec.QTesla.keygen_sampleE_step",
@@ -1747,7 +1748,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "a5f5718b910462e678eac5bb864a6a74"
+      "b75082892252a289e5c221dd36f9f18f"
     ],
     [
       "Spec.QTesla.keygen_sampleE_step",
@@ -1801,7 +1802,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "3f5f656b0a3b790942bd1ba58041bbca"
+      "82e1564b21c8f69fe7fa0d2c298d8c8a"
     ],
     [
       "Spec.QTesla.keygen_sampleE",
@@ -1823,7 +1824,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "8668adecf84a94e18ed9b9ceb5e47153"
+      "860ac06fb9ffbb8dee0411aed5f47176"
     ],
     [
       "Spec.QTesla.keygen_sampleE",
@@ -1845,7 +1846,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "464d0d7c7bb041ea50fe4c9db6efd82e"
+      "c9bd4667a7926b85864b1cf8dd6897c0"
     ],
     [
       "Spec.QTesla.keygen_sampleE",
@@ -1876,7 +1877,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "fe318ecee3f3bd369c4e99916f839e24"
+      "91f291d16a51a45ba7d82b1fdde6fed0"
     ],
     [
       "Spec.QTesla.poly_mod",
@@ -1904,7 +1905,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "52dc55256225ba1db070b821453dc1c2"
+      "f3e761cfbad3a09aa44a4e095751188f"
     ],
     [
       "Spec.QTesla.keygen_computeT_step",
@@ -1950,7 +1951,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "24c5a0227e52c596370d72df663506bc"
+      "50c739cda21a88c132123f0da2e8ddf6"
     ],
     [
       "Spec.QTesla.keygen_computeT",
@@ -1979,7 +1980,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "4bdf9c703e53c298499633441a9da5f5"
+      "c9a31a48eebce61afd3acb084f155db0"
     ],
     [
       "Spec.QTesla.qTesla_keygen",
@@ -2021,7 +2022,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "8ee6a91a46b92f3d816b9136722e65a7"
+      "c96e79911c52280e87e0a7edcb249bfd"
     ],
     [
       "Spec.QTesla.ySampler_while",
@@ -2042,7 +2043,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "26c606c40a550ed6304e71aa46024e9e"
+      "dc7d3330b2bf1f48b5194f985f5455a6"
     ],
     [
       "Spec.QTesla.ySampler_while",
@@ -2063,7 +2064,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "c76a3fb01b141abb8897a5b8aec506a5"
+      "78c31be742be6aa9f0b2b2ec0b0d79bd"
     ],
     [
       "Spec.QTesla.ySampler_while",
@@ -2143,7 +2144,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "5832c966f6a1fcdcf2a64823766596fb"
+      "f0ed38d91bfc9c83350d451cd2ebd4e0"
     ],
     [
       "Spec.QTesla.ySampler_oracle",
@@ -2164,7 +2165,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "0154d66a4ae6d27cd750b67e1fbbea15"
+      "4e5e884dd491e3a3ba271963bca9218b"
     ],
     [
       "Spec.QTesla.ySampler",
@@ -2185,7 +2186,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "e2f9134304dabc98d2803d0fc71d4b80"
+      "b4d0858e6073741dba0a5b7e16426c9b"
     ],
     [
       "Spec.QTesla.ySampler",
@@ -2206,7 +2207,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "8d84c27dbaaa458ae0a27dd79a31c3ce"
+      "788b863c0409a401cb37f6cdd70e0650"
     ],
     [
       "Spec.QTesla.ySampler",
@@ -2249,7 +2250,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "75e36ef756ec195cf506788de5962982"
+      "35e8422e473127a5fcc06e7aaa8f666e"
     ],
     [
       "Spec.QTesla.hashH",
@@ -2266,7 +2267,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_c8c02abee2dca2b376e09b814a4f370e"
       ],
       0,
-      "d11040f81853c5da8040f1d793cd9a05"
+      "d93a289afafceb7b30d7fd4764378d86"
     ],
     [
       "Spec.QTesla.hashH",
@@ -2300,7 +2301,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_c8c02abee2dca2b376e09b814a4f370e"
       ],
       0,
-      "c8d63a95617027b1ffca266391fa4540"
+      "9e5d5e7c7fe72fddfe6f0cdb704082fd"
     ],
     [
       "Spec.QTesla.signlist_t",
@@ -2321,7 +2322,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "fedd2246ecd8d2c3c6b80abeed45a6ce"
+      "9135f6a5c3537b3ad3c2c504ff34309e"
     ],
     [
       "Spec.QTesla.enc_while_getR",
@@ -2351,7 +2352,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_1c7d4387fb16b95e3109f760ce0f7ffa"
       ],
       0,
-      "ec7d5049e03db39f2d76ecc83b8bb361"
+      "aeb12a507ec759b234e148922cbc315d"
     ],
     [
       "Spec.QTesla.enc_while",
@@ -2374,7 +2375,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "9393790b56e108804cbbc0566eb93944"
+      "7b36cde8eff7bc0b293288cb2ceba332"
     ],
     [
       "Spec.QTesla.enc_while",
@@ -2397,7 +2398,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "3c470f38ccc45161d81e2ed31993ecd6"
+      "22f046fe3d4a63991716b0c483be358a"
     ],
     [
       "Spec.QTesla.enc_while",
@@ -2459,7 +2460,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "8cac28648852d8deb55de5db05310be9"
+      "f98729b238168f69faf653ca3cda28f4"
     ],
     [
       "Spec.QTesla.enc_oracle",
@@ -2482,7 +2483,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "2ab3184e705e03c5cc5e9de7910bbf09"
+      "99a8854917601528644da57dfbafadda"
     ],
     [
       "Spec.QTesla.enc",
@@ -2503,7 +2504,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "caa7224722fb4edacc678cdb284c60c9"
+      "efb5f0d462393c594e415b76e692a428"
     ],
     [
       "Spec.QTesla.enc",
@@ -2524,7 +2525,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "ebc052d8cc026815d34cd2ebed2873a8"
+      "0eae0ccc812fe4cf19de72b43a4ff7bd"
     ],
     [
       "Spec.QTesla.enc",
@@ -2563,7 +2564,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "54b9a369399338d720f8d003a3ad9995"
+      "bf269b061e334201fc98b31aaea191df"
     ],
     [
       "Spec.QTesla.mod_pm",
@@ -2584,7 +2585,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_ae8d7bc8e7cdbe001c7fb33d1c3618db"
       ],
       0,
-      "3158e776ecbf1e61ab0c772a1d750f2f"
+      "2ca277c852603066542075a774e78446"
     ],
     [
       "Spec.QTesla.intL",
@@ -2596,7 +2597,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "957a2583f570596a1c9ce82fcba9cb16"
+      "e6a73a77d4f07e140603c5976021ee5f"
     ],
     [
       "Spec.QTesla.poly_mod_pm",
@@ -2623,7 +2624,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_df823f174df5306262c0b3dc19e3b403"
       ],
       0,
-      "d02a9a688a4bdca4cdd9768ad9dce0f6"
+      "f647f4c43e74a4cf07f4e5d8b0b56261"
     ],
     [
       "Spec.QTesla.fnL",
@@ -2635,7 +2636,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "cf7a7b68e4360fa1580e8497b1013548"
+      "942f94f4fecef160721ac8c334aa032d"
     ],
     [
       "Spec.QTesla.intM",
@@ -2648,15 +2649,17 @@
         "equation_FStar.UInt32.n", "equation_QTesla.Params.params_d",
         "equation_QTesla.Params.params_q", "equation_Spec.QTesla.mod_pm",
         "function_token_typing_FStar.UInt32.n", "int_inversion",
-        "primitive_Prims.op_Division", "primitive_Prims.op_LessThanOrEqual",
-        "primitive_Prims.op_Minus", "primitive_Prims.op_Modulus",
-        "primitive_Prims.op_Subtraction", "projection_inverse_BoxInt_proj_0",
+        "primitive_Prims.op_Division",
+        "primitive_Prims.op_GreaterThanOrEqual",
+        "primitive_Prims.op_LessThanOrEqual", "primitive_Prims.op_Minus",
+        "primitive_Prims.op_Modulus", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
         "refinement_interpretation_Spec.QTesla_Tm_refine_3ca5037766abbdc3a738bc5c108fe427",
-        "refinement_interpretation_Spec.QTesla_Tm_refine_e87c9a450e5a8a96782c2a4a30a86abf",
-        "typing_Spec.QTesla.mod_pm"
+        "refinement_interpretation_Spec.QTesla_Tm_refine_e87c9a450e5a8a96782c2a4a30a86abf"
       ],
       0,
-      "67def1a4e20a05bfe2c418167f6a85ee"
+      "9964c26fa7c09137018abe63a80f7238"
     ],
     [
       "Spec.QTesla.fnM",
@@ -2680,7 +2683,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "e30fec8e155d63b0e7b184b42e51d0f1"
+      "9f379a95c637af331069002ee7e5a777"
     ],
     [
       "Spec.QTesla.polysM",
@@ -2708,7 +2711,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "f64ad3eb52d7da7b48367185d2fec7b2"
+      "548ffd8b973ae0a7014d6e2cc6761ecb"
     ],
     [
       "Spec.QTesla.test_rejection",
@@ -2729,7 +2732,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "efebe80b5c12d77f8551fdce2e3470f3"
+      "367b4d22da21d86b6b7fd7243c07114c"
     ],
     [
       "Spec.QTesla.test_z",
@@ -2750,7 +2753,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "383d906b820b1535ada90ae1c62f054a"
+      "4183bd661780807a98b528af045e4641"
     ],
     [
       "Spec.QTesla.lInfiniteNorm",
@@ -2808,7 +2811,7 @@
         "typing_tok_Lib.IntTypes.U32@tok", "typing_tok_Lib.IntTypes.U8@tok"
       ],
       0,
-      "72c85cbedbbbfda6041639ab0061fb53"
+      "2bebc6088d6c33016d174faba517aea7"
     ],
     [
       "Spec.QTesla.test_w",
@@ -2832,7 +2835,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "9072c0c03e8e0c9c5f67de8f859c519e"
+      "acab480d770748cd3dde5b8ad48eeb57"
     ],
     [
       "Spec.QTesla.hashG",
@@ -2852,7 +2855,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "4f1d91f8c6fe1e916706321155b9095d"
+      "18497b76d964392b3a51398be7b812b0"
     ],
     [
       "Spec.QTesla.hashG",
@@ -2875,7 +2878,7 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
       ],
       0,
-      "bae076d3afedb9db78af8f93c86f8ae1"
+      "198f6fcfe7e66d83d03806acf9e5f436"
     ],
     [
       "Spec.QTesla.qtesla_sign_step4",
@@ -2896,7 +2899,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_c8c02abee2dca2b376e09b814a4f370e"
       ],
       0,
-      "5cf139e7bfcc8990bd44b79974bb7e16"
+      "a76e23669f2608f59f4ec1de4d111c2c"
     ],
     [
       "Spec.QTesla.qtesla_sign_step4",
@@ -2917,7 +2920,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_c8c02abee2dca2b376e09b814a4f370e"
       ],
       0,
-      "10092c2dde84b5a347ec791c339bb5cd"
+      "fa972422150430362f9affab94f56d63"
     ],
     [
       "Spec.QTesla.qtesla_sign_step4",
@@ -2954,7 +2957,7 @@
         "typing_FStar.Seq.Base.length", "well-founded-ordering-on-nat"
       ],
       0,
-      "f63236f6dde2ad3a99b25905df262e22"
+      "87ea470cbd364a3ff43ebe686da05952"
     ],
     [
       "Spec.QTesla.qtesla_sign_oracle",
@@ -2975,7 +2978,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_c8c02abee2dca2b376e09b814a4f370e"
       ],
       0,
-      "f0982316c389207fb8684a314bb81744"
+      "b5f38067cf4f06baabd0d90b82a8378f"
     ],
     [
       "Spec.QTesla.qtesla_sign",
@@ -2997,7 +3000,7 @@
         "refinement_interpretation_Spec.QTesla_Tm_refine_c8c02abee2dca2b376e09b814a4f370e"
       ],
       0,
-      "36d07d27fc08353c2c794ed3d6133af5"
+      "a2525db34c472628be8addf84a258ddb"
     ],
     [
       "Spec.QTesla.qtesla_verify",
@@ -3029,7 +3032,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "90b13d4bc58af29864d847813237186e"
+      "6c8324fa89812997d535f9cb85b12080"
     ]
   ]
 ]
