@@ -870,6 +870,7 @@ let test_rejection z =
 	// this code somewhat awkwardly only checks that boolean in the while condition, and sets it to true either
 	// when the early-escape condition fires (one of the generated coefficients is out of bounds), or when
 	// the entire array is checked and the for condition becomes false.
+        // See https://github.com/FStarLang/FStar/issues/1579
         if i.(size 0) <. params_n
 	then (
             let iVal = i.(size 0) in
@@ -961,7 +962,8 @@ let crypto_sign #smlennat sm smlen m mlen sk =
                  #(fun _ h -> live h c /\ live h randomness /\  live h randomness_input /\
                      live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
                      live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk /\ live h k /\ live h break)
-                 (fun () -> not break.(size 0))
+                 // See https://github.com/FStarLang/FStar/issues/1579
+                 (fun () -> (* k.(size 0) <. params_k && *) not break.(size 0))
                  (fun _ ->
                      let kVal:size_t = k.(size 0) in
 		     if (kVal <. params_k)
