@@ -13,6 +13,8 @@ else
   $(error ERROR: VARIANT must be one of I, III-size, III-speed, p-I, p-III)
 endif
 
+REF_HOME=../reference/Reference_implementation/qTesla_$(subst -,_,$(VARIANT))
+
 CACHE_DIR     = .cache.$(VARIANT)
 OUTPUT_DIR    = .output.$(VARIANT)
 HINT_DIR      = .hints.$(VARIANT)
@@ -37,12 +39,12 @@ lib:
 stage2: $(OUT_DIR)/libqtesla.a
 
 KATs: $(OUT_DIR)/libqtesla.a
-	make -C $(LWEKE_HOME) tests-fstar
-	(cd $(LWEKE_HOME); fstar_PQCtestKAT_sign-$(VARIANT))
+	make -C $(REF_HOME) tests-fstar
+	(cd $(REF_HOME); fstar_PQCtestKAT_sign-$(VARIANT))
 
 benchmark: $(OUT_DIR)/libqtesla.a
-	make -C $(LWEKE_HOME) tests-fstar
-	(cd $(LWEKE_HOME); fstar_test_qtesla-$(VARIANT))
+	make -C $(REF_HOME) tests-fstar
+	(cd $(REF_HOME); fstar_test_qtesla-$(VARIANT))
 
 stage1: $(GENERATED_DIR)/Makefile.include
 
@@ -171,7 +173,7 @@ ALL_OBJS = $(patsubst %.c,%.o,$(ALL_SOURCES)) \
 INCLUDE_DIRS = \
   $(KREMLIN_HOME)/include \
   $(KREMLIN_HOME)/kremlib \
-  $(LWEKE_HOME)/sha3 \
+  $(REF_HOME)/sha3 \
   $(HACL_HOME)/lib \
   $(HACL_HOME)/code/sha3
 
@@ -190,19 +192,19 @@ CFLAGS += $(addprefix -I ,$(INCLUDE_DIRS)) -Wall -Wextra -Werror \
 
 -include $(patsubst %.c,%.d,$(ALL_SOURCES))
 
-$(LWEKE_HOME)/%.o:
-	make -C $(LWEKE_HOME) $*.o
+$(REF_HOME)/%.o:
+	make -C $(REF_HOME) $*.o
 
 $(OUT_DIR):
 	mkdir -p $@
 
 # 4. Collecting all of the object files into static libraries and test executable
 
-$(OUT_DIR)/libqtesla.a: $(ALL_OBJS) $(LWEKE_HOME)/objs/random.o | $(OUT_DIR)
+$(OUT_DIR)/libqtesla.a: $(ALL_OBJS) $(REF_HOME)/objs/random.o | $(OUT_DIR)
 	$(AR) rcs -S $(OUT_DIR)/libqtesla.a $^
 	ranlib $(OUT_DIR)/libqtesla.a
 
-$(OUT_DIR)/test.exe: $(ALL_OBJS) $(LWEKE_HOME)/tests/rng.o | $(OUT_DIR)
+$(OUT_DIR)/test.exe: $(ALL_OBJS) $(REF_HOME)/tests/rng.o | $(OUT_DIR)
 	$(info ALL_SOURCES is $(ALL_SOURCES))
 	$(CC) $(CFLAGS) -o $@ $^ -L $(KREMLIN_HOME)/kremlib/out -lkremlib
 

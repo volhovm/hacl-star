@@ -347,8 +347,7 @@ let ntt a w =
                 #(fun h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
                 #(fun _ h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
                 cond
-                (fun _ -> ());
-                (*
+                (fun _ ->
                     let jTwiddleVal = jTwiddle.(size 0) in
                     let wj:elem = w.(jTwiddleVal) in
                     jTwiddle.(size 0) <- jTwiddleVal +. (size 1);
@@ -367,10 +366,10 @@ let ntt a w =
                             let temp:elem = barr_reduce (reduce I64.((elem_to_int64 wj) *^ (elem_to_int64 aVal))) in
                             let aVal:elem = a.(jVal) in
                             a.(aIndex) <- barr_reduce (int64_to_elem I64.((elem_to_int64 aVal) +^ (2L *^ (elem_to_int64 params_q) -^ (elem_to_int64 temp))));
-                            a.(j) <- barr_reduce (int64_to_elem I64.((elem_to_int64 temp) +^ ((elem_to_int64 aVal))))
+                            a.(jVal) <- barr_reduce (int64_to_elem I64.((elem_to_int64 temp) +^ ((elem_to_int64 aVal))))
                         );
                     jFirst.(size 0) <- UI32.(j.(size 0) +^ numoProblems.(size 0))
-                );*)
+                );
             numoProblems.(size 0) <- UI32.(numoProblems.(size 0) >>^ 1ul);
             pop_frame()
         );
@@ -419,9 +418,9 @@ let nttinv a w =
                         (fun _ ->
                             let jVal:size_t = j.(size 0) in
                             let aIndex:size_t = UI32.(jVal +^ numoProblems.(size 0)) in
-                            let temp:elem = a.(j) in
+                            let temp:elem = a.(jVal) in
                             let aaIndex:elem = a.(aIndex) in
-                            a.(j) <- barr_reduce (int64_to_elem I64.((elem_to_int64 temp) +^ (elem_to_int64 aaIndex)));
+                            a.(jVal) <- barr_reduce (int64_to_elem I64.((elem_to_int64 temp) +^ (elem_to_int64 aaIndex)));
                             a.(aIndex) <- barr_reduce (reduce I64.((elem_to_int64 wj) *^ ((elem_to_int64 temp) +^ (2L *^ (elem_to_int64 params_q) -^ (elem_to_int64 aaIndex)))))
                         );
                     jFirst.(size 0) <- UI32.(j.(size 0) +^ numoProblems.(size 0))
@@ -622,9 +621,9 @@ val qtesla_keygen:
   loop1 h0 (size params_k) e spec
   (fun k ->
     C.Loops.do_while
-      (fun h break -> live h e /\ live h randomness_extended /\
-                   (not break ==> (check_ES (get h e k) params_Le)) /\
-                   (break ==> (not (check_ES (get h e k) params_Le))))
+      (fun h stop -> live h e /\ live h randomness_extended /\
+                   (not stop ==> (check_ES (get h e k) params_Le)) /\
+                   (stop ==> (not (check_ES (get h e k) params_Le))))
       (fun _ ->
         let nonce0 = nonce.(size 0) in
         nonce.(size 0) <- nonce0 +. 1;
@@ -650,8 +649,8 @@ let qtesla_keygen pk sk =
       (fun h _ -> live h nonce /\ live h e /\ live h randomness_extended)
       (fun k ->
         C.Loops.do_while
-          (fun h break -> live h nonce /\ live h e /\ live h randomness_extended)
-                       //(break ==> (not (check_ES (get_poly e k) params_Le))))
+          (fun h stop -> live h nonce /\ live h e /\ live h randomness_extended)
+                       //(stop ==> (not (check_ES (get_poly e k) params_Le))))
           (fun _ ->
             let subbuffer = sub randomness_extended (k *. crypto_seedbytes) crypto_randombytes in
             let nonce0 = nonce.(size 0) in
@@ -664,8 +663,8 @@ let qtesla_keygen pk sk =
           )
       );
   C.Loops.do_while
-      (fun h break -> live h s /\ live h randomness_extended /\ live h nonce)
-                   //(break ==> (not (check_ES s params_Ls)))) // TODO: need Ghost/Tot version of check_ES for invariants
+      (fun h stop -> live h s /\ live h randomness_extended /\ live h nonce)
+                   //(stop ==> (not (check_ES s params_Ls)))) // TODO: need Ghost/Tot version of check_ES for invariants
       (fun _ ->
         let rndsubbuffer = sub randomness_extended (params_k *. crypto_seedbytes) crypto_randombytes in
         let nonce0:uint64 = nonce.(size 0) in
@@ -923,8 +922,8 @@ let crypto_sign #smlennat sm smlen m mlen sk =
 
     R.randombytes_ crypto_randombytes (sub randomness_input crypto_randombytes crypto_randombytes);
     update_sub randomness_input (size 0) crypto_seedbytes (sub sk (crypto_secretkeybytes -. crypto_seedbytes) crypto_seedbytes);
-    params_hashG m mlen params_hmbytes (sub randomness_input (crypto_randombytes +. crypto_seedbytes) params_hmbytes);
-    params_hashG randomness_input (crypto_randombytes +. crypto_seedbytes +. params_hmbytes) crypto_seedbytes randomness;
+    params_hashG mlen m params_hmbytes (sub randomness_input (crypto_randombytes +. crypto_seedbytes) params_hmbytes);
+    params_hashG (crypto_randombytes +. crypto_seedbytes +. params_hmbytes) randomness_input crypto_seedbytes randomness;
 
     poly_uniform a (sub #_ #_ #(v crypto_randombytes) sk (crypto_secretkeybytes -. (size 2) *. crypto_seedbytes) crypto_randombytes);
 
@@ -954,16 +953,16 @@ let crypto_sign #smlennat sm smlen m mlen sk =
             else (
                  push_frame();
                  let k = create (size 1) (size 0) in
-                 let break = create (size 1) false in
+                 let stop = create (size 1) false in
                  while
                  #(fun h -> live h c /\ live h randomness /\  live h randomness_input /\
                      live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
-                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk /\ live h k /\ live h break)
+                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk /\ live h k /\ live h stop)
                  #(fun _ h -> live h c /\ live h randomness /\  live h randomness_input /\
                      live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
-                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk /\ live h k /\ live h break)
+                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk /\ live h k /\ live h stop)
                  // See https://github.com/FStarLang/FStar/issues/1579
-                 (fun () -> (* k.(size 0) <. params_k && *) not break.(size 0))
+                 (fun () -> (* k.(size 0) <. params_k && *) not stop.(size 0))
                  (fun _ ->
                      let kVal:size_t = k.(size 0) in
 		     if (kVal <. params_k)
@@ -974,9 +973,9 @@ let crypto_sign #smlennat sm smlen m mlen sk =
                          poly_sub (index_poly v_ kVal) (index_poly v_ kVal) (index_poly ec kVal);
                          rsp.(size 0) <- test_v (index_poly v_ kVal);
                          if (let rspVal = rsp.(size 0) in not (rspVal = 0l))
-                         then ( break.(size 0) <- true )
+                         then ( stop.(size 0) <- true )
                          else ( k.(size 0) <- (k.(size 0)) +. (size 1) ) )
-	             else ( break.(size 0) <- true )
+	             else ( stop.(size 0) <- true )
                  );
                  pop_frame();
 
