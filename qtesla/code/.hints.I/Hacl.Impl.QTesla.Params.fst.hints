@@ -1,5 +1,5 @@
 [
-  "@g*k>wE¼Ÿ7\u0019\u00032Ìå˜",
+  "ž.Ø¬v½\f ½î\u007f‹)\u000fY3",
   [
     [
       "Hacl.Impl.QTesla.Params.crypto_randombytes",
@@ -65,6 +65,32 @@
       "532341a04f23581a9521c7e8f5eb65f4"
     ],
     [
+      "Hacl.Impl.QTesla.Params.elem_n",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_irrelevance_Prims.pow2.fuel_instrumented", "@query",
+        "constructor_distinct_Lib.IntTypes.U32",
+        "equality_tok_Lib.IntTypes.PUB@tok",
+        "equality_tok_Lib.IntTypes.U32@tok",
+        "equation_Hacl.Impl.QTesla.Params.crypto_randombytes",
+        "equation_Lib.IntTypes.bits", "equation_Prims.nat",
+        "function_token_typing_Hacl.Impl.QTesla.Params.crypto_randombytes",
+        "lemma_Lib.IntTypes.pow2_values", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Hacl.Impl.QTesla.Params_Tm_refine_1d27a7257c3d135f4b985d466d247283",
+        "refinement_interpretation_Lib.IntTypes_Tm_refine_a023f390483b324d20370f23ed0795dc",
+        "typing_Hacl.Impl.QTesla.Params.crypto_randombytes",
+        "typing_Lib.IntTypes.uint_v", "typing_tok_Lib.IntTypes.PUB@tok",
+        "typing_tok_Lib.IntTypes.U32@tok"
+      ],
+      0,
+      "c33852d8dd24be00eed659c9592680fb"
+    ],
+    [
       "Hacl.Impl.QTesla.Params.params_n",
       1,
       2,
@@ -89,7 +115,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "85c8d459b062493dcdd34bfd1baed836"
+      "8c8d287db514fb8998f03e7e43a638cb"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_k",
@@ -111,7 +137,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "67baad59c53bd8d049e3111fdf45c3db"
+      "a34cf016c6451ac8e0a16dc4b9e6b514"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_q",
@@ -149,7 +175,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "5675543462b23516bc38eac5ccb0a19c"
+      "faf4fec596feef3efad3e847a1192c46"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_h",
@@ -171,7 +197,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "83a7b30f17ccad52e884a436dcb85311"
+      "c0b22250aab91890bf82ca47a154da37"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_Le",
@@ -201,7 +227,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "ef95d39210680570b308a8731d083dd0"
+      "65e2b52131bf3367b7d1f2d7bb7a9353"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_Ls",
@@ -231,7 +257,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "f910b49c56ee07b39fbc88611d55523a"
+      "eb556d86ae3e3c7859f8e42760110274"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_B",
@@ -269,7 +295,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "3060c1e1f667fdd499de15c7f58a986d"
+      "7f4f22713c92f447269888fe373cc02e"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_U",
@@ -307,7 +333,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "bb32d351864066159aad2e67ccc9cf93"
+      "a56aded88161c947a311dadc52968c55"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_d",
@@ -329,7 +355,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "96a331876a012347a4ada90b0449e44c"
+      "ad8b578008c393a6e78470323f2d028c"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_genA",
@@ -351,7 +377,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "a8f2aa90949d709af4374402943486dd"
+      "47045b0ac8b26bc07cf29e4800864beb"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_barr_mult",
@@ -389,7 +415,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "10abc1886bc59f2f0c398bac1594240b"
+      "6d7f33254c29805e12c67a40de2995cd"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_barr_div",
@@ -419,7 +445,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "14ad75361d9706f66712bfb2bcb82ed7"
+      "57e7ddd9bace605780722ddbbfe62f2c"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_qinv",
@@ -457,7 +483,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "175c548595536a7c8b8ca494c1d234d9"
+      "6dcc48d460c0842265af0016f02fd3ca"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_q_log",
@@ -479,7 +505,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "082cc107d8b17e7643eca46cc2c86dc2"
+      "987eebd5478639f1b8f6bd5ea5abd05e"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_r2_invn",
@@ -517,7 +543,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "ecb58d7caf373ff0dda92dae110bbeb7"
+      "7eb72a63761531592283b542c7accf01"
     ],
     [
       "Hacl.Impl.QTesla.Params.params_hmbytes",
@@ -543,7 +569,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "3d03e2dd84b19d0d3de1257b5d530614"
+      "b657e8d4af634c4bdba9106a248b1854"
     ],
     [
       "Hacl.Impl.QTesla.Params.crypto_secretkeybytes",
@@ -626,7 +652,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "71b966de5e1a6454327617ab955b8808"
+      "01433d97332e0297c401c6f3ab8f8153"
     ],
     [
       "Hacl.Impl.QTesla.Params.crypto_bytes",
@@ -648,7 +674,7 @@
         "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "904f4061d5ebdad80a2f1927794c8ed7"
+      "cec4965c585c78e1f3fb25c7b3f9459f"
     ]
   ]
 ]

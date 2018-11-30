@@ -2,7 +2,7 @@ FSTAR_HOME   ?= ../../../FStar
 KREMLIN_HOME ?= ../../../kremlin
 HACL_HOME    ?= ../..
 
-VARIANT      ?= I
+VARIANT      ?= p-III
 
 ifeq ($(VARIANT),I)
 else ifeq ($(VARIANT),III-size)
@@ -56,6 +56,7 @@ stage1: $(GENERATED_DIR)/Makefile.include
 FSTAR_INCLUDE_DIRS = \
   ../spec \
   ../spec/params-$(VARIANT) \
+  params-$(VARIANT) \
   $(HACL_KREMLIN) \
   $(KREMLIN_HOME)/kremlib \
   $(HACL_HOME)/specs \
@@ -137,7 +138,7 @@ $(GENERATED_DIR)/Makefile.include: $(ALL_KRML_INPUTS) | .depend
 	-bundle 'C=C.Endianness' \
 	-bundle 'Hacl.SHA3=Hacl.Impl.SHA3,Hacl.SHA3' \
 	-library 'C,FStar' \
-	-drop 'LowStar,Spec,Prims,Lib,C.Loops.*' \
+	-drop 'LowStar,Spec,Prims,Lib' \
 	-add-include '"c/Lib_PrintBuffer.h"' \
 	-tmpdir $(GENERATED_DIR) \
 	$^

@@ -23,6 +23,7 @@ open Lib.Buffer
 
 open C.Loops
 
+open Hacl.Impl.QTesla.Constants
 open Hacl.Impl.QTesla.Params
 
 module B  = LowStar.Buffer
@@ -43,12 +44,26 @@ module R    = Hacl.QTesla.Random
 type poly = lbuffer elem (v params_n)
 type poly_k = lbuffer elem (v (params_k *. params_n))
 
-//unfold let create_poly _ : poly = create #_ #params_n (size params_n) (to_elem 0)
-//unfold let create_polys_k _ : poly_k = create #_ #(params_n * params_k) (size (params_n * params_k)) (to_elem 0)
+val poly_create:
+    unit
+  -> StackInline poly
+    (requires fun _ -> True)
+    (ensures fun _ _ _ -> True)
+
+let poly_create _ = create params_n (to_elem 0)
+
+val poly_k_create:
+    unit
+  -> StackInline poly_k
+    (requires fun _ -> True)
+    (ensures fun _ _ _ -> True)
+
+let poly_k_create _ = create (params_n *. params_k) (to_elem 0)
 
 val get_poly: p: poly_k -> k: size_t{k <. params_k} -> GTot poly
 let get_poly p k = gsub p (k *. params_n) params_n
 
+inline_for_extraction private
 val index_poly: p: poly_k -> k: size_t{k <. params_k} -> Stack poly
     (requires fun h -> live h p)
     (ensures fun h0 pk h1 -> h0 == h1 /\ pk == get_poly p k)
@@ -56,115 +71,22 @@ let index_poly p k = sub p (k *. params_n) params_n
 
 let randomness_extended_size = normalize_term ((params_k +. size 3) *. crypto_seedbytes)
 
-assume val cshake128_frodo:
-    input_len:size_t
-  -> input:lbuffer uint8 (v input_len)
-  -> cstm:uint16
-  -> output_len:size_t
-  -> output: lbuffer uint8 (v output_len)
-  -> Stack unit
-    (requires fun h -> live h input /\ live h output /\ disjoint input output)
-    (ensures fun h0 _ h1 ->
-      modifies1 output h0 h1 /\
-      as_seq h1 output == FS.cshake128_frodo (v input_len) (as_seq h0 input) cstm (v output_len))
-
-val cdtIndex:
-    x : size_t
-  -> y : size_t
-  -> Tot size_t
-
-// TODO: Will need for implementation of sample_gauss_poly
-(*let cdtIndex x y = x *. (size 3) + y*)
-
 assume val sample_gauss_poly:
     x: poly
   -> seed: lbuffer uint8 (v crypto_randombytes)
   -> nonce: FStar.Int64.t
   -> Stack unit
     (requires fun h -> live h x /\ live h seed /\ disjoint x seed)
-    (ensures fun h0 _ h1 ->
-      live h1 x /\ live h1 seed /\
-      modifies1 x h0 h1) // TODO: output equal to spec
-
-// TODO: There is all kinds of specialized per-parameter-set stuff happening in sample_gauss_poly.
-// Need to figure out how to write a more general parameterized implementation, or if it's necessary,
-// write a separate one for each parameter set.
-(*let sample_gauss_poly x seed nonce =
-    [@inline_let]
-    let cdtList: list I64.t = [
-    0x0000020000000000L; 0x0000000000000000L; 0x0000000000000000L;
-    0x0000030000000000L; 0x0000000000000000L; 0x0000000000000000L;
-    0x0000032000000000L; 0x0000000000000000L; 0x0000000000000000L;
-    0x0000032100000000L; 0x0000000000000000L; 0x0000000000000000L;
-    0x0000032102000000L; 0x0000000000000000L; 0x0000000000000000L;
-    0x0000032102010000L; 0x0000000000000000L; 0x0000000000000000L;
-    0x0000032102010020L; 0x0000000000000000L; 0x0000000000000000L;
-    0x0000032102010020L; 0x0100000000000000L; 0x0000000000000000L;
-    0x0000032102010020L; 0x0100020000000000L; 0x0000000000000000L;
-    0x0000032102010020L; 0x0100020001000000L; 0x0000000000000000L;
-    0x0000032102010020L; 0x0100020001000020L; 0x0000000000000000L;
-    0x0000032102010020L; 0x0100020001000020L; 0x0001000000000000L;
-    0x0000032102010020L; 0x0100020001000020L; 0x0001000002000000L;
-    0x0000032102010020L; 0x0100020001000020L; 0x0001000002000001L ] in
-    let cdt = createL_global cdtList in
-    push_frame();
-
-    let seed_ex = create #uint8 #(v params_n * 8) (params_n *. (size 8)) (u8 0) in
-    let j = create #I64.t #1 (size 1) 0L in
-    let bitsremained = create #I64.t #1 (size 1) 0L in
-    let rbits = create #I64.t #1 (size 1) 0L in
-    let y = create #I64.t #1
-    let r = create #UI64.t #1 (size 1) 0uL in
-    let s = create #UI64.t #1 (size 1) 0uL in
-    let t = create #UI64.t #1 (size 1) 0uL in
-    let c = create #UI64.t #1 (size 1) 0uL in
-
-    params_gaussSampler_xof crypto_randombytes seed dmsp.(size 0) (params_n *. (size 8)) buf;
-
-    let buf = bufferAsInt64s seed_ex in
-
-    for 0ul params_n
-        (fun h _ -> live h seed_ex /\ live h j)
-        (fun x_ind ->
-            if let jVal = j.size(0) in jVal +. 46 >. params_n
-            then ( params_gaussSampler_xof crypto_randombytes seed dmsp.(size 0) (params_n *. (size 8)) buf;
-                   j.(size 0) <- (size 0)
-                 )
-            else ();
-
-            do_while
-                (fun h _ -> live h seed_ex /\ live h buf /\ live h j)
-                (fun _ ->
-                    rbits.(size 0) <- buf.(j.(size 0));
-                    j.(size 0) <- j.(size 0) +. (size 1);
-                    bitsremained.(size 0) <- 64L;
-
-                    do_while
-                        (fun h -> live h seed_ex /\ live h buf /\ live h j)
-                        (fun _ ->
-                            r.(size 0) <- buf.(j.(size 0));
-                            j.(size 0) <- I64.((j.(size 0)) +^ 1L);
-                            s.(size 0) <- buf.(j.(size 0));
-                            j.(size 0) <- I64.((j.(size 0)) +^ 1L);
-                            t.(size 0) <- buf.(j.(size 0));
-                            j.(size 0) <- I64.((j.(size 0)) +^ 1L);
-                            if (let bitsremainedVal = bitsremainedVal.(size 0) in bitsremainedVal <=^ 64L - 6L)
-                            then rbits.(size 0) <- I64.t(((rbits.(size 0)) <<^ 6L) ^^ (((r.(size 0)) >>^ 58L) &^ 63L))
-                            else ();
-                            r.(size 0) <- I64.t(r.(size 0) &^ 0x000003FFFFFFFFFFL);
-
-                            I64.t(r.(size 0) >^ 0x0000032102010020L)
-                        );
-
-                    y.(size 0) <- 0L;*)
-
-
-val sampleE_state: i:size_nat -> Type0
-let sampleE_state i = tuple2 S.polys_t S.positive
-
-// TODO: Better way of doing negation/absolute value of an Int64?
-val abs_elem: elem -> elem
-let abs_elem x = if x <^ (to_elem 0) then x *^ (to_elem (-1)) else x
+    (ensures fun h0 _ h1 -> modifies1 x h0 h1) 
+    
+// Reference implementation returns the unsigned version of the element type. Not sure yet whether or not
+// it's important to do this. In one case the return value is compared against a quantity that isn't even close
+// to exceeding the maximum value of a signed int32, much less an int64, and in all other cases ends up getting
+// immediately cast back into a signed type.
+val abs_elem: value: elem -> Tot (x:elem{x >=^ (to_elem 0)})
+let abs_elem value = 
+    let mask = value >>^ ((size elem_n) -. (size 1)) in
+    (mask ^^ value) -^ mask
 
 val check_ES:
     p: poly
@@ -189,32 +111,29 @@ let check_ES p bound =
   for (size 0) params_h
       (fun h _ -> live h p /\ live h sum /\ live h limit /\ live h temp /\ live h mask /\ live h list)
       (fun j ->
-          let loopMax:UI32.t = UI32.((limit.(0ul)) -^ 1ul) in
+          let loopMax:UI32.t = UI32.((limit.(size 0)) -^ 1ul) in
           for 0ul loopMax
           (fun h _ -> live h p /\ live h sum /\ live h limit /\ live h temp /\ live h mask /\ live h list)
-          (fun i32 ->
-              let i = uint32_to_int16 i32 in
-              mask.(size 0) <- I16.( (list.(i +^ 1s)) -^ (list.(i)) >>^ 15ul );
-              temp.(size 0) <- I16.(( (list.(i +^ 1s)) &^ (mask.(0ul)) ) |^
-                              ( (list.(i)) &^ (lognot mask.(size 0)) ));
-              list.(I16.(i +^ 1s)) <- I16.(( (list.(i)) &^ mask.(0ul) ) |^
-                                         ( (list.(i +^ 1s)) &^ (lognot mask.(0ul)) ));
+          (fun i ->
+              mask.(size 0) <- I16.( ((list.(i +. (size 1))) -^ (list.(i))) >>^ 15ul );
+              temp.(size 0) <- I16.( ((list.(i +. (size 1))) &^ (mask.(size 0))) |^
+                                    ((list.(i)) &^ (lognot mask.(size 0))));
+              list.(I16.(i +. (size 1))) <- I16.(( (list.(i)) &^ mask.(size 0) ) |^
+                                         ( (list.(i +. (size 1))) &^ (lognot mask.(size 0)) ));
               list.(i) <- temp.(size 0)
           );
 
-          let listIndex:UI32.t = UI32.((limit.(0ul)) -^ 1ul) in
+          let listIndex:UI32.t = UI32.((limit.(size 0)) -^ 1ul) in
           let listAmt:I16.t = list.(listIndex) in
           let listAmt:UI32.t = int16_to_uint32 listAmt in
           sum.(size 0) <- UI32.(sum.(size 0) +^ listAmt);
           limit.(size 0) <- UI32.((limit.(size 0)) -^ 1ul)
       );
 
-   let sumAmt:UI32.t = sum.(0ul) in
+   let sumAmt:UI32.t = sum.(size 0) in
    let res = UI32.(sumAmt >^ bound) in
    pop_frame();
    res
-
-unfold let shake128_rate:size_t = size 168
 
 val reduce:
     a: I64.t
@@ -242,7 +161,7 @@ val poly_uniform:
   -> seed: lbuffer uint8 (v crypto_randombytes)
   -> Stack unit
     (requires fun h -> live h a /\ live h seed /\ disjoint a seed)
-    (ensures fun h0 _ h1 -> live h1 a /\ live h1 seed /\ modifies1 a h0 h1)
+    (ensures fun h0 _ h1 -> modifies1 a h0 h1)
 
 let poly_uniform a seed =
     push_frame();
@@ -253,7 +172,7 @@ let poly_uniform a seed =
     let mask:UI32.t = (1ul <<. params_q_log) -. 1ul in
     let buf = create (shake128_rate *. params_genA) (u8 0) in
     let dmsp = create (size 1) 0us in
-    cshake128_frodo crypto_randombytes seed (dmsp.(size 0)) (shake128_rate *. params_genA) buf;
+    SHA3.cshake128_frodo crypto_randombytes seed (dmsp.(size 0)) (shake128_rate *. params_genA) buf;
     dmsp.(size 0) <- UI16.((dmsp.(size 0)) +^ 1us);
 
     while
@@ -261,11 +180,10 @@ let poly_uniform a seed =
         #(fun _ h -> live h pos /\ live h i /\ live h nblocks /\ live h buf /\ live h dmsp)
         ( fun _ -> (i.(size 0)) <. (params_k *. params_n) )
         ( fun _ ->
-            let bufSize:size_t = (nblocks.(size 0)) *. shake128_rate in
-            if (pos.(size 0)) >. bufSize -. ((size 4) *. nbytes)
+            if (pos.(size 0)) >. (shake128_rate *. (nblocks.(size 0))) -. ((size 4) *. nbytes)
             then ( nblocks.(size 0) <- 1ul;
-                 let bufSize:size_t = (nblocks.(size 0)) *. shake128_rate in
-                 cshake128_frodo crypto_randombytes seed (dmsp.(size 0)) bufSize buf;
+	         let bufSize:size_t = shake128_rate *. (nblocks.(size 0)) in
+                 SHA3.cshake128_frodo crypto_randombytes seed (dmsp.(size 0)) (bufSize) buf;
                  dmsp.(size 0) <- UI16.((dmsp.(size 0)) +^ 1us);
                  pos.(size 0) <- 0ul )
             else ();
@@ -324,7 +242,7 @@ val ntt:
   -> w: poly
   -> Stack unit
     (requires fun h -> live h a /\ live h w)
-    (ensures fun h0 _ h1 -> live h1 a /\ live h1 w /\ modifies1 a h0 h1)
+    (ensures fun h0 _ h1 -> modifies1 a h0 h1)
 
 let ntt a w =
     push_frame();
@@ -366,7 +284,8 @@ let ntt a w =
                             let temp:elem = barr_reduce (reduce I64.((elem_to_int64 wj) *^ (elem_to_int64 aVal))) in
                             let aVal:elem = a.(jVal) in
                             a.(aIndex) <- barr_reduce (int64_to_elem I64.((elem_to_int64 aVal) +^ (2L *^ (elem_to_int64 params_q) -^ (elem_to_int64 temp))));
-                            a.(jVal) <- barr_reduce (int64_to_elem I64.((elem_to_int64 temp) +^ ((elem_to_int64 aVal))))
+                            a.(jVal) <- barr_reduce (int64_to_elem I64.((elem_to_int64 temp) +^ ((elem_to_int64 aVal))));
+			    j.(size 0) <- jVal +. (size 1)
                         );
                     jFirst.(size 0) <- UI32.(j.(size 0) +^ numoProblems.(size 0))
                 );
@@ -380,17 +299,17 @@ val nttinv:
   -> w: poly
   -> Stack unit
     (requires fun h -> live h a /\ live h w)
-    (ensures fun h0 _ h1 -> live h1 a /\ live h1 w /\ modifies1 a h0 h1)
+    (ensures fun h0 _ h1 -> modifies1 a h0 h1)
 
 let nttinv a w =
     push_frame();
     let numoProblems = create (size 1) (size 1) in
     let jTwiddle = create (size 1) (size 0) in
 
-    C.Loops.while // Outermost for loop
+    while // Outermost for loop
         #(fun h -> live h numoProblems /\ live h jTwiddle)
         #(fun _ h -> live h numoProblems /\ live h jTwiddle)
-        (fun _ -> numoProblems.(size 0) >. (size 0))
+        (fun _ -> numoProblems.(size 0) <. params_n)
         (fun _ ->
             push_frame();
             let j = create (size 1) (size 0) in
@@ -399,7 +318,7 @@ let nttinv a w =
               (requires fun h -> live h jFirst)
               (ensures fun h0 _ h1 -> live h1 jFirst)
             = jFirst.(size 0) <. params_n in
-            C.Loops.while // Middle for loop
+            while // Middle for loop
                 #(fun h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
                 #(fun _ h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
                 cond
@@ -411,7 +330,7 @@ let nttinv a w =
                     // final value of j from each inner for loop, so its scope can't be constrained to the for loop.
                     j.(size 0) <- jFirst.(size 0);
                     let jFinish:UI32.t = UI32.(jFirst.(size 0) +^ numoProblems.(size 0)) in
-                    C.Loops.while
+                    while
                         #(fun h -> live h numoProblems /\ live h jTwiddle /\ live h jFirst)
                         #(fun _ h -> live h numoProblems /\ live h jTwiddle /\ live h jFirst)
                         (fun _ -> j.(size 0) <. jFinish)
@@ -421,7 +340,8 @@ let nttinv a w =
                             let temp:elem = a.(jVal) in
                             let aaIndex:elem = a.(aIndex) in
                             a.(jVal) <- barr_reduce (int64_to_elem I64.((elem_to_int64 temp) +^ (elem_to_int64 aaIndex)));
-                            a.(aIndex) <- barr_reduce (reduce I64.((elem_to_int64 wj) *^ ((elem_to_int64 temp) +^ (2L *^ (elem_to_int64 params_q) -^ (elem_to_int64 aaIndex)))))
+                            a.(aIndex) <- barr_reduce (reduce I64.((elem_to_int64 wj) *^ ((elem_to_int64 temp) +^ (2L *^ (elem_to_int64 params_q) -^ (elem_to_int64 aaIndex)))));
+			    j.(size 0) <- jVal +. (size 1)
                         );
                     jFirst.(size 0) <- UI32.(j.(size 0) +^ numoProblems.(size 0))
                 );
@@ -436,7 +356,7 @@ val poly_ntt:
   -> x: poly
   -> Stack unit
     (requires fun h -> live h x_ntt /\ live h x /\ disjoint x_ntt x)
-    (ensures fun h0 _ h1 -> live h1 x_ntt /\ live h1 x /\ modifies1 x h0 h1)
+    (ensures fun h0 _ h1 -> modifies1 x h0 h1)
 
 let poly_ntt x_ntt x =
     push_frame();
@@ -455,7 +375,7 @@ val poly_pointwise:
   -> y: poly
   -> Stack unit
     (requires fun h -> live h result /\ live h x /\ live h y)
-    (ensures fun h0 _ h1 -> live h1 result /\ live h1 x /\ live h1 y /\ modifies1 result h0 h1)
+    (ensures fun h0 _ h1 -> modifies1 result h0 h1)
 
 let poly_pointwise result x y =
     push_frame();
@@ -474,7 +394,7 @@ val poly_mul:
   -> y: poly
   -> Stack unit
     (requires fun h -> live h result /\ live h x /\ live h y)
-    (ensures fun h0 _ h1 -> live h1 result /\ live h1 x /\ live h1 y /\ modifies1 result h0 h1)
+    (ensures fun h0 _ h1 -> modifies1 result h0 h1)
 
 // TODO
 assume val zetainv: poly
@@ -490,7 +410,7 @@ val poly_add:
   -> y: poly
   -> Stack unit
     (requires fun h -> live h result /\ live h x /\ live h y /\ disjoint result x /\ disjoint result y /\ disjoint x y)
-    (ensures fun h0 _ h1 -> live h1 result /\ live h1 x /\ live h1 y /\ modifies1 result h0 h1)
+    (ensures fun h0 _ h1 -> modifies1 result h0 h1)
 
 let poly_add result x y =
     push_frame();
@@ -507,7 +427,7 @@ val poly_sub:
   -> y: poly
   -> Stack unit
     (requires fun h -> live h result /\ live h x /\ live h y)
-    (ensures fun h0 _ h1 -> live h1 result /\ live h1 x /\ live h1 y /\ modifies1 result h0 h1)
+    (ensures fun h0 _ h1 -> modifies1 result h0 h1)
 
 let poly_sub result x y =
     push_frame();
@@ -603,8 +523,7 @@ val qtesla_keygen:
   -> sk: buffer uint8
   -> Stack unit
     (requires fun h -> live h pk /\ live h sk /\ disjoint pk sk)
-    //(ensures fun h0 _ h1 -> modifies (loc_buffer pk) h0 h1 /\ modifies (loc_buffer sk) h0 h1)
-    (ensures fun _ _ _ -> True)
+    (ensures fun h0 _ h1 -> modifies (loc pk |+| loc sk) h0 h1)
 
 // Preliminary work using one of Santiago's loop combinators for the first for loop
 (*assume val keygen_sample_spec:
@@ -634,21 +553,20 @@ let qtesla_keygen pk sk =
   push_frame();
   let randomness = create crypto_randombytes (u8 0) in
   let randomness_extended = create randomness_extended_size (u8 0) in
-  let e:poly_k = create (params_n *. params_k) (to_elem 0) in
-  let s:poly = create params_n (to_elem 0) in
-  let s_ntt:poly = create params_n (to_elem 0) in
-  let a:poly_k = create (params_n *. params_k) (to_elem 0) in
-  let t:poly_k = create (params_n *. params_k) (to_elem 0) in
-  // TODO: nonce and mask are signed types! Investigate this.
+  let e:poly_k = poly_k_create () in
+  let s:poly = poly_create () in
+  let s_ntt:poly = poly_create () in
+  let a:poly_k = poly_k_create () in
+  let t:poly_k = poly_k_create () in 
   let nonce = create 1ul 0L in
   let mask = create 1ul (to_elem 0) in
   R.randombytes_ crypto_randombytes randomness;
-  SHA3.shake128_hacl crypto_randombytes randomness randomness_extended_size randomness_extended;
+  params_SHAKE crypto_randombytes randomness randomness_extended_size randomness_extended;
 
-  C.Loops.for (size 0) params_k
+  for (size 0) params_k
       (fun h _ -> live h nonce /\ live h e /\ live h randomness_extended)
       (fun k ->
-        C.Loops.do_while
+        do_while
           (fun h stop -> live h nonce /\ live h e /\ live h randomness_extended)
                        //(stop ==> (not (check_ES (get_poly e k) params_Le))))
           (fun _ ->
@@ -662,7 +580,7 @@ let qtesla_keygen pk sk =
             not (check_ES ek params_Le)
           )
       );
-  C.Loops.do_while
+  do_while
       (fun h stop -> live h s /\ live h randomness_extended /\ live h nonce)
                    //(stop ==> (not (check_ES s params_Ls)))) // TODO: need Ghost/Tot version of check_ES for invariants
       (fun _ ->
@@ -690,7 +608,7 @@ let qtesla_keygen pk sk =
           (fun h _ -> live h t /\ live h a /\ live h s_ntt /\ live h e /\ live h mask)
           (fun i ->
               let tki:elem = tk.(i) in
-              mask.(0ul) <- (params_q -^ tki) >>^ 63ul;
+              mask.(size 0) <- (params_q -^ tki) >>^ 63ul;
               let mask0:elem = mask.(size 0) in
               tk.(i) <- tki -^ (params_q &^ mask0)
            )
@@ -720,7 +638,7 @@ val hash_vm:
 let hash_vm c_bin v_ hm =
     push_frame();
 
-    let t = create (params_k *. params_n +. params_hmbytes) (u8 0) in
+    let t = create (params_k *. params_n +. crypto_hmbytes) (u8 0) in
     let index = create (size 1) (size 0) in
 
     for 0ul params_k
@@ -731,12 +649,12 @@ let hash_vm c_bin v_ hm =
 	(fun h _ -> live h c_bin /\ live h v_ /\ live h hm /\ live h index)
 	(fun i ->
 	    let temp:elem = v_.(index.(size 0)) in
-	    let mask:elem = (elem_to_int64 (params_q /^ (to_elem 2) -^ temp)) >>^ 63ul in
-	    let temp:elem = ((temp -^ params_q) &^ mask) |^ (temp &^ (I64.lognot mask)) in
+	    let mask:elem = (params_q /^ (to_elem 2) -^ temp) >>^ 63ul in
+	    let temp:elem = ((temp -^ params_q) &^ mask) |^ (temp &^ (lognot mask)) in
 	    let cL:elem = temp &^ (((to_elem 1) <<^ params_d) -^ (to_elem 1)) in
-	    let mask:elem = ((((to_elem 1) <<^ params_d) -^ (to_elem 1)) -^ cL) >>^ 63ul in
-	    let cL:elem = ((cL -^ ((to_elem 1) <<^ params_d)) &^ mask) |^ (cL &^ (I64.lognot mask)) in
-	    t.(size 0) <- int64_to_uint8 ((temp -^ cL) >>^ params_d);
+	    let mask:elem = (((to_elem 1) <<^ (params_d -. (size 1))) -^ cL) >>^ 63ul in
+	    let cL:elem = ((cL -^ ((to_elem 1) <<^ params_d)) &^ mask) |^ (cL &^ (lognot mask)) in
+	    t.(index.(size 0)) <- elem_to_uint8 ((temp -^ cL) >>^ params_d);
 	    // Putting (index.(size 0)) inline in the assignment causes a typing error for some reason.
 	    // Opened a bug on this.
 	    let indexVal:size_t = index.(size 0) in
@@ -744,8 +662,8 @@ let hash_vm c_bin v_ hm =
 	)
     );
 
-    update_sub #MUT #_ #_ t (params_k *. params_n) params_hmbytes hm;
-    params_hashG (params_k *. params_n +. params_hmbytes) t crypto_c_bytes c_bin;
+    update_sub #MUT #_ #_ t (params_k *. params_n) crypto_hmbytes hm;
+    params_SHAKE (params_k *. params_n +. crypto_hmbytes) t crypto_c_bytes c_bin;
 
     pop_frame()
 
@@ -762,13 +680,13 @@ val encode_c:
 let encode_c pos_list sign_list c_bin =
     push_frame();
 
-    let c = create params_n (I16.int_to_t 0) in
+    let c = create params_n 0s in
     let r = create shake128_rate (u8 0) in
     let dmsp = create (size 1) (u16 0) in
     let cnt = create (size 1) (size 0) in
     let i = create (size 1) (size 0) in
 
-    cshake128_frodo crypto_randombytes c_bin (dmsp.(size 0)) shake128_rate r;
+    SHA3.cshake128_frodo crypto_randombytes c_bin (dmsp.(size 0)) shake128_rate r;
     let dmspVal:uint16 = dmsp.(size 0) in
     dmsp.(size 0) <- dmspVal +. (u16 1);
 
@@ -782,20 +700,20 @@ let encode_c pos_list sign_list c_bin =
         let iVal:size_t = i.(size 0) in
 	let cntVal:size_t = cnt.(size 0) in
         if cntVal >. (shake128_rate -. (size 3))
-	then ( cshake128_frodo crypto_randombytes c_bin (dmsp.(size 0)) shake128_rate r;
+	then ( SHA3.cshake128_frodo crypto_randombytes c_bin (dmsp.(size 0)) shake128_rate r;
 	       let dmspVal:uint16 = dmsp.(size 0) in
 	       dmsp.(size 0) <- dmspVal +. (u16 1)
 	     )
 	else ();
 
         let rCntVal:uint8 = r.(cntVal) in
-	let pos:size_t = (rCntVal <<. (size 8)) |. (rCntVal +. (size 1)) in
+	let pos:size_t = (rCntVal <<. (size 8)) |. (r.(cntVal +. (size 1))) in
 	let pos:size_t = pos &. (params_n -. (size 1)) in
 
-	if (c.(pos)) = (I16.int_to_t 0)
-	then ( if (r.(cntVal +. (size 2)) &. (size 1)) = (size 1)
-	       then c.(pos) <- (I16.int_to_t (-1))
-	       else c.(pos) <- (I16.int_to_t (-1));
+	if (c.(pos)) = 0s
+	then ( if (r.(cntVal +. (size 2)) &. 1y) = 1y
+	       then c.(pos) <- -1s
+	       else c.(pos) <- 1s;
 	       pos_list.(iVal) <- pos;
 	       sign_list.(iVal) <- c.(pos);
 	       i.(size 0) <- iVal +. (size 1)
@@ -818,6 +736,8 @@ val sparse_mul8:
 let sparse_mul8 prod sk pos_list sign_list =
     push_frame();
 
+    let t = sk in
+    
     for 0ul params_n
     (fun h _ -> live h prod)
     (fun i -> prod.(i) <- to_elem 0);
@@ -830,16 +750,16 @@ let sparse_mul8 prod sk pos_list sign_list =
 	(fun h _ -> live h prod /\ live h sk /\ live h pos_list /\ live h sign_list)
 	(fun j -> 
 	    let sign_list_i:I16.t = sign_list.(i) in
-	    let skVal:uint8 = sk.(j +. params_n -. pos) in
-	    prod.(j) <- (prod.(j)) -^ (int16_to_elem sign_list_i) *^ (uint8_to_elem skVal)
+	    let tVal:uint8 = t.(j +. params_n -. pos) in
+	    prod.(j) <- (prod.(j)) -^ (int16_to_elem I16.(sign_list_i *^ (uint8_to_int16 tVal)))
 	);
 
 	for pos params_n
 	(fun h _ -> live h prod /\ live h sk /\ live h pos_list /\ live h sign_list)
 	(fun j -> 
 	    let sign_list_i:I16.t = sign_list.(i) in
-	    let skVal:uint8 = sk.(j -. pos) in
-  	    prod.(j) <- (prod.(j)) +^ (int16_to_elem sign_list_i) *^ (uint8_to_elem skVal)
+	    let tVal:uint8 = t.(j -. pos) in
+  	    prod.(j) <- (prod.(j)) +^ (int16_to_elem I16.(sign_list_i *^ (uint8_to_int16 tVal)))
 	)
     );
 
@@ -854,36 +774,17 @@ val test_rejection:
 
 let test_rejection z =
     push_frame();
-    let res = create (size 1) false in
-    let i = create (size 1) (size 0) in
 
-    while
-    #(fun h -> live h z /\ live h res /\ live h i)
-    #(fun _ h -> live h z /\ live h res /\ live h i)
-    (fun _ -> not res.(size 0))
-    (fun _ -> 
-        // In the reference implementation, this is a for loop, but we have an early-exit condition. We could finish
-	// the loop but this would be inefficient. Ideally the while loop condition would be
-	// i.(size 0) <. params_n && not res.(size 0). Unfortunately the && operator requires Ghost operations because
-	// of potential short-circuit behavior, and dereferencing an element of an array is stateful. This is why
-	// this code somewhat awkwardly only checks that boolean in the while condition, and sets it to true either
-	// when the early-escape condition fires (one of the generated coefficients is out of bounds), or when
-	// the entire array is checked and the for condition becomes false.
-        // See https://github.com/FStarLang/FStar/issues/1579
-        if i.(size 0) <. params_n
-	then (
-            let iVal = i.(size 0) in
-            let zVal = z.(iVal) in
-	    if (abs_elem zVal) >^ (params_B -^ params_U)
-	    then ( res.(size 0) <- true )
-	    else ( i.(size 0) <- (i.(size 0)) +. (size 1) ))
-        else ( res.(size 0) <- true )
-    );
+    let _, res =
+    interruptible_for 0ul params_n
+    (fun h _ _ -> live h z)
+    (fun i ->
+        let zVal = z.(i) in
+	(abs_elem zVal) >^ (params_B -^ params_U)
+    ) in
 
-    let resVal:bool = res.(size 0) in
     pop_frame();
-    resVal
-
+    res
 
 assume val test_v:
     v : poly
@@ -891,39 +792,39 @@ assume val test_v:
     (requires fun h -> live h v)
     (ensures fun h0 _ h1 -> h0 == h1)
 
-val crypto_sign:
-    #smlennat : size_nat
-  -> sm : lbuffer uint8 smlennat
-  -> smlen : lbuffer size_t 1
+val qtesla_sign:
+    smlen : lbuffer size_t 1 // smlen only valid on output; does _not_ indicate allocated size of sm on input
   -> m : buffer uint8
   -> mlen : size_t{B.length m = v mlen}
+  -> sm: lbuffer uint8 ((v crypto_bytes) + (v mlen))
   -> sk : lbuffer uint8 (v crypto_secretkeybytes)
   -> Stack unit
-    (requires fun h -> live h sm /\ live h m /\ live h sk /\ disjoint sm m /\ disjoint sm sk /\ disjoint m sk /\ smlennat = (v (bget h smlen 0)))
-    (ensures fun h0 _ h1 -> live h1 sm /\ live h1 m /\ live h1 sk /\ modifies2 sm smlen h0 h1)
+    (requires fun h -> live h sm /\ live h m /\ live h sk /\ disjoint sm m /\ disjoint sm sk /\ disjoint m sk)
+    (ensures fun h0 _ h1 -> live h1 sm /\ live h1 m /\ live h1 sk /\ modifies (loc sm |+| loc smlen) h0 h1)
+    //modifies2 sm smlen h0 h1)
 
-let crypto_sign #smlennat sm smlen m mlen sk =
+let qtesla_sign smlen m mlen sm sk =
     push_frame();
 
     let c = create crypto_c_bytes (u8 0) in
     let randomness = create crypto_seedbytes (u8 0) in
-    let randomness_input = create (crypto_randombytes +. crypto_seedbytes +. params_hmbytes) (u8 0) in
+    let randomness_input = create (crypto_randombytes +. crypto_seedbytes +. crypto_hmbytes) (u8 0) in
     let pos_list = create params_h (UI32.uint_to_t 0) in
     let sign_list = create params_h (I16.int_to_t 0) in
-    let y:poly = create params_n (to_elem 0) in
-    let y_ntt:poly = create params_n (to_elem 0) in
-    let sc:poly = create params_n (to_elem 0) in
-    let z:poly = create params_n (to_elem 0) in
-    let v_:poly_k = create (params_n *. params_k) (to_elem 0) in
-    let ec:poly_k = create (params_n *. params_k) (to_elem 0) in
-    let a:poly_k = create (params_n *. params_k) (to_elem 0) in
+    let y:poly = poly_create () in
+    let y_ntt:poly = poly_create () in
+    let sc:poly = poly_create () in
+    let z:poly = poly_create () in 
+    let v_:poly_k = poly_k_create () in 
+    let ec:poly_k = poly_k_create () in
+    let a:poly_k = poly_k_create () in
     let rsp = create (size 1) (I32.int_to_t 0) in
     let nonce = create (size 1) (I32.int_to_t 0) in
 
     R.randombytes_ crypto_randombytes (sub randomness_input crypto_randombytes crypto_randombytes);
     update_sub randomness_input (size 0) crypto_seedbytes (sub sk (crypto_secretkeybytes -. crypto_seedbytes) crypto_seedbytes);
-    params_hashG mlen m params_hmbytes (sub randomness_input (crypto_randombytes +. crypto_seedbytes) params_hmbytes);
-    params_hashG (crypto_randombytes +. crypto_seedbytes +. params_hmbytes) randomness_input crypto_seedbytes randomness;
+    params_SHAKE mlen m crypto_hmbytes (sub randomness_input (crypto_randombytes +. crypto_seedbytes) crypto_hmbytes);
+    params_SHAKE (crypto_randombytes +. crypto_seedbytes +. crypto_hmbytes) randomness_input crypto_seedbytes randomness;
 
     poly_uniform a (sub #_ #_ #(v crypto_randombytes) sk (crypto_secretkeybytes -. (size 2) *. crypto_seedbytes) crypto_randombytes);
 
@@ -943,7 +844,7 @@ let crypto_sign #smlennat sm smlen m mlen sk =
                     poly_mul (index_poly v_ k) (index_poly a k) y_ntt
                 );
 
-            hash_vm c v_ (sub randomness_input (crypto_randombytes +. crypto_seedbytes) params_hmbytes);
+            hash_vm c v_ (sub randomness_input (crypto_randombytes +. crypto_seedbytes) crypto_hmbytes);
             encode_c pos_list sign_list c;
             sparse_mul8 sc sk pos_list sign_list;
             poly_add z y sc;
@@ -986,8 +887,7 @@ let crypto_sign #smlennat sm smlen m mlen sk =
                       (fun h _ -> live h c /\ live h randomness /\  live h randomness_input /\
                      live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
                      live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk)
-                      (fun i ->
-                        sm.(crypto_bytes +. i) <- B.index m i );
+                      (fun i -> sm.(crypto_bytes +. i) <- B.index m i );
 
                       smlen.(size 0) <- crypto_bytes +. mlen;
 
