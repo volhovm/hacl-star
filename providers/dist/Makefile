@@ -51,6 +51,7 @@ CFLAGS		+= -Wno-parentheses -g
 # 3. Honor configurations
 
 ifeq ($(EVERCRYPT_OPENSSL),true)
+  CFLAGS	+= -DEVERCRYPT_STATICCONFIG_OPENSSL
   CFLAGS	+= -I $(OPENSSL_HOME)/include
   LDFLAGS 	+= -L$(OPENSSL_HOME) -lcrypto
   LDFLAGS	+= -ldl -lpthread
@@ -58,12 +59,18 @@ ifeq ($(EVERCRYPT_OPENSSL),true)
 endif
 
 ifeq ($(EVERCRYPT_BCRYPT),true)
+  CFLAGS	+= -DEVERCRYPT_STATICCONFIG_BCRYPT
   LDFLAGS	+= -lbcrypt
   SOURCES	+= evercrypt_bcrypt.c
 endif
 
 ifeq ($(EVERCRYPT_VALE),true)
+  CFLAGS	+= -DEVERCRYPT_STATICCONFIG_VALE
   OBJS 		+= $(patsubst %.S,%.o,$(wildcard *-$(MARCH)$(VARIANT).S))
+endif
+
+ifeq ($(EVERCRYPT_HACL),true)
+  CFLAGS	+= -DEVERCRYPT_STATICCONFIG_HACL
 endif
 
 # Note: some distributions (e.g. coco) don't want bytes

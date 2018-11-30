@@ -193,16 +193,14 @@ dist/compact/evercrypt.cmxa: evercrypt/ml/EverCrypt_Bytes.ml dist/compact/libeve
 SHELL=/bin/bash
 
 .PHONY: clean
-clean:
-	rm -rf $(GENERATED_DIR) evercrypt/c/*.o libevercrypt.$(SO) libevercrypt.a
+clean: clean-c
 	$(MAKE) -C test clean
 
 .PHONY: clean-c
 clean-c:
-	rm -rf dist
-	rm -rf $(CACHE_DIR)/EverCrypt.StaticConfig.fst.checked
+	rm -rf dist/{header,compact,coco}
 
 .PHONY: distclean
 distclean: clean
-	rm -rf $(OUT_DIR) $(CACHE_DIR)
+	rm -rf $(OUTPUT_DIR) $(CACHE_DIR)
 

@@ -26,7 +26,7 @@
         "typing_FStar.Buffer.as_seq"
       ],
       0,
-      "b188db8af8f4f99247f6c8d5e94cfbbf"
+      "ab18c28ff9297996654b70945af94a69"
     ],
     [
       "Hacl.Chacha20.chacha20",
@@ -75,7 +75,7 @@
         "typing_FStar.Buffer.as_seq", "typing_FStar.UInt32.v"
       ],
       0,
-      "727921774b6863d045db0f7e550a17a1"
+      "e1ce8a42c12bb7e2598de530cc6cf6c6"
     ]
   ]
 ]

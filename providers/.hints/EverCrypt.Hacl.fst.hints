@@ -16,7 +16,7 @@
         "token_correspondence_EverCrypt.Specs.curve_x25519_pre"
       ],
       0,
-      "4009438a884346718018bbef08db763a"
+      "c775651bc8f464e782b17b02605f368f"
     ],
     [
       "EverCrypt.Hacl.aes128_keyExpansion",
@@ -31,7 +31,7 @@
         "token_correspondence_EverCrypt.Specs.aes128_create_pre"
       ],
       0,
-      "b2e88cabfb2cd6359a13d7251729691c"
+      "bc656ab1f18d260e98f519b539fe6803"
     ],
     [
       "EverCrypt.Hacl.aes128_cipher",
@@ -46,7 +46,7 @@
         "token_correspondence_EverCrypt.Specs.aes128_compute_pre"
       ],
       0,
-      "f9476af83a7b8c1a4a33cf9d096f7523"
+      "a2c3443ef55114d586770cba50d8c50a"
     ],
     [
       "EverCrypt.Hacl.aes256_keyExpansion",
@@ -61,7 +61,7 @@
         "token_correspondence_EverCrypt.Specs.aes256_create_pre"
       ],
       0,
-      "f43c24c4f9523f4f1c9b8ca0e9ac5f5a"
+      "e8b9fde8aad28a9593421bcacdacc17b"
     ],
     [
       "EverCrypt.Hacl.aes256_cipher",
@@ -76,7 +76,7 @@
         "token_correspondence_EverCrypt.Specs.aes256_compute_pre"
       ],
       0,
-      "c4d6e7073e8b4f3084a8694a8686061d"
+      "2725d3d38b6f6ae05348abdc31dcf034"
     ],
     [
       "EverCrypt.Hacl.chacha20",
@@ -91,7 +91,7 @@
         "token_correspondence_EverCrypt.Specs.chacha20_pre"
       ],
       0,
-      "7203b9e5803bd8cacf3b41e3374ad204"
+      "dd5e1e7a5d680a3b71c6a31256c9f586"
     ],
     [
       "EverCrypt.Hacl.chacha20_poly1305_encrypt",
@@ -108,7 +108,7 @@
         "token_correspondence_EverCrypt.Specs.chacha20_poly1305_encrypt_pre"
       ],
       0,
-      "a03d219656b9db58fa7a9a3f38168c78"
+      "e01a34350542fe842f54c27d2b7545b5"
     ],
     [
       "EverCrypt.Hacl.chacha20_poly1305_decrypt",
@@ -125,7 +125,7 @@
         "token_correspondence_EverCrypt.Specs.chacha20_poly1305_decrypt_pre"
       ],
       0,
-      "b04f4445976f6c0ed4d628883f592785"
+      "638b646039b0f3ecbcf41e8f5ac26ebb"
     ]
   ]
 ]

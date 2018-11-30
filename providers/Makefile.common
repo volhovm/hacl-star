@@ -6,17 +6,6 @@ HACL_HOME	?= ..
 MLCRYPTO_HOME	?= ../../MLCrypto
 OPENSSL_HOME	?= $(MLCRYPTO_HOME)/openssl
 
-# The noopenssl config no means: enable bcrypt + disable openssl
-ifeq (,$(EVEREST_WINDOWS))
-ifeq (,$(KAIZALA))
-CONFIG		?= default
-else
-CONFIG		= kaizala
-endif
-else
-CONFIG		= noopenssl
-endif
-
 CACHE_DIR	= .cache
 OUTPUT_DIR	= .output
 HINT_DIR	= .hints
@@ -44,7 +33,6 @@ FSTAR_INCLUDES = \
   $(KREMLIN_HOME)/kremlib \
   $(HACL_HOME)/providers/evercrypt \
   $(HACL_HOME)/providers/evercrypt/fst \
-  $(HACL_HOME)/providers/evercrypt/config/$(CONFIG) \
   $(HACL_CODE)/lib/kremlin \
   $(HACL_CODE)/experimental/aesgcm \
   $(HACL_CODE)/curve25519/interfaces \
