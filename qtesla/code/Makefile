@@ -2,7 +2,7 @@ FSTAR_HOME   ?= ../../../FStar
 KREMLIN_HOME ?= ../../../kremlin
 HACL_HOME    ?= ../..
 
-VARIANT      ?= p-III
+VARIANT      ?= p-I
 
 ifeq ($(VARIANT),I)
 else ifeq ($(VARIANT),III-size)
