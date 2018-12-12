@@ -439,22 +439,6 @@ let poly_sub result x y =
     );
     pop_frame()
 
-assume val encode_sig:
-    sm: buffer uint8
-  -> c: buffer uint8
-  -> z: poly
-  -> Stack unit
-    (requires fun h -> live h sm /\ live h c /\ live h z /\ disjoint sm c /\ disjoint sm z /\ disjoint c z)
-    (ensures fun h0 _ h1 -> modifies (loc sm) h0 h1)
-
-assume val decode_sig:
-    c: buffer uint8
-  -> z: poly
-  -> sm: buffer uint8
-  -> Stack unit
-    (requires fun h -> live h c /\ live h z /\ live h sm /\ disjoint c z /\ disjoint c sm /\ disjoint z sm)
-    (ensures fun h0 _ h1 -> modifies (loc z |+| loc c) h0 h1)
-
 val qtesla_keygen:
     pk: buffer uint8
   -> sk: buffer uint8
@@ -1013,7 +997,7 @@ let qtesla_verify mallocated mlen m smlen sm pk =
     let z = poly_create () in
     let z_ntt = poly_create() in
 
-    decode_sig c z sm;
+    decode_sig c z smlen sm;
     if test_z z <> 0l then ( pop_frame(); -2l ) else (
     decode_pk pk_t seed pk;
     poly_uniform a seed;

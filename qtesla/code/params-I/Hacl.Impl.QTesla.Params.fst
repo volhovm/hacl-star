@@ -82,6 +82,7 @@ let params_SHAKE = SHA3.shake128_hacl
 inline_for_extraction noextract
 let params_cSHAKE = SHA3.cshake128_frodo
 
+inline_for_extraction noextract
 let shake_rate = shake128_rate
 
 let crypto_hmbytes = size 64
