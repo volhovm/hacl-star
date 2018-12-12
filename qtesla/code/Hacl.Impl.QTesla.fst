@@ -542,8 +542,7 @@ let qtesla_keygen pk sk =
            )
         );
 
-  // TODO: pack_sk in provable parameter sets, encode_sk in heuristic sets
-  pack_sk sk s e rndsubbuffer;
+  encode_or_pack_sk sk s e rndsubbuffer;
   encode_pk pk t rndsubbuffer;
 
   pop_frame()

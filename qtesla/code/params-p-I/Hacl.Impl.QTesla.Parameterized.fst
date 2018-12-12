@@ -67,6 +67,9 @@ let pack_sk sk s e seeds =
 
     pop_frame()
 
+inline_for_extraction noextract
+let encode_or_pack_sk = pack_sk
+
 private inline_for_extraction noextract
 val encode_pk_ptSet:
     pk : lbuffer uint8 crypto_publickeybytes
