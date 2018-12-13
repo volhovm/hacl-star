@@ -22,6 +22,10 @@ unfold let to_elem = I32.int_to_t
 module IElem = FStar.Int32
 unfold let elem_n = IElem.n
 
+unfold let sparse_elem = I16.t
+unfold let to_sparse_elem = I16.int_to_t
+unfold let sparse_to_int16 x = x
+
 unfold let elem_to_int8 = int32_to_int8
 unfold let int8_to_elem = int8_to_int32
 unfold let elem_to_uint8 = int32_to_uint8

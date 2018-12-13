@@ -23,6 +23,10 @@ unfold let to_elem = I64.int_to_t
 module IElem = FStar.Int64
 unfold let elem_n = IElem.n
 
+unfold let sparse_elem = I8.t
+unfold let to_sparse_elem = I8.int_to_t
+unfold let sparse_to_int16 = int8_to_int16
+
 unfold let elem_to_int8 = int64_to_int8
 unfold let int8_to_elem = int8_to_int64
 unfold let elem_to_uint8 = int64_to_uint8

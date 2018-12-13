@@ -23,6 +23,10 @@ unfold let to_elem = I64.int_to_t
 module IElem = FStar.Int64
 unfold let elem_n = IElem.n
 
+unfold let sparse_elem = I8.t
+unfold let to_sparse_elem = I8.int_to_t
+unfold let sparse_to_int16 = int8_to_int16
+
 unfold let elem_to_int8 = int64_to_int8
 unfold let int8_to_elem = int8_to_int64
 unfold let elem_to_uint8 = int64_to_uint8
@@ -94,6 +98,9 @@ let crypto_c_bytes = size 32
 let crypto_secretkeybytes:size_t = normalize_term ((size I8.n /. size 8) *. params_n +. (size I8.n /. size 8) *. params_n *. params_k +. size 2 *. crypto_seedbytes)
 let crypto_publickeybytes = normalize_term ((params_q_log *. params_n *. params_k +. size 7) /. size 8 +. crypto_seedbytes)
 let crypto_bytes = normalize_term (((params_n *. params_d +. size 7) /. (size 8)) +. crypto_c_bytes)
+
+/// Types taken by the sparse multiplication algorithm
+let sparse_mul_arg = I8.t
 
 /// Precomputed polynomials for doing NTT transformations
 

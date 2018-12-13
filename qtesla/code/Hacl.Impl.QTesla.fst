@@ -26,7 +26,7 @@ open C.Loops
 open Hacl.Impl.QTesla.Params
 open Hacl.Impl.QTesla.Constants
 open Hacl.Impl.QTesla.Globals
-open Hacl.Impl.QTesla.Parameterized
+open Hacl.Impl.QTesla.Pack
 
 module B  = LowStar.Buffer
 module ST = FStar.HyperStack.ST
@@ -699,42 +699,42 @@ let encode_c pos_list sign_list c_bin =
 
     pop_frame()
 
-val sparse_mul8:
+val sparse_mul:
     prod : poly
-  -> sk : lbuffer uint8 crypto_secretkeybytes
+  -> s : lbuffer sparse_elem params_n
   -> pos_list : lbuffer UI32.t params_h
   -> sign_list : lbuffer I16.t params_h
   -> Stack unit
-    (requires fun h -> live h prod /\ live h sk /\ live h pos_list /\ live h sign_list /\ disjoint prod sk /\ disjoint prod pos_list /\ disjoint prod sign_list)
-    (ensures fun h0 _ h1 -> live h1 prod /\ live h1 sk /\ live h1 pos_list /\ live h1 sign_list /\ modifies1 prod h0 h1)
+    (requires fun h -> live h prod /\ live h s /\ live h pos_list /\ live h sign_list /\ disjoint prod s /\ disjoint prod pos_list /\ disjoint prod sign_list)
+    (ensures fun h0 _ h1 -> modifies1 prod h0 h1)
 
-let sparse_mul8 prod sk pos_list sign_list =
+let sparse_mul prod s pos_list sign_list =
     push_frame();
 
-    let t = sk in
+    let t = s in
     
     for 0ul params_n
     (fun h _ -> live h prod)
     (fun i -> prod.(i) <- to_elem 0);
 
     for 0ul params_h
-    (fun h _ -> live h prod /\ live h sk /\ live h pos_list /\ live h sign_list)
+    (fun h _ -> live h prod /\ live h t /\ live h pos_list /\ live h sign_list)
     (fun i ->
         let pos = pos_list.(i) in
 	for 0ul pos
-	(fun h _ -> live h prod /\ live h sk /\ live h pos_list /\ live h sign_list)
+	(fun h _ -> live h prod /\ live h t /\ live h pos_list /\ live h sign_list)
 	(fun j -> 
 	    let sign_list_i:I16.t = sign_list.(i) in
-	    let tVal:uint8 = t.(j +. params_n -. pos) in
-	    prod.(j) <- (prod.(j)) -^ (int16_to_elem I16.(sign_list_i *^ (uint8_to_int16 tVal)))
+	    let tVal:sparse_elem = t.(j +. params_n -. pos) in
+	    prod.(j) <- (prod.(j)) -^ (int16_to_elem I16.(sign_list_i *^ (sparse_to_int16 tVal)))
 	);
 
 	for pos params_n
-	(fun h _ -> live h prod /\ live h sk /\ live h pos_list /\ live h sign_list)
+	(fun h _ -> live h prod /\ live h t /\ live h pos_list /\ live h sign_list)
 	(fun j -> 
 	    let sign_list_i:I16.t = sign_list.(i) in
-	    let tVal:uint8 = t.(j -. pos) in
-  	    prod.(j) <- (prod.(j)) +^ (int16_to_elem I16.(sign_list_i *^ (uint8_to_int16 tVal)))
+	    let tVal:sparse_elem = t.(j -. pos) in
+  	    prod.(j) <- (prod.(j)) +^ (int16_to_elem I16.(sign_list_i *^ (sparse_to_int16 tVal)))
 	)
     );
 
@@ -836,8 +836,8 @@ let test_v v =
 
 val qtesla_sign:
     smlen : lbuffer size_t 1ul // smlen only valid on output; does _not_ indicate allocated size of sm on input
-  -> m : buffer uint8
-  -> mlen : size_t{B.length m = v mlen}
+  -> mlen : size_t
+  -> m : lbuffer uint8 mlen
   -> sm: lbuffer uint8 (crypto_bytes +. mlen)
   -> sk : lbuffer uint8 crypto_secretkeybytes
   -> Stack unit
@@ -845,14 +845,17 @@ val qtesla_sign:
     (ensures fun h0 _ h1 -> live h1 sm /\ live h1 m /\ live h1 sk /\ modifies (loc sm |+| loc smlen) h0 h1)
     //modifies2 sm smlen h0 h1)
 
-let qtesla_sign smlen m mlen sm sk =
+let qtesla_sign smlen mlen m sm sk =
     push_frame();
 
     let c = create crypto_c_bytes (u8 0) in
     let randomness = create crypto_seedbytes (u8 0) in
     let randomness_input = create (crypto_randombytes +. crypto_seedbytes +. crypto_hmbytes) (u8 0) in
+    let seeds = create (size 2 *. crypto_seedbytes) (u8 0) in
     let pos_list = create params_h (UI32.uint_to_t 0) in
     let sign_list = create params_h (I16.int_to_t 0) in
+    let (s:lbuffer sparse_elem params_n) = create params_n (to_sparse_elem 0) in
+    let e = create (params_n *. params_k) (to_sparse_elem 0) in
     let y:poly = poly_create () in
     let y_ntt:poly = poly_create () in
     let sc:poly = poly_create () in
@@ -865,18 +868,19 @@ let qtesla_sign smlen m mlen sm sk =
 
     // TODO: decode_sk here in heuristic parameter sets. I think this may just be relocating the pointer arithmetic
     // that happens inline in the provable parameter sets.
+    decode_sk seeds s e sk;
 
     R.randombytes_ crypto_randombytes (sub randomness_input crypto_randombytes crypto_randombytes);
-    update_sub randomness_input (size 0) crypto_seedbytes (sub sk (crypto_secretkeybytes -. crypto_seedbytes) crypto_seedbytes);
+    update_sub randomness_input (size 0) crypto_seedbytes (sub seeds crypto_seedbytes crypto_seedbytes);
     params_SHAKE mlen m crypto_hmbytes (sub randomness_input (crypto_randombytes +. crypto_seedbytes) crypto_hmbytes);
     params_SHAKE (crypto_randombytes +. crypto_seedbytes +. crypto_hmbytes) randomness_input crypto_seedbytes randomness;
 
-    poly_uniform a (sub #_ #_ #(v crypto_randombytes) sk (crypto_secretkeybytes -. (size 2) *. crypto_seedbytes) crypto_randombytes);
+    poly_uniform a seeds;
 
     do_while
         (fun h _ -> live h c /\ live h randomness /\ live h randomness_input /\
                      live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
-                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk)
+                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h s)
         (fun _ ->
             nonce.(size 0) <- I32.(nonce.(size 0) +^ 1l);
             sample_y y randomness (nonce.(size 0));
@@ -885,17 +889,14 @@ let qtesla_sign smlen m mlen sm sk =
 	    // ntt form.
             poly_ntt y_ntt y;
             for 0ul params_k
-                (fun h _ -> live h c /\ live h randomness /\  live h randomness_input /\
-                     live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
-                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk)
+                (fun h _ -> live h v_ /\ live h a /\ live h y_ntt)
                 (fun k ->
-                    poly_mul (index_poly v_ k) (index_poly a k) y_ntt
+		    poly_mul (index_poly v_ k) (index_poly a k) y_ntt
                 );
 
             hash_vm c v_ (sub randomness_input (crypto_randombytes +. crypto_seedbytes) crypto_hmbytes);
             encode_c pos_list sign_list c;
-	    // TODO: heuristic parameter sets use sparse_mul16
-            sparse_mul8 sc sk pos_list sign_list;
+            sparse_mul sc s pos_list sign_list;
             poly_add z y sc;
 
             if test_rejection z
@@ -905,12 +906,10 @@ let qtesla_sign smlen m mlen sm sk =
                  let k = create (size 1) (size 0) in
                  let stop = create (size 1) false in
                  while
-                 #(fun h -> live h c /\ live h randomness /\  live h randomness_input /\
-                     live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
-                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk /\ live h k /\ live h stop)
-                 #(fun _ h -> live h c /\ live h randomness /\  live h randomness_input /\
-                     live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
-                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk /\ live h k /\ live h stop)
+                 #(fun h -> live h ec /\ live h k /\ live h stop /\ live h e /\ live h pos_list /\ live h sign_list /\
+		         live h v_ /\ live h rsp)
+                 #(fun _ h -> live h ec /\ live h k /\ live h stop /\ live h e /\ live h pos_list /\ live h sign_list /\
+		         live h v_ /\ live h rsp)
                  // See https://github.com/FStarLang/FStar/issues/1579
                  (fun () -> (* k.(size 0) <. params_k && *) not stop.(size 0))
                  (fun _ ->
@@ -920,7 +919,7 @@ let qtesla_sign smlen m mlen sm sk =
                          let sk_offset:size_t = (params_n *. (kVal +. (size 1))) in
                          let sublen:size_t = crypto_secretkeybytes -. sk_offset in
 			 // TODO: heuristic parameter sets use sparse_mul16
-                         sparse_mul8 (index_poly ec kVal) (sub #_ #_ #(v sublen) sk sk_offset sublen) pos_list sign_list;
+                         sparse_mul (index_poly ec kVal) (sub e (params_n *. kVal) params_n) pos_list sign_list;
                          poly_sub (index_poly v_ kVal) (index_poly v_ kVal) (index_poly ec kVal);
                          rsp.(size 0) <- test_v (index_poly v_ kVal);
                          if (let rspVal = rsp.(size 0) in not (rspVal = 0l))
@@ -934,10 +933,8 @@ let qtesla_sign smlen m mlen sm sk =
                  then (false)
                  else (
                       for 0ul mlen
-                      (fun h _ -> live h c /\ live h randomness /\  live h randomness_input /\
-                     live h pos_list /\ live h sign_list /\ live h y /\ live h y_ntt /\ live h sc /\ live h z /\
-                     live h v_ /\ live h ec /\ live h a /\ live h rsp /\ live h nonce /\ live h sm /\ live h m /\ live h sk)
-                      (fun i -> sm.(crypto_bytes +. i) <- B.index m i );
+                      (fun h _ -> live h sm /\ live h m)
+                      (fun i -> sm.(crypto_bytes +. i) <- m.(i) );
 
                       smlen.(size 0) <- crypto_bytes +. mlen;
 

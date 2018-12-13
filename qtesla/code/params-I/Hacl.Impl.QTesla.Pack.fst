@@ -1,4 +1,4 @@
-module Hacl.Impl.QTesla.Parameterized
+module Hacl.Impl.QTesla.Pack
 
 open FStar.HyperStack
 open FStar.HyperStack.ST

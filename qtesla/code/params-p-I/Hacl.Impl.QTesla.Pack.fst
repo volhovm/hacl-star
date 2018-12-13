@@ -1,4 +1,4 @@
-module Hacl.Impl.QTesla.Parameterized
+module Hacl.Impl.QTesla.Pack
 
 open FStar.HyperStack
 open FStar.HyperStack.ST
@@ -70,6 +70,23 @@ let pack_sk sk s e seeds =
 inline_for_extraction noextract
 let encode_or_pack_sk = pack_sk
 
+assume val decode_sk:
+    seeds : lbuffer uint8 (size 2 *. crypto_seedbytes)
+  -> s : lbuffer sparse_elem params_n
+  -> e : lbuffer sparse_elem (params_n *. params_k)
+  -> sk : lbuffer uint8 crypto_secretkeybytes
+  -> Stack unit
+    (requires fun h -> live h seeds /\ live h s /\ live h e /\ live h sk /\
+                    disjoint seeds s /\ disjoint seeds e /\ disjoint seeds e /\
+		    disjoint s e /\ disjoint s sk /\ disjoint e sk)
+    // TODO: fix ensures clause		    
+    (ensures fun h0 _ h1 -> True) // modifies (loc_union (loc_union (loc_buffer seeds) (loc_buffer s)) (loc_buffer e)) h0 h1)
+
+(*let decode_sk seeds s e sk =
+    push_frame();
+
+    copy seeds (sub sk (crypto_secretkeybytes -. size 2 *. crypto_seedbytes) (size 2 *. crypto_seedbytes));*)
+
 private inline_for_extraction noextract
 val encode_pk_ptSet:
     pk : lbuffer uint8 crypto_publickeybytes
@@ -123,22 +140,21 @@ let encode_pk pk t seedA =
 	let tj24 = t.(j+.size 24) in let tj25 = t.(j+.size 25) in let tj26 = t.(j+.size 26) in let tj27 = t.(j+.size 27) in
 	let tj28 = t.(j+.size 28) in let tj29 = t.(j+.size 29) in let tj30 = t.(j+.size 30) in let tj31 = t.(j+.size 31) in
 
-        pt (i)          (tj               |^ (tj1  <<^ 31ul));
-	pt (i+.size 1)  ((tj1  >>^  1ul)  |^ (tj2  <<^ 30ul)); pt (i+.size 2)   ((tj2  >>^  2ul)  |^ (tj3  <<^ 29ul));
-	pt (i+.size 3)  ((tj3  >>^  3ul)  |^ (tj4  <<^ 28ul)); pt (i+.size 4)   ((tj4  >>^  4ul)  |^ (tj5  <<^ 27ul));
-	pt (i+.size 5)  ((tj5  >>^  5ul)  |^ (tj6  <<^ 26ul)); pt (i+.size 6)   ((tj6  >>^  6ul)  |^ (tj7  <<^ 25ul));
-	pt (i+.size 7)  ((tj7  >>^  7ul)  |^ (tj8  <<^ 24ul)); pt (i+.size 8)   ((tj8  >>^  8ul)  |^ (tj9  <<^ 23ul));
-	pt (i+.size 9)  ((tj9  >>^  9ul)  |^ (tj10 <<^ 22ul)); pt (i+.size 10)  ((tj10 >>^ 10ul)  |^ (tj11 <<^ 21ul));
-	pt (i+.size 11) ((tj11 >>^ 11ul)  |^ (tj12 <<^ 20ul)); pt (i+.size 12)  ((tj12 >>^ 12ul)  |^ (tj13 <<^ 19ul));
-	pt (i+.size 13) ((tj13 >>^ 13ul)  |^ (tj14 <<^ 18ul)); pt (i+.size 14)  ((tj14 >>^ 14ul)  |^ (tj15 <<^ 17ul));
-	pt (i+.size 15) ((tj15 >>^ 15ul)  |^ (tj16 <<^ 16ul)); pt (i+.size 16)  ((tj16 >>^ 16ul)  |^ (tj17 <<^ 15ul));
-	pt (i+.size 17) ((tj17 >>^ 17ul)  |^ (tj18 <<^ 14ul)); pt (i+.size 18)  ((tj18 >>^ 18ul)  |^ (tj19 <<^ 13ul));
-	pt (i+.size 19) ((tj19 >>^ 19ul)  |^ (tj20 <<^ 12ul)); pt (i+.size 20)  ((tj20 >>^ 20ul)  |^ (tj21 <<^ 11ul));
-	pt (i+.size 21) ((tj21 >>^ 21ul)  |^ (tj22 <<^ 10ul)); pt (i+.size 22)  ((tj22 >>^ 22ul)  |^ (tj23 <<^  9ul));
-	pt (i+.size 23) ((tj23 >>^ 23ul)  |^ (tj24 <<^  8ul)); pt (i+.size 24)  ((tj24 >>^ 24ul)  |^ (tj25 <<^  7ul));
-	pt (i+.size 25) ((tj25 >>^ 25ul)  |^ (tj26 <<^  6ul)); pt (i+.size 26)  ((tj26 >>^ 26ul)  |^ (tj27 <<^  5ul));
-	pt (i+.size 27) ((tj28 >>^ 27ul)  |^ (tj28 <<^  4ul)); pt (i+.size 28)  ((tj28 >>^ 28ul)  |^ (tj29 <<^  3ul));
-	pt (i+.size 29) ((tj28 >>^ 29ul)  |^ (tj30 <<^  2ul)); pt (i+.size 30)  ((tj30 >>^ 30ul)  |^ (tj31 <<^  1ul));
+        pt (i)          (tj               |^ (tj1  <<^ 29ul)); pt (i+.size 1)   ((tj1  >>^  3ul)  |^ (tj2  <<^ 26ul));
+	pt (i+.size 2)  ((tj2  >>^ 6ul)   |^ (tj3  <<^ 23ul)); pt (i+.size 3)   ((tj3  >>^  9ul)  |^ (tj4  <<^ 20ul));
+	pt (i+.size 4)  ((tj4  >>^ 12ul)  |^ (tj5  <<^ 17ul)); pt (i+.size 5)   ((tj5  >>^ 15ul)  |^ (tj6  <<^ 14ul));
+	pt (i+.size 6)  ((tj6  >>^ 18ul)  |^ (tj7  <<^ 11ul)); pt (i+.size 7)   ((tj7  >>^ 21ul)  |^ (tj8  <<^ 8ul));
+	pt (i+.size 8)  ((tj8  >>^ 24ul)  |^ (tj9  <<^ 5ul));  pt (i+.size 9)   ((tj9  >>^ 27ul)  |^ (tj10 <<^ 2ul) |^ (tj11 <<^ 31ul));
+	pt (i+.size 10) ((tj11 >>^ 1ul)   |^ (tj12 <<^ 28ul)); pt (i+.size 11)  ((tj12 >>^  4ul)  |^ (tj13 <<^ 25ul));
+	pt (i+.size 12) ((tj13 >>^ 7ul)   |^ (tj14 <<^ 22ul)); pt (i+.size 13)  ((tj14 >>^ 10ul)  |^ (tj15 <<^ 19ul));
+	pt (i+.size 14) ((tj15 >>^ 13ul)  |^ (tj16 <<^ 16ul)); pt (i+.size 15)  ((tj16 >>^ 16ul)  |^ (tj17 <<^ 13ul));
+	pt (i+.size 16) ((tj17 >>^ 19ul)  |^ (tj18 <<^ 10ul)); pt (i+.size 17)  ((tj18 >>^ 22ul)  |^ (tj19 <<^  7ul));
+	pt (i+.size 18) ((tj19 >>^ 25ul)  |^ (tj20 <<^  4ul)); pt (i+.size 19)  ((tj20 >>^ 28ul)  |^ (tj21 <<^  1ul) |^ (tj22 <<^ 30ul));
+	pt (i+.size 20) ((tj22 >>^ 25ul)  |^ (tj23 <<^ 27ul)); pt (i+.size 21)  ((tj23 >>^  5ul)  |^ (tj24 <<^ 24ul));
+	pt (i+.size 22) ((tj24 >>^ 8ul)   |^ (tj25 <<^ 21ul)); pt (i+.size 23)  ((tj25 >>^ 11ul)  |^ (tj26 <<^ 18ul));
+	pt (i+.size 24) ((tj26 >>^ 14ul)  |^ (tj27 <<^ 15ul)); pt (i+.size 25)  ((tj27 >>^ 17ul)  |^ (tj28 <<^ 12ul));
+	pt (i+.size 26) ((tj28 >>^ 20ul)  |^ (tj29 <<^  9ul)); pt (i+.size 27)  ((tj29 >>^ 23ul)  |^ (tj30 <<^  6ul));
+	pt (i+.size 28) ((tj30 >>^ 26ul)  |^ (tj31 <<^  3ul));
 	
         jBuf.(size 0) <- j +. size 32;
 	iBuf.(size 0) <- i +. params_q_log
@@ -175,7 +191,7 @@ let decode_pk pk seedA pk_in =
     // In the reference implementation, pp is a uint32_t view into pk. We can't do that in F*, so we operate
     // directly on pk, doing a cast from int32 to uint32 in-line. pt is a uint32_t view into pk, and the
     // function pt above takes care of doing that conversion.
-    let mask31:UI32.t = UI32.((1ul <<^ params_q_log) -^ 1ul) in
+    let mask29:UI32.t = UI32.((1ul <<^ params_q_log) -^ 1ul) in
 
     // In the reference code, "pt = (uint32_t*)pk_in" where pk_in is (unsigned char *). We can't recast buffers to have
     // different element types in F*. (BufferView does this, but only as ghost predicates for proving theorems.)
@@ -196,40 +212,40 @@ let decode_pk pk seedA pk_in =
         [@inline_let] let u2i = uint32_to_int32 in
 	// In the reference code, assignment is done to pp, and "pp = (uint32_t*)pk". Here instead we inline the
 	// cast of the reuslt from uint32_t to int32_t in each assignment and then assign directly to elements of pk.
-        let ppi = UI32.( (pt j) &^ mask31 ) in pk.(i) <- u2i ppi;
-	let ppi1 = UI32.( (((pt (j+.size  0)) >>^ 31ul) |^ ((pt (j+.size  1))) <<^  1ul) &^ mask31 ) in pk.(i+.size 1) <- u2i ppi1;
-	let ppi2 = UI32.( (((pt (j+.size  1)) >>^ 30ul) |^ ((pt (j+.size  2))) <<^  2ul) &^ mask31 ) in pk.(i+.size 2) <- u2i ppi2;
-	let ppi3 = UI32.( (((pt (j+.size  2)) >>^ 29ul) |^ ((pt (j+.size  3))) <<^  3ul) &^ mask31 ) in pk.(i+.size  3) <- u2i ppi3;
-	let ppi4 = UI32.( (((pt (j+.size  3)) >>^ 28ul) |^ ((pt (j+.size  4))) <<^  4ul) &^ mask31 ) in pk.(i+.size  4) <- u2i ppi4;
-	let ppi5 = UI32.( (((pt (j+.size  4)) >>^ 27ul) |^ ((pt (j+.size  5))) <<^  5ul) &^ mask31 ) in pk.(i+.size  5) <- u2i ppi5;
-	let ppi6 = UI32.( (((pt (j+.size  5)) >>^ 26ul) |^ ((pt (j+.size  6))) <<^  6ul) &^ mask31 ) in pk.(i+.size  6) <- u2i ppi6;
-	let ppi7 = UI32.( (((pt (j+.size  6)) >>^ 25ul) |^ ((pt (j+.size  7))) <<^  7ul) &^ mask31 ) in pk.(i+.size  7) <- u2i ppi7;
-	let ppi8 = UI32.( (((pt (j+.size  7)) >>^ 24ul) |^ ((pt (j+.size  8))) <<^  8ul) &^ mask31 ) in pk.(i+.size  8) <- u2i ppi8;
-	let ppi9 = UI32.( (((pt (j+.size  8)) >>^ 23ul) |^ ((pt (j+.size  9))) <<^  9ul) &^ mask31 ) in pk.(i+.size  9) <- u2i ppi9;
-	let ppi10 = UI32.( (((pt (j+.size  9)) >>^ 23ul) |^ ((pt (j+.size 10))) <<^ 10ul) &^ mask31 ) in pk.(i+.size 10)  <- u2i ppi10;
-	let ppi11 = UI32.( (((pt (j+.size 10)) >>^ 21ul) |^ ((pt (j+.size 11))) <<^ 11ul) &^  mask31 ) in pk.(i+.size 11) <- u2i ppi11;
-	let ppi12 = UI32.( (((pt (j+.size 11)) >>^ 20ul) |^ ((pt (j+.size 12))) <<^ 12ul) &^ mask31 ) in pk.(i+.size 12) <- u2i ppi12;
-	let ppi13 = UI32.( (((pt (j+.size 12)) >>^ 19ul) |^ ((pt (j+.size 13))) <<^ 13ul) &^ mask31 ) in pk.(i+.size 13) <- u2i ppi13;
-	let ppi14 = UI32.( (((pt (j+.size 13)) >>^ 18ul) |^ ((pt (j+.size 14))) <<^ 14ul) &^ mask31 ) in pk.(i+.size 14) <- u2i ppi14;
-	let ppi15 = UI32.( (((pt (j+.size 14)) >>^ 17ul) |^ ((pt (j+.size 15))) <<^ 15ul) &^ mask31 ) in pk.(i+.size 15) <- u2i ppi15;
-	let ppi16 = UI32.( (((pt (j+.size 15)) >>^ 16ul) |^ ((pt (j+.size 16))) <<^ 16ul) &^ mask31 ) in pk.(i+.size 16) <- u2i ppi16;
-	let ppi17 = UI32.( (((pt (j+.size 16)) >>^ 15ul) |^ ((pt (j+.size 17))) <<^ 17ul) &^ mask31 ) in pk.(i+.size 17) <- u2i ppi17;
-	let ppi18 = UI32.( (((pt (j+.size 17)) >>^ 14ul) |^ ((pt (j+.size 18))) <<^ 18ul) &^ mask31 ) in pk.(i+.size 18) <- u2i ppi18;
-	let ppi19 = UI32.( (((pt (j+.size 18)) >>^ 13ul) |^ ((pt (j+.size 19))) <<^ 19ul) &^ mask31 ) in pk.(i+.size 19) <- u2i ppi19;
-	let ppi20 = UI32.( (((pt (j+.size 19)) >>^ 12ul) |^ ((pt (j+.size 20))) <<^ 20ul) &^ mask31 ) in pk.(i+.size 20) <- u2i ppi20;
-	let ppi21 = UI32.( (((pt (j+.size 20)) >>^ 11ul) |^ ((pt (j+.size 21))) <<^ 21ul) &^ mask31 ) in pk.(i+.size 21) <- u2i ppi21;
-	let ppi22 = UI32.( (((pt (j+.size 21)) >>^ 10ul) |^ ((pt (j+.size 22))) <<^ 22ul) &^ mask31 ) in pk.(i+.size 22) <- u2i ppi22;
-	let ppi23 = UI32.( (((pt (j+.size 22)) >>^  9ul) |^ ((pt (j+.size 23))) <<^ 23ul) &^ mask31 ) in pk.(i+.size 23) <- u2i ppi23;
-	let ppi24 = UI32.( (((pt (j+.size 23)) >>^  8ul) |^ ((pt (j+.size 24))) <<^ 24ul) &^ mask31 ) in pk.(i+.size 24) <- u2i ppi24;
-	let ppi25 = UI32.( (((pt (j+.size 24)) >>^  7ul) |^ ((pt (j+.size 25))) <<^ 25ul) &^ mask31 ) in pk.(i+.size 25) <- u2i ppi25;
-	let ppi26 = UI32.( (((pt (j+.size 25)) >>^  6ul) |^ ((pt (j+.size 26))) <<^ 26ul) &^ mask31 ) in pk.(i+.size 26) <- u2i ppi26;
-	let ppi27 = UI32.( (((pt (j+.size 26)) >>^  5ul) |^ ((pt (j+.size 27))) <<^ 27ul) &^ mask31 ) in pk.(i+.size 27) <- u2i ppi27;
-	let ppi28 = UI32.( (((pt (j+.size 27)) >>^  4ul) |^ ((pt (j+.size 28))) <<^ 28ul) &^ mask31 ) in pk.(i+.size 28) <- u2i ppi28;
-	let ppi29 = UI32.( (((pt (j+.size 28)) >>^  3ul) |^ ((pt (j+.size 29))) <<^ 29ul) &^ mask31 ) in pk.(i+.size 29) <- u2i ppi29;
-	let ppi30 = UI32.( (((pt (j+.size 29)) >>^  2ul) |^ ((pt (j+.size 30))) <<^ 30ul) &^ mask31 ) in pk.(i+.size 30) <- u2i ppi30;
-	let ppi31 = UI32.( (pt (j+.size 30)) >>^  1ul ) in pk.(i+.size 31) <- u2i ppi31;
+        let ppi = UI32.( (pt j) &^ mask29 ) in pk.(i) <- u2i ppi;
+	let ppi1 = UI32.( (((pt (j+.size  0)) >>^ 29ul) |^ ((pt (j+.size  1))) <<^  3ul) &^ mask29 ) in pk.(i+.size 1) <- u2i ppi1;
+	let ppi2 = UI32.( (((pt (j+.size  1)) >>^ 26ul) |^ ((pt (j+.size  2))) <<^  6ul) &^ mask29 ) in pk.(i+.size 2) <- u2i ppi2;
+	let ppi3 = UI32.( (((pt (j+.size  2)) >>^ 23ul) |^ ((pt (j+.size  3))) <<^  9ul) &^ mask29 ) in pk.(i+.size  3) <- u2i ppi3;
+	let ppi4 = UI32.( (((pt (j+.size  3)) >>^ 20ul) |^ ((pt (j+.size  4))) <<^ 12ul) &^ mask29 ) in pk.(i+.size  4) <- u2i ppi4;
+	let ppi5 = UI32.( (((pt (j+.size  4)) >>^ 17ul) |^ ((pt (j+.size  5))) <<^ 15ul) &^ mask29 ) in pk.(i+.size  5) <- u2i ppi5;
+	let ppi6 = UI32.( (((pt (j+.size  5)) >>^ 14ul) |^ ((pt (j+.size  6))) <<^ 18ul) &^ mask29 ) in pk.(i+.size  6) <- u2i ppi6;
+	let ppi7 = UI32.( (((pt (j+.size  6)) >>^ 11ul) |^ ((pt (j+.size  7))) <<^ 21ul) &^ mask29 ) in pk.(i+.size  7) <- u2i ppi7;
+	let ppi8 = UI32.( (((pt (j+.size  7)) >>^  8ul) |^ ((pt (j+.size  8))) <<^ 24ul) &^ mask29 ) in pk.(i+.size  8) <- u2i ppi8;
+	let ppi9 = UI32.( (((pt (j+.size  8)) >>^  5ul) |^ ((pt (j+.size  9))) <<^ 27ul) &^ mask29 ) in pk.(i+.size  9) <- u2i ppi9;
+	let ppi10 = UI32.(  ((pt (j+.size  9)) >>^  2ul) &^ mask29 ) in pk.(i+.size 10)  <- u2i ppi10;
+	let ppi11 = UI32.( (((pt (j+.size  9)) >>^ 31ul) |^ ((pt (j+.size 10))) <<^  1ul) &^  mask29 ) in pk.(i+.size 11) <- u2i ppi11;
+	let ppi12 = UI32.( (((pt (j+.size 10)) >>^ 28ul) |^ ((pt (j+.size 11))) <<^  4ul) &^ mask29 ) in pk.(i+.size 12) <- u2i ppi12;
+	let ppi13 = UI32.( (((pt (j+.size 11)) >>^ 25ul) |^ ((pt (j+.size 12))) <<^  7ul) &^ mask29 ) in pk.(i+.size 13) <- u2i ppi13;
+	let ppi14 = UI32.( (((pt (j+.size 12)) >>^ 22ul) |^ ((pt (j+.size 13))) <<^ 10ul) &^ mask29 ) in pk.(i+.size 14) <- u2i ppi14;
+	let ppi15 = UI32.( (((pt (j+.size 13)) >>^ 19ul) |^ ((pt (j+.size 14))) <<^ 13ul) &^ mask29 ) in pk.(i+.size 15) <- u2i ppi15;
+	let ppi16 = UI32.( (((pt (j+.size 14)) >>^ 16ul) |^ ((pt (j+.size 15))) <<^ 16ul) &^ mask29 ) in pk.(i+.size 16) <- u2i ppi16;
+	let ppi17 = UI32.( (((pt (j+.size 15)) >>^ 13ul) |^ ((pt (j+.size 16))) <<^ 19ul) &^ mask29 ) in pk.(i+.size 17) <- u2i ppi17;
+	let ppi18 = UI32.( (((pt (j+.size 16)) >>^ 10ul) |^ ((pt (j+.size 17))) <<^ 22ul) &^ mask29 ) in pk.(i+.size 18) <- u2i ppi18;
+	let ppi19 = UI32.( (((pt (j+.size 17)) >>^  7ul) |^ ((pt (j+.size 18))) <<^ 25ul) &^ mask29 ) in pk.(i+.size 19) <- u2i ppi19;
+	let ppi20 = UI32.( (((pt (j+.size 18)) >>^  4ul) |^ ((pt (j+.size 19))) <<^ 28ul) &^ mask29 ) in pk.(i+.size 20) <- u2i ppi20;
+	let ppi21 = UI32.(  ((pt (j+.size 19)) >>^  1ul) &^ mask29 ) in pk.(i+.size 21) <- u2i ppi21;
+	let ppi22 = UI32.( (((pt (j+.size 19)) >>^ 30ul) |^ ((pt (j+.size 20))) <<^  2ul) &^ mask29 ) in pk.(i+.size 22) <- u2i ppi22;
+	let ppi23 = UI32.( (((pt (j+.size 20)) >>^ 27ul) |^ ((pt (j+.size 21))) <<^  5ul) &^ mask29 ) in pk.(i+.size 23) <- u2i ppi23;
+	let ppi24 = UI32.( (((pt (j+.size 21)) >>^ 24ul) |^ ((pt (j+.size 22))) <<^  8ul) &^ mask29 ) in pk.(i+.size 24) <- u2i ppi24;
+	let ppi25 = UI32.( (((pt (j+.size 22)) >>^ 21ul) |^ ((pt (j+.size 23))) <<^ 11ul) &^ mask29 ) in pk.(i+.size 25) <- u2i ppi25;
+	let ppi26 = UI32.( (((pt (j+.size 23)) >>^ 18ul) |^ ((pt (j+.size 24))) <<^ 14ul) &^ mask29 ) in pk.(i+.size 26) <- u2i ppi26;
+	let ppi27 = UI32.( (((pt (j+.size 24)) >>^ 15ul) |^ ((pt (j+.size 25))) <<^ 17ul) &^ mask29 ) in pk.(i+.size 27) <- u2i ppi27;
+	let ppi28 = UI32.( (((pt (j+.size 25)) >>^ 12ul) |^ ((pt (j+.size 26))) <<^ 20ul) &^ mask29 ) in pk.(i+.size 28) <- u2i ppi28;
+	let ppi29 = UI32.( (((pt (j+.size 26)) >>^  9ul) |^ ((pt (j+.size 27))) <<^ 23ul) &^ mask29 ) in pk.(i+.size 29) <- u2i ppi29;
+	let ppi30 = UI32.( (((pt (j+.size 27)) >>^  6ul) |^ ((pt (j+.size 28))) <<^ 26ul) &^ mask29 ) in pk.(i+.size 30) <- u2i ppi30;
+	let ppi31 = UI32.( (pt (j+.size 28)) >>^  3ul ) in pk.(i+.size 31) <- u2i ppi31;
 
-        jBuf.(size 0) <- j +. size 31;
+        jBuf.(size 0) <- j +. size 29;
 	iBuf.(size 0) <- i +. size 32
     );
 
@@ -287,12 +303,20 @@ let encode_sig sm c z =
         let i:size_t = iBuf.(size 0) in
 	let j:size_t = jBuf.(size 0) in
 
-        pt i            UI64.( ((t_ j)                        &^ ((1uL <<^ 24ul) -^ 1uL)) |^ ((t_ (j+.size  1)) <<^ 24ul) );
-	pt (i+.size  1) UI64.( (((t_ (j +.size  1)) >>^  8ul) &^ ((1uL <<^ 16ul) -^ 1uL)) |^ ((t_ (j+.size  2)) <<^ 16ul) );
-	pt (i+.size  2) UI64.( (((t_ (j +.size  2)) >>^ 16ul) &^ ((1uL <<^  8ul) -^ 1uL)) |^ ((t_ (j+.size  3)) <<^  8ul) );
+        pt i            UI64.( ((t_ j)                        &^ ((1uL <<^ 22ul) -^ 1uL)) |^ ((t_ (j+.size  1)) <<^ 22ul) );
+	pt (i+.size  1) UI64.( (((t_ (j +.size  1)) >>^ 10ul) &^ ((1uL <<^ 12ul) -^ 1uL)) |^ ((t_ (j+.size  2)) <<^ 12ul) );
+	pt (i+.size  2) UI64.( (((t_ (j +.size  2)) >>^ 20ul) &^ ((1uL <<^  2ul) -^ 1uL)) |^ (((t_ (j+.size  3)) &^ ((1uL <<^ 22ul) -^ 1uL)) <<^ 2ul) |^ ((t_ (j+.size  4)) <<^ 24ul) );
+	pt (i+.size  3) UI64.( (((t_ (j +.size  4)) >>^  8ul) &^ ((1uL <<^ 14ul) -^ 1uL)) |^ ((t_ (j+.size  5)) <<^ 14ul) );
+	pt (i+.size  4) UI64.( (((t_ (j +.size  5)) >>^ 18ul) &^ ((1uL <<^  4ul) -^ 1uL)) |^ (((t_ (j+.size  3)) &^ ((1uL <<^ 22ul) -^ 1uL)) <<^ 4ul) |^ ((t_ (j+.size  7)) <<^ 26ul) );
+	pt (i+.size  5) UI64.( (((t_ (j +.size  7)) >>^  6ul) &^ ((1uL <<^ 16ul) -^ 1uL)) |^ ((t_ (j+.size  8)) <<^ 16ul) );
+	pt (i+.size  6) UI64.( (((t_ (j +.size  8)) >>^ 16ul) &^ ((1uL <<^  6ul) -^ 1uL)) |^ (((t_ (j+.size  3)) &^ ((1uL <<^ 22ul) -^ 1uL)) <<^ 6ul) |^ ((t_ (j+.size 10)) <<^ 28ul) );
+	pt (i+.size  7) UI64.( (((t_ (j +.size 10)) >>^  4ul) &^ ((1uL <<^ 18ul) -^ 1uL)) |^ ((t_ (j+.size 11)) <<^ 18ul) );
+	pt (i+.size  8) UI64.( (((t_ (j +.size 11)) >>^ 14ul) &^ ((1uL <<^  8ul) -^ 1uL)) |^ (((t_ (j+.size  3)) &^ ((1uL <<^ 22ul) -^ 1uL)) <<^ 8ul) |^ ((t_ (j+.size 13)) <<^ 30ul) );
+	pt (i+.size  9) UI64.( (((t_ (j +.size 13)) >>^  2ul) &^ ((1uL <<^ 20ul) -^ 1uL)) |^ ((t_ (j+.size 14)) <<^ 20ul) );
+	pt (i+.size 10) UI64.( (((t_ (j +.size 14)) >>^ 12ul) &^ ((1uL <<^ 10ul) -^ 1uL)) |^ ((t_ (j+.size 15)) <<^ 15ul) );
 
-        jBuf.(size 0) <- j +. size 4;
-	iBuf.(size 0) <- i +. params_d /. size 8
+        jBuf.(size 0) <- j +. size 16;
+	iBuf.(size 0) <- i +. params_d /. size 2
     );
 
     update_sub #MUT #_ #_ sm (params_n *. params_d /. size 8) crypto_c_bytes c;
@@ -347,14 +371,34 @@ let decode_sig c z smlen sm =
 	let ptj0  = pt (j+.size  0) in
 	let ptj1  = pt (j+.size  1) in
 	let ptj2  = pt (j+.size  2) in
+	let ptj3  = pt (j+.size  3) in
+	let ptj4  = pt (j+.size  4) in
+	let ptj5  = pt (j+.size  5) in
+	let ptj6  = pt (j+.size  6) in
+	let ptj7  = pt (j+.size  7) in
+	let ptj8  = pt (j+.size  8) in
+	let ptj9  = pt (j+.size  9) in
+	let ptj10 = pt (j+.size 10) in
 
-        z.(i)          <- i2e I32.( ((u2i ptj0) <<^  8ul) >>^  8ul );
-        z.(i+.size  1) <- i2e I32.( u2i UI32.( (ptj0 >>^ 24ul) &^ ((1ul <<^  8ul) -^ 1ul) ) |^ UI32.(u2i (ptj1 <<^ 16ul)) >>^  8ul );
-        z.(i+.size  2) <- i2e I32.( u2i UI32.( (ptj1 >>^ 16ul) &^ ((1ul <<^ 16ul) -^ 1ul) ) |^ UI32.(u2i (ptj2 <<^ 24ul)) >>^  8ul );
-        z.(i+.size  3) <- i2e I32.( u2i UI32.( ptj2 >>^ 8ul ) );
+        z.(i)          <- i2e I32.( (u2i ptj0 <<^ 10ul) >>^ 10ul );
+        z.(i+.size  1) <- i2e I32.( u2i UI32.( ptj0 >>^ 22ul ) |^ I32.(u2i UI32.(ptj1 <<^ 20ul)) >>^ 10ul );
+        z.(i+.size  2) <- i2e I32.( u2i UI32.( ptj1 >>^ 12ul ) |^ I32.(u2i UI32.(ptj2 <<^ 30ul)) >>^ 10ul );
+        z.(i+.size  3) <- i2e I32.( u2i UI32.( ptj2 <<^  8ul ) >>^ 10ul );
+        z.(i+.size  4) <- i2e I32.( u2i UI32.( ptj2 >>^ 24ul ) |^ I32.(u2i UI32.(ptj3 <<^ 18ul)) >>^ 10ul );
+        z.(i+.size  5) <- i2e I32.( u2i UI32.( ptj3 >>^ 14ul ) |^ I32.(u2i UI32.(ptj4 <<^ 28ul)) >>^ 10ul );
+        z.(i+.size  6) <- i2e I32.( u2i UI32.( ptj4 <<^  6ul ) >>^ 10ul );
+        z.(i+.size  7) <- i2e I32.( u2i UI32.( ptj4 >>^ 26ul ) |^ I32.(u2i UI32.(ptj5 <<^ 16ul)) >>^ 10ul );
+        z.(i+.size  8) <- i2e I32.( u2i UI32.( ptj5 >>^ 16ul ) |^ I32.(u2i UI32.(ptj6 <<^ 26ul)) >>^ 10ul );
+        z.(i+.size  9) <- i2e I32.( u2i UI32.( ptj6 <<^  4ul ) >>^ 10ul );
+        z.(i+.size 10) <- i2e I32.( u2i UI32.( ptj6 >>^ 28ul ) |^ I32.(u2i UI32.(ptj7 <<^ 14ul)) >>^ 10ul );
+        z.(i+.size 11) <- i2e I32.( u2i UI32.( ptj7 >>^ 18ul ) |^ I32.(u2i UI32.(ptj8 <<^ 24ul)) >>^ 10ul );
+        z.(i+.size 12) <- i2e I32.( u2i UI32.( ptj8 <<^  2ul ) >>^ 10ul );
+        z.(i+.size 13) <- i2e I32.( u2i UI32.( ptj8 >>^ 30ul ) |^ I32.(u2i UI32.(ptj9 <<^ 12ul)) >>^ 10ul );
+        z.(i+.size 14) <- i2e I32.( u2i UI32.( ptj9 >>^ 20ul ) |^ I32.(u2i UI32.(ptj10 <<^ 22ul)) >>^ 10ul );
+        z.(i+.size 15) <- i2e I32.( u2i ptj10 >>^ 10ul );
 
-        jBuf.(size 0) <- j +. size 3;
-	iBuf.(size 0) <- i +. size 4
+        jBuf.(size 0) <- j +. size 11;
+	iBuf.(size 0) <- i +. size 16
     );
 
     copy c (sub sm (params_n *. params_d /. size 8) crypto_c_bytes);
