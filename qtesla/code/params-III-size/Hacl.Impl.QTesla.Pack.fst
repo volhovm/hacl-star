@@ -42,52 +42,13 @@ val encode_sk:
 let encode_sk sk s e seeds =
     push_frame();
 
-    let iBuf = create (size 1) (size 0) in
-    let jBuf = create (size 1) (size 0) in
+    for 0ul params_n
+    (fun h _ -> live h sk /\ live h s)
+    (fun i -> let si = s.(i) in sk.(i) <- elem_to_uint8 si);
 
-    while
-    #(fun h -> live h iBuf /\ live h jBuf /\ live h sk /\ live h s)
-    #(fun _ h -> live h iBuf /\ live h jBuf /\ live h sk /\ live h s)
-    (fun _ -> iBuf.(size 0) <. params_n)
-    (fun _ ->
-        let i = iBuf.(size 0) in
-	let j = jBuf.(size 0) in
-	
-        let si0 = s.(i+.size 0) in    let si1 = s.(i+.size 1) in
-	let si2 = s.(i+.size 2) in    let si3 = s.(i+.size 3) in
-	
-	sk.(j+.size 0) <- elem_to_uint8 si0;
-	sk.(j+.size 1) <- elem_to_uint8 (((si0 >>^ 8ul) &^ 0x03l) |^ (si1 <<^ 2ul));
-	sk.(j+.size 2) <- elem_to_uint8 (((si1 >>^ 6ul) &^ 0x0Fl) |^ (si2 <<^ 4ul));
-	sk.(j+.size 3) <- elem_to_uint8 (((si2 >>^ 4ul) &^ 0x3Fl) |^ (si3 <<^ 6ul));
-	sk.(j+.size 4) <- elem_to_uint8 (si3 >>^ 2ul);
-
-        jBuf.(size 0) <- j +. size 5;
-	iBuf.(size 0) <- i +. size 4
-    );
-
-    iBuf.(size 0) <- size 0;
-    
-    while
-    #(fun h -> live h iBuf /\ live h jBuf /\ live h sk /\ live h e)
-    #(fun _ h -> live h iBuf /\ live h jBuf /\ live h sk /\ live h e)
-    (fun _ -> iBuf.(size 0) <. params_n)
-    (fun _ ->
-        let i = iBuf.(size 0) in
-	let j = jBuf.(size 0) in
-
-        let ei0 = e.(i+.size 0) in    let ei1 = s.(i+.size 1) in
-	let ei2 = e.(i+.size 2) in    let ei3 = s.(i+.size 3) in
-	
-	sk.(j+.size 0) <- elem_to_uint8 ei0;
-	sk.(j+.size 1) <- elem_to_uint8 (((ei0 >>^ 8ul) &^ 0x03l) |^ (ei1 <<^ 2ul));
-	sk.(j+.size 2) <- elem_to_uint8 (((ei1 >>^ 6ul) &^ 0x0Fl) |^ (ei2 <<^ 4ul));
-	sk.(j+.size 3) <- elem_to_uint8 (((ei2 >>^ 4ul) &^ 0x3Fl) |^ (ei3 <<^ 6ul));
-	sk.(j+.size 4) <- elem_to_uint8 (ei3 >>^ 2ul);
-
-        jBuf.(size 0) <- j +. size 5;
-	iBuf.(size 0) <- i +. size 4
-    );
+    for 0ul params_n
+    (fun h _ -> live h sk /\ live h e)
+    (fun i -> let ei = e.(i) in sk.(params_n +. i) <- elem_to_uint8 ei);
 
     update_sub #MUT #_ #_ sk (size 2 *. params_s_bits *. params_n /. size 8) (size 2 *. crypto_seedbytes) seeds;
 
@@ -111,51 +72,13 @@ val decode_sk:
 let decode_sk seeds s e sk =
     push_frame();
 
-    let iBuf = create (size 1) (size 0) in
-    let jBuf = create (size 1) (size 0) in
+    for 0ul params_n
+    (fun h _ -> live h sk /\ live h s)
+    (fun i -> let ski = sk.(i) in s.(i) <- int8_to_int16 (uint8_to_int8 ski));
 
-    while
-    #(fun h -> live h s /\ live h sk /\ live h iBuf /\ live h jBuf)
-    #(fun _ h -> live h s /\ live h sk /\ live h iBuf /\ live h jBuf)
-    (fun _ -> iBuf.(size 0) <. params_n)
-    (fun _ ->
-        let i = iBuf.(size 0) in
-	let j = jBuf.(size 0) in
-
-        let skj0 = sk.(j+.size 0) in    let skj1 = sk.(j+.size 1) in
-	let skj2 = sk.(j+.size 2) in    let skj3 = sk.(j+.size 3) in
-	let skj4 = sk.(j+.size 4) in
-
-        s.(i+.size 0) <- I16.(uint8_to_int16 skj0               |^ int32_to_int16 I32.(((uint8_to_int32 skj1) <<^ 30ul) >>^ 22ul));
-	s.(i+.size 2) <- I16.(uint8_to_int16 UI8.(skj1 >>^ 2ul) |^ int32_to_int16 I32.(((uint8_to_int32 skj2) <<^ 28ul) >>^ 22ul));
-	s.(i+.size 3) <- I16.(uint8_to_int16 UI8.(skj2 >>^ 4ul) |^ int32_to_int16 I32.(((uint8_to_int32 skj3) <<^ 26ul) >>^ 22ul));
-	s.(i+.size 4) <- I16.(uint8_to_int16 UI8.(skj3 >>^ 6ul) |^ int8_to_int16 I8.((uint8_to_int8 skj4) <<^ 2ul));
-
-        jBuf.(size 0) <- j +. size 5;
-	iBuf.(size 0) <- i +. size 4
-    );
-
-    iBuf.(size 0) <- size 0;
-    while
-    #(fun h -> live h e /\ live h sk /\ live h iBuf /\ live h jBuf)
-    #(fun _ h -> live h e /\ live h sk /\ live h iBuf /\ live h jBuf)
-    (fun _ -> iBuf.(size 0) <. params_n)
-    (fun _ ->
-        let i = iBuf.(size 0) in
-	let j = jBuf.(size 0) in
-
-        let skj0 = sk.(j+.size 0) in    let skj1 = sk.(j+.size 1) in
-	let skj2 = sk.(j+.size 2) in    let skj3 = sk.(j+.size 3) in
-	let skj4 = sk.(j+.size 4) in
-
-        e.(i+.size 0) <- I16.(uint8_to_int16 skj0               |^ int32_to_int16 I32.(((uint8_to_int32 skj1) <<^ 30ul) >>^ 22ul));
-	e.(i+.size 1) <- I16.(uint8_to_int16 UI8.(skj1 >>^ 2ul) |^ int32_to_int16 I32.(((uint8_to_int32 skj2) <<^ 28ul) >>^ 22ul));
-	e.(i+.size 2) <- I16.(uint8_to_int16 UI8.(skj2 >>^ 4ul) |^ int32_to_int16 I32.(((uint8_to_int32 skj3) <<^ 26ul) >>^ 22ul));
-	e.(i+.size 3) <- I16.(uint8_to_int16 UI8.(skj3 >>^ 6ul) |^ int8_to_int16 I8.((uint8_to_int8 skj4) <<^ 2ul));
-
-        jBuf.(size 0) <- j +. size 5;
-	iBuf.(size 0) <- i +. size 4
-    );
+    for 0ul params_n
+    (fun h _ -> live h sk /\ live h e)
+    (fun i -> let ski = sk.(params_n +. i) in e.(i) <- int8_to_int16 (uint8_to_int8 ski));
 
     copy seeds (sub sk (size 2 *. params_s_bits *. params_n /. size 8) (size 2 *. crypto_seedbytes));
 
