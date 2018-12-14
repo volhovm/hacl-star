@@ -27,6 +27,18 @@ open Hacl.Impl.QTesla.Globals
 
 #reset-options "--z3rlimit 100 --max_fuel 0 --max_ifuel 0 --admit_smt_queries true"
 
+inline_for_extraction noextract private
+val pack_sk_iskSet:
+    sk : lbuffer uint8 crypto_secretkeybytes
+  -> i : size_t{i <. crypto_secretkeybytes}
+  -> value : I8.t
+  -> Stack unit
+    (requires fun h -> live h sk)
+    (ensures fun h0 _ h1 -> modifies1 sk h0 h1)
+
+let pack_sk_iskSet sk i value =
+    sk.(i) <- int8_to_uint8 value
+
 val pack_sk:
     sk: lbuffer uint8 crypto_secretkeybytes
   -> s: poly
@@ -40,52 +52,57 @@ val pack_sk:
 
 let pack_sk sk s e seeds =
     push_frame();
-    // TODO: isk needs to be a view of sk as a series of I8.t's
-    let isk = create crypto_secretkeybytes 0y in
+    [@inline_let] let isk = pack_sk_iskSet sk in // isk = (int8_t *)sk
 
     for 0ul params_n
-    (fun h _ -> live h isk /\ live h s)
-    (fun i -> isk.(i) <- let sVal = s.(i) in elem_to_int8 sVal);
+    (fun h _ -> live h sk /\ live h s)
+    (fun i -> let si = s.(i) in isk i (elem_to_int8 si));
 
-    let iskOrig = isk in
-    let isk = sub isk params_n (crypto_secretkeybytes -. params_n) in
+    let isk = sub sk params_n (crypto_secretkeybytes -. params_n) in
+    [@inline_let] let isk_ = pack_sk_iskSet isk in // isk += PARAM_N
     for 0ul params_k
-    (fun h _ -> live h isk /\ live h e)
+    (fun h _ -> live h sk /\ live h e)
     (fun k -> for 0ul params_n
-           (fun h _ -> live h isk /\ live h e)
-	   (fun i -> let eVal = e.(k *. params_n +. i) in isk.(k *. params_n +. i) <- elem_to_int8 eVal )
+           (fun h0 _ -> live h0 sk /\ live h0 e)
+	   (fun i -> let eVal = e.(k *. params_n +. i) in isk_ (k *. params_n +. i) (elem_to_int8 eVal) )
     );
 
     update_sub #MUT #_ #_ isk (params_k *. params_n) (size 2 *. crypto_seedbytes) seeds;
-
-    // In the reference implementation, isk is an alias for sk. We can't do that in F*. Therefore, with
-    // some perf cost, we have to do a copy back into sk. We use iskOrig because we need the pointer to the
-    // beginning of the whole array, and at this point isk has been advanced by params_n.
-    for 0ul crypto_secretkeybytes
-    (fun h _ -> live h sk /\ live h isk)
-    (fun i -> let iski = iskOrig.(i) in sk.(i) <- int8_to_uint8 iski );
 
     pop_frame()
 
 inline_for_extraction noextract
 let encode_or_pack_sk = pack_sk
 
-assume val decode_sk:
+val decode_sk:
     seeds : lbuffer uint8 (size 2 *. crypto_seedbytes)
   -> s : lbuffer sparse_elem params_n
   -> e : lbuffer sparse_elem (params_n *. params_k)
   -> sk : lbuffer uint8 crypto_secretkeybytes
   -> Stack unit
     (requires fun h -> live h seeds /\ live h s /\ live h e /\ live h sk /\
-                    disjoint seeds s /\ disjoint seeds e /\ disjoint seeds e /\
+                    disjoint seeds s /\ disjoint seeds e /\ disjoint seeds sk /\
 		    disjoint s e /\ disjoint s sk /\ disjoint e sk)
-    // TODO: fix ensures clause		    
-    (ensures fun h0 _ h1 -> True) // modifies (loc_union (loc_union (loc_buffer seeds) (loc_buffer s)) (loc_buffer e)) h0 h1)
+    (ensures fun h0 _ h1 -> modifies (loc seeds |+| loc s |+| loc e) h0 h1)
 
-(*let decode_sk seeds s e sk =
+let decode_sk seeds s e sk =
     push_frame();
 
-    copy seeds (sub sk (crypto_secretkeybytes -. size 2 *. crypto_seedbytes) (size 2 *. crypto_seedbytes));*)
+    for 0ul params_n
+    (fun h _ -> live h sk /\ live h s)
+    (fun i -> let ski = sk.(i) in s.(i) <- uint8_to_int8 ski);
+
+    for 0ul params_k
+    (fun h _ -> live h sk /\ live h e)
+    (fun k ->
+        for 0ul params_n
+	(fun h _ -> live h sk /\ live h e)
+	(fun i -> let skVal = sk.(params_n *. (k +. size 1) +. i) in e.(params_n *. k +. i) <- uint8_to_int8 skVal)
+    );
+
+    copy seeds (sub sk (crypto_secretkeybytes -. size 2 *. crypto_seedbytes) (size 2 *. crypto_seedbytes));
+
+    pop_frame()
 
 private inline_for_extraction noextract
 val encode_pk_ptSet:
