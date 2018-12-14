@@ -72,7 +72,7 @@ assume val sample_gauss_poly:
 // it's important to do this. In one case the return value is compared against a quantity that isn't even close
 // to exceeding the maximum value of a signed int32, much less an int64, and in all other cases ends up getting
 // immediately cast back into a signed type.
-val abs_elem: value: elem -> Tot (x:elem{x >=^ (to_elem 0)})
+val abs_elem: value: elem -> Tot (x:elem{x >=^ to_elem 0})
 let abs_elem value = 
     let mask = value >>^ ((size elem_n) -. (size 1)) in
     (mask ^^ value) -^ mask
@@ -86,38 +86,48 @@ val check_ES:
 
 let check_ES p bound =
   push_frame();
+  // TODO/HACK: This is a hack to bind the hat operators in this function to the appropriate type;
+  // heuristic parameter sets use I32.t and provable parameter sets use I16.t. We load the one
+  // set of names from the Params module and rebind the operators here. Look into using FStar.Integers
+  // to make this less miserable.
+  [@inline_let] let op_Plus_Hat = checkES_plus in
+  [@inline_let] let op_Subtraction_Hat = checkES_minus in
+  [@inline_let] let op_Greater_Greater_Hat = checkES_sr in
+  [@inline_let] let op_Amp_Hat = checkES_and in
+  [@inline_let] let op_Bar_Hat = checkES_or in
+  [@inline_let] let lognot = checkES_lognot in
+  
   let sum = create (size 1) 0ul in
   let limit = create (size 1) params_n in
-  let temp = create (size 1) 0s in
-  let mask = create (size 1) 0s in
-  let list = create params_n 0s in
+  let (temp:lbuffer checkES_t (size 1)) = create (size 1) checkES_init in
+  let (mask:lbuffer checkES_t (size 1)) = create (size 1) checkES_init in
+  let (list:lbuffer checkES_t params_n) = create params_n checkES_init in
   for (size 0) params_n
       (fun h _ -> live h p /\ live h list)
       (fun j ->
         let abspj = abs_elem p.(j) in
-	// TODO: Heuristic parameter sets cast to the element type. Figure/find out why.
-        list.(j) <- elem_to_int16 abspj);
+        list.(j) <- elem_to_checkES_t abspj);
 
   for (size 0) params_h
       (fun h _ -> live h p /\ live h sum /\ live h limit /\ live h temp /\ live h mask /\ live h list)
       (fun j ->
-          let loopMax:UI32.t = UI32.((limit.(size 0)) -^ 1ul) in
+          let loopMax = (limit.(size 0)) -. size 1 in
           for 0ul loopMax
           (fun h _ -> live h p /\ live h sum /\ live h limit /\ live h temp /\ live h mask /\ live h list)
           (fun i ->
-              mask.(size 0) <- I16.( ((list.(i +. (size 1))) -^ (list.(i))) >>^ 15ul );
-              temp.(size 0) <- I16.( ((list.(i +. (size 1))) &^ (mask.(size 0))) |^
-                                    ((list.(i)) &^ (lognot mask.(size 0))));
-              list.(I16.(i +. (size 1))) <- I16.(( (list.(i)) &^ mask.(size 0) ) |^
-                                         ( (list.(i +. (size 1))) &^ (lognot mask.(size 0)) ));
+              mask.(size 0) <- ((list.(i +. size 1)) -^ (list.(i))) >>^ UI32.(checkES_n -^ 1ul);
+              temp.(size 0) <- ((list.(i +. size 1)) &^ (mask.(size 0))) |^
+                                    ((list.(i)) &^ (lognot mask.(size 0)));
+              list.(i +. size 1) <- (list.(i)) &^ mask.(size 0) |^
+                                   (list.(i +. (size 1))) &^ (lognot mask.(size 0));
               list.(i) <- temp.(size 0)
           );
 
-          let listIndex:UI32.t = UI32.((limit.(size 0)) -^ 1ul) in
-          let listAmt:I16.t = list.(listIndex) in
-          let listAmt:UI32.t = int16_to_uint32 listAmt in
+          let listIndex = limit.(size 0) -. size 1 in
+          let listAmt = list.(listIndex) in
+          let listAmt:UI32.t = checkES_to_uint32 listAmt in
           sum.(size 0) <- UI32.(sum.(size 0) +^ listAmt);
-          limit.(size 0) <- UI32.((limit.(size 0)) -^ 1ul)
+          limit.(size 0) <- limit.(size 0) -. size 1
       );
 
    let sumAmt:UI32.t = sum.(size 0) in
