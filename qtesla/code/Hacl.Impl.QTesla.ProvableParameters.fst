@@ -6,11 +6,14 @@ module Hacl.Impl.QTesla.ProvableParameters
 module I8 = FStar.Int8
 module I16 = FStar.Int16
 module I64 = FStar.Int64
+module UI64 = FStar.UInt64
 open FStar.Int.Cast
 open Lib.IntTypes
 
 type elem = I64.t
+type uelem = UI64.t
 unfold let to_elem = I64.int_to_t
+unfold let to_uelem = UI64.uint_to_t
 module IElem = FStar.Int64
 unfold let elem_n = IElem.n
 
@@ -28,6 +31,10 @@ unfold let elem_to_int64 x = x
 unfold let int64_to_elem x = x
 unfold let elem_to_uint64 = int64_to_uint64
 unfold let uint64_to_elem = uint64_to_int64
+unfold let elem_to_uelem = int64_to_uint64
+
+unfold let uelem_sr = UI64.shift_right
+unfold let uelem_or = UI64.logor
 
 unfold let sparse_elem = I8.t
 unfold let to_sparse_elem = I8.int_to_t

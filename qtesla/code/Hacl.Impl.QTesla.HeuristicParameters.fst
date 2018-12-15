@@ -3,11 +3,14 @@ module Hacl.Impl.QTesla.HeuristicParameters
 
 module I16 = FStar.Int16
 module I32 = FStar.Int32
+module UI32 = FStar.UInt32
 open FStar.Int.Cast
 open Lib.IntTypes
 
 type elem = I32.t
+type uelem = UI32.t
 unfold let to_elem = I32.int_to_t
+unfold let to_uelem = UI32.uint_to_t
 module IElem = FStar.Int32
 unfold let elem_n = IElem.n
 
@@ -25,6 +28,10 @@ unfold let elem_to_int64 = int32_to_int64
 unfold let int64_to_elem = int64_to_int32
 unfold let elem_to_uint64 = int32_to_uint64
 unfold let uint64_to_elem = uint64_to_int32
+unfold let elem_to_uelem = int32_to_uint32
+
+unfold let uelem_sr = UI32.shift_right
+unfold let uelem_or = UI32.logor
 
 unfold let sparse_elem = I16.t
 unfold let sparse_n = size I16.n

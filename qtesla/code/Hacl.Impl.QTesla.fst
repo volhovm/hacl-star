@@ -531,7 +531,7 @@ let qtesla_keygen pk sk =
 
   // TODO: Heuristic parameter sets call poly_mul and poly_add_correct at this point, which is a poly_add and one type
   // of applied correction. Provable parameter sets (where k > 1, so in a loop) call poly_mul and then poly_add, and
-  // apply a different 
+  // apply a different correction.
   poly_ntt s_ntt s;
 
   C.Loops.for (size 0) params_k
@@ -599,7 +599,7 @@ let sample_y y seed nonce =
 	let bufPosAsU32 = uint_from_bytes_le #U32 #PUB subbuff in
 	let bufPosAsElem = uint32_to_elem bufPosAsU32 in
 	let i0 = i.(size 0) in
-	// TODO: heuristic parameter sets do four at once. Perf?
+	// Heuristic parameter sets do four at once. Perf. But optional.
 	y.(i0) <- bufPosAsElem &^ (to_elem 1 <<^ ((params_b_bits +. size 1) -. size 1));
 	y.(i0) <- y.(i0) -^ params_B;
 	if y.(i0) <> (uint32_to_elem (size 1 <<. params_b_bits))
@@ -825,16 +825,16 @@ let test_v v =
     let _, _ = interruptible_for 0ul params_n
     (fun h _ _ -> live h v)
     (fun i ->
-        let mask:elem = (params_q /^ (to_elem 2) -^ (v.(i))) >>^ (size elem_n) -. (size 1) in
+        let mask:elem = (params_q /^ (to_elem 2) -^ (v.(i))) >>^ ((size elem_n) -. (size 1)) in
 	let val_:elem = ((v.(i) -^ params_q) &^ mask) |^ (v.(i) &^ (lognot mask)) in
-	// TODO: t0 and t1 are the unsigned type of the element type. Important?
-	let t0 = (lognot ((abs_elem val_) -^ (params_q /^ (size 2) -^ params_rejection))) >>^ (size elem_n) -. (size 1) in
+	// TODO: t0 and t1 are the unsigned type of the element type. Important? Yes, because it's 
+	let t0:uelem = elem_to_uelem ((lognot ((abs_elem val_) -^ (params_q /^ (size 2) -^ params_rejection)))) `uelem_sr` ((size elem_n) -. (size 1)) in
 	let left = val_ in
 	// TODO: in the ref code, this computation of val is cast to int32_t. Not sure why.
 	let val_:elem = (val_ +^ ((to_elem 1) <<^ (params_d -. (size 1))) -^ (to_elem 1)) >>^ params_d in
 	let val_:elem = left -^ (val_ <<^ params_d) in
-	let t1 = (lognot ((abs_elem val_) -^ ((to_elem 1) <<^ (params_d -. (size 1))) -^ params_rejection)) >>^ (size elem_n) -. (size 1) in
-        if (t0 |^ t1) = to_elem 1
+	let t1:uelem = elem_to_uelem ((lognot ((abs_elem val_) -^ ((to_elem 1) <<^ (params_d -. (size 1))) -^ params_rejection))) `uelem_sr` ((size elem_n) -. (size 1)) in
+        if (t0 `uelem_or` t1) = to_uelem 1
 	then ( res.(size 0) <- 1l; true )
 	else ( false )
     ) in
@@ -876,8 +876,6 @@ let qtesla_sign smlen mlen m sm sk =
     let rsp = create (size 1) (I32.int_to_t 0) in
     let nonce = create (size 1) (I32.int_to_t 0) in
 
-    // TODO: decode_sk here in heuristic parameter sets. I think this may just be relocating the pointer arithmetic
-    // that happens inline in the provable parameter sets.
     decode_sk seeds s e sk;
 
     R.randombytes_ crypto_randombytes (sub randomness_input crypto_randombytes crypto_randombytes);
@@ -928,7 +926,6 @@ let qtesla_sign smlen mlen m sm sk =
 		     then (
                          let sk_offset:size_t = (params_n *. (kVal +. (size 1))) in
                          let sublen:size_t = crypto_secretkeybytes -. sk_offset in
-			 // TODO: heuristic parameter sets use sparse_mul16
                          sparse_mul (index_poly ec kVal) (sub e (params_n *. kVal) params_n) pos_list sign_list;
                          poly_sub (index_poly v_ kVal) (index_poly v_ kVal) (index_poly ec kVal);
                          rsp.(size 0) <- test_v (index_poly v_ kVal);
