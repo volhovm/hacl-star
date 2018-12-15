@@ -27,6 +27,7 @@ open Hacl.Impl.QTesla.Params
 open Hacl.Impl.QTesla.Constants
 open Hacl.Impl.QTesla.Globals
 open Hacl.Impl.QTesla.Pack
+open Hacl.Impl.QTesla.Poly
 
 module B  = LowStar.Buffer
 module ST = FStar.HyperStack.ST
@@ -135,25 +136,6 @@ let check_ES p bound =
    pop_frame();
    res
 
-val reduce:
-    a: I64.t
-  -> Tot elem
-
-let reduce a =
-    let u:I64.t = I64.((a *^ params_qinv) &^ 0xffffffffL) in
-    let u:I64.t = I64.(u *^ (elem_to_int64 params_q)) in
-    let a:I64.t = I64.(a +^ u) in
-    int64_to_elem I64.(a >>^ 32ul)
-
-val barr_reduce:
-    a: elem
-  -> Tot elem
-
-let barr_reduce a =
-    let a64:I64.t = elem_to_int64 a in
-    let u:elem = (int64_to_elem I64.((a64 *^ params_barr_mult) >>^ params_barr_div)) *^ params_q in
-    a -^ u
-
 open Lib.ByteBuffer
 
 val poly_uniform:
@@ -234,221 +216,6 @@ let poly_uniform a seed =
 
     pop_frame()
 
-val ntt:
-    a: poly
-  -> w: poly
-  -> Stack unit
-    (requires fun h -> live h a /\ live h w)
-    (ensures fun h0 _ h1 -> modifies1 a h0 h1)
-
-let ntt a w =
-    push_frame();
-    let numoProblems = create (size 1) (params_n >>. (size 1)) in
-    let jTwiddle = create (size 1) (size 0) in
-
-    while // Outermost for loop
-        #(fun h -> live h numoProblems /\ live h jTwiddle)
-        #(fun _ h -> live h numoProblems /\ live h jTwiddle)
-        (fun _ -> numoProblems.(size 0) >. (size 0))
-        (fun _ ->
-            push_frame();
-            let j = create (size 1) (size 0) in
-            let jFirst = create (size 1) (size 0) in            
-            let cond () : Stack bool
-              (requires fun h -> live h jFirst)
-              (ensures fun h0 _ h1 -> live h1 jFirst)
-            = jFirst.(size 0) <. params_n in
-            while // Middle for loop
-                #(fun h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
-                #(fun _ h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
-                cond
-                (fun _ ->
-                    let jTwiddleVal = jTwiddle.(size 0) in
-                    let wj:elem = w.(jTwiddleVal) in
-                    jTwiddle.(size 0) <- jTwiddleVal +. (size 1);
-                    // Innermost for loop. Have to use a while because the middle for loop's increment depends on the
-                    // final value of j from each inner for loop, so its scope can't be constrained to the for loop.
-                    j.(size 0) <- jFirst.(size 0);
-                    let jFinish:UI32.t = UI32.(jFirst.(size 0) +^ numoProblems.(size 0)) in
-                    while
-                        #(fun h -> live h numoProblems /\ live h jTwiddle /\ live h jFirst)
-                        #(fun _ h -> live h numoProblems /\ live h jTwiddle /\ live h jFirst)
-                        (fun _ -> j.(size 0) <. jFinish)
-                        (fun _ ->
-                            let jVal:size_t = j.(size 0) in
-                            let aIndex:size_t = UI32.(jVal +^ numoProblems.(size 0)) in
-                            let aVal:elem = a.(aIndex) in
-                            let temp:elem = barr_reduce (reduce I64.((elem_to_int64 wj) *^ (elem_to_int64 aVal))) in
-                            let aVal:elem = a.(jVal) in
-                            a.(aIndex) <- barr_reduce (int64_to_elem I64.((elem_to_int64 aVal) +^ (2L *^ (elem_to_int64 params_q) -^ (elem_to_int64 temp))));
-                            a.(jVal) <- barr_reduce (int64_to_elem I64.((elem_to_int64 temp) +^ ((elem_to_int64 aVal))));
-			    j.(size 0) <- jVal +. (size 1)
-                        );
-                    jFirst.(size 0) <- UI32.(j.(size 0) +^ numoProblems.(size 0))
-                );
-            numoProblems.(size 0) <- UI32.(numoProblems.(size 0) >>^ 1ul);
-            pop_frame()
-        );
-    pop_frame()
-
-// TODO: This implementation varies quite a bit, even between p-I and p-III, which is unusual in what I've found
-// so far. Generally the heuristic/provable security division is the differentiator.
-val nttinv:
-    a: poly
-  -> w: poly
-  -> Stack unit
-    (requires fun h -> live h a /\ live h w)
-    (ensures fun h0 _ h1 -> modifies1 a h0 h1)
-
-let nttinv a w =
-    push_frame();
-    let numoProblems = create (size 1) (size 1) in
-    let jTwiddle = create (size 1) (size 0) in
-
-    while // Outermost for loop
-        #(fun h -> live h numoProblems /\ live h jTwiddle)
-        #(fun _ h -> live h numoProblems /\ live h jTwiddle)
-        (fun _ -> numoProblems.(size 0) <. params_n)
-        (fun _ ->
-            push_frame();
-            let j = create (size 1) (size 0) in
-            let jFirst = create (size 1) (size 0) in
-            let cond () : Stack bool
-              (requires fun h -> live h jFirst)
-              (ensures fun h0 _ h1 -> live h1 jFirst)
-            = jFirst.(size 0) <. params_n in
-            while // Middle for loop
-                #(fun h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
-                #(fun _ h -> live h numoProblems /\ live h jTwiddle /\ live h j /\ live h jFirst)
-                cond
-                (fun _ ->
-                    let jTwiddleVal = jTwiddle.(size 0) in
-                    let wj:elem = w.(jTwiddleVal) in
-                    jTwiddle.(size 0) <- jTwiddleVal +. (size 1);
-                    // Innermost for loop. Have to use a while because the middle for loop's increment depends on the
-                    // final value of j from each inner for loop, so its scope can't be constrained to the for loop.
-                    j.(size 0) <- jFirst.(size 0);
-                    let jFinish:UI32.t = UI32.(jFirst.(size 0) +^ numoProblems.(size 0)) in
-                    while
-                        #(fun h -> live h numoProblems /\ live h jTwiddle /\ live h jFirst)
-                        #(fun _ h -> live h numoProblems /\ live h jTwiddle /\ live h jFirst)
-                        (fun _ -> j.(size 0) <. jFinish)
-                        (fun _ ->
-                            let jVal:size_t = j.(size 0) in
-                            let aIndex:size_t = UI32.(jVal +^ numoProblems.(size 0)) in
-                            let temp:elem = a.(jVal) in
-                            let aaIndex:elem = a.(aIndex) in
-                            a.(jVal) <- barr_reduce (int64_to_elem I64.((elem_to_int64 temp) +^ (elem_to_int64 aaIndex)));
-                            a.(aIndex) <- barr_reduce (reduce I64.((elem_to_int64 wj) *^ ((elem_to_int64 temp) +^ (2L *^ (elem_to_int64 params_q) -^ (elem_to_int64 aaIndex)))));
-			    j.(size 0) <- jVal +. (size 1)
-                        );
-                    jFirst.(size 0) <- UI32.(j.(size 0) +^ numoProblems.(size 0))
-                );
-            numoProblems.(size 0) <- UI32.(numoProblems.(size 0) *^ 2ul);
-            pop_frame()
-        );
-
-    pop_frame()
-
-// When the Frodo code creates arrays of constants like this, it uses createL_global, which creates an
-// immutable buffer. But this screws up subtyping with poly, which is sometimes mutable. Nik tells us
-// there's no good way to do this because, unlike const parameters in C, guarantees like this go both ways
-// and we'd essentially be asking the world never to mutate a poly, which is obviously not going to work. So
-// we use createL, which makes it mutable, but we just never change it.
-let zeta: poly = createL zeta_list
-
-val poly_ntt:
-    x_ntt: poly
-  -> x: poly
-  -> Stack unit
-    (requires fun h -> live h x_ntt /\ live h x /\ disjoint x_ntt x)
-    (ensures fun h0 _ h1 -> modifies1 x h0 h1)
-
-let poly_ntt x_ntt x =
-    push_frame();
-    C.Loops.for 0ul params_n
-    (fun h _ -> live h x_ntt /\ live h x)
-    (fun i ->
-        x_ntt.(i) <- (x.(i))
-    );
-
-    ntt x_ntt zeta;
-    pop_frame()
-
-val poly_pointwise:
-    result: poly
-  -> x: poly
-  -> y: poly
-  -> Stack unit
-    (requires fun h -> live h result /\ live h x /\ live h y)
-    (ensures fun h0 _ h1 -> modifies1 result h0 h1)
-
-let poly_pointwise result x y =
-    push_frame();
-    C.Loops.for (size 0) params_n
-    (fun h _ -> live h result /\ live h x /\ live h y)
-    (fun i ->
-        let xi:elem = x.(i) in
-        let yi:elem = y.(i) in
-        result.(i) <- reduce I64.( (elem_to_int64 xi) *^ (elem_to_int64 yi) )
-    );
-    pop_frame()
-
-// TODO: should call createL_global to make this immutable. Need to work out the typing relationships since poly
-// should by default treated as mutable.
-let zetainv: poly = createL zetainv_list
-
-val poly_mul:
-    result: poly
-  -> x: poly
-  -> y: poly
-  -> Stack unit
-    (requires fun h -> live h result /\ live h x /\ live h y)
-    (ensures fun h0 _ h1 -> modifies1 result h0 h1)
-
-let poly_mul result x y =
-    poly_pointwise result x y;
-    nttinv result zetainv;
-    ()
-
-val poly_add:
-    result: poly
-  -> x: poly
-  -> y: poly
-  -> Stack unit
-    (requires fun h -> live h result /\ live h x /\ live h y /\ disjoint result x /\ disjoint result y /\ disjoint x y)
-    (ensures fun h0 _ h1 -> modifies1 result h0 h1)
-
-let poly_add result x y =
-    push_frame();
-    C.Loops.for 0ul params_n
-    (fun h _ -> live h result /\ live h x /\ live h y)
-    (fun i ->
-        result.(i) <- x.(i) +^ y.(i)
-    );
-    pop_frame()
-
-// TODO: heuristic parameter sets have a poly_add_correct, poly_sub_correct, and poly_sub_reduce
-
-val poly_sub:
-    result: poly
-  -> x: poly
-  -> y: poly
-  -> Stack unit
-    (requires fun h -> live h result /\ live h x /\ live h y)
-    (ensures fun h0 _ h1 -> modifies1 result h0 h1)
-
-let poly_sub result x y =
-    push_frame();
-    C.Loops.for 0ul params_n
-    (fun h _ -> live h result /\ live h x /\ live h y)
-    (fun i ->
-        let xi:elem = x.(i) in
-        let yi:elem = y.(i) in
-        result.(i) <- barr_reduce (x.(i) -^ y.(i))
-    );
-    pop_frame()
-
 val qtesla_keygen:
     pk: buffer uint8
   -> sk: buffer uint8
@@ -492,8 +259,7 @@ let qtesla_keygen pk sk =
   let s_ntt:poly = poly_create () in
   let a:poly_k = poly_k_create () in
   let t:poly_k = poly_k_create () in 
-  let nonce = create 1ul 0L in
-  let mask = create 1ul (to_elem 0) in
+  let nonce = create (size 1) 0L in
   R.randombytes_ crypto_randombytes randomness;
   params_SHAKE crypto_randombytes randomness randomness_extended_size randomness_extended;
 
@@ -529,27 +295,16 @@ let qtesla_keygen pk sk =
   let rndsubbuffer = sub randomness_extended ((params_k +. (size 1)) *. crypto_seedbytes) crypto_randombytes in
   poly_uniform a rndsubbuffer;
 
-  // TODO: Heuristic parameter sets call poly_mul and poly_add_correct at this point, which is a poly_add and one type
-  // of applied correction. Provable parameter sets (where k > 1, so in a loop) call poly_mul and then poly_add, and
-  // apply a different correction.
   poly_ntt s_ntt s;
 
   C.Loops.for (size 0) params_k
-      (fun h _ -> live h t /\ live h a /\ live h s_ntt /\ live h e /\ live h mask)
+      (fun h _ -> live h t /\ live h a /\ live h s_ntt /\ live h e)
       (fun k ->
           let tk:poly = index_poly t k in
           let ak:poly = index_poly a k in
           let ek:poly = index_poly e k in
           poly_mul tk ak s_ntt;
-          poly_add tk tk ek;
-          C.Loops.for 0ul params_n
-          (fun h _ -> live h t /\ live h a /\ live h s_ntt /\ live h e /\ live h mask)
-          (fun i ->
-              let tki:elem = tk.(i) in
-              mask.(size 0) <- (params_q -^ tki) >>^ (size elem_n) -. (size 1);
-              let mask0:elem = mask.(size 0) in
-              tk.(i) <- tki -^ (params_q &^ mask0)
-           )
+          poly_add_correct tk tk ek
         );
 
   encode_or_pack_sk sk s e rndsubbuffer;
@@ -827,7 +582,6 @@ let test_v v =
     (fun i ->
         let mask:elem = (params_q /^ (to_elem 2) -^ (v.(i))) >>^ ((size elem_n) -. (size 1)) in
 	let val_:elem = ((v.(i) -^ params_q) &^ mask) |^ (v.(i) &^ (lognot mask)) in
-	// TODO: t0 and t1 are the unsigned type of the element type. Important? Yes, because it's 
 	let t0:uelem = elem_to_uelem ((lognot ((abs_elem val_) -^ (params_q /^ (size 2) -^ params_rejection)))) `uelem_sr` ((size elem_n) -. (size 1)) in
 	let left = val_ in
 	// TODO: in the ref code, this computation of val is cast to int32_t. Not sure why.
@@ -927,7 +681,7 @@ let qtesla_sign smlen mlen m sm sk =
                          let sk_offset:size_t = (params_n *. (kVal +. (size 1))) in
                          let sublen:size_t = crypto_secretkeybytes -. sk_offset in
                          sparse_mul (index_poly ec kVal) (sub e (params_n *. kVal) params_n) pos_list sign_list;
-                         poly_sub (index_poly v_ kVal) (index_poly v_ kVal) (index_poly ec kVal);
+                         poly_sub_correct (index_poly v_ kVal) (index_poly v_ kVal) (index_poly ec kVal);
                          rsp.(size 0) <- test_v (index_poly v_ kVal);
                          if (let rspVal = rsp.(size 0) in not (rspVal = 0l))
                          then ( stop.(size 0) <- true )
@@ -1012,8 +766,7 @@ let qtesla_verify mallocated mlen m smlen sm pk =
     (fun k ->
         poly_mul (index_poly w k) (index_poly a k) z_ntt;
 	sparse_mul32 (index_poly tc k) (sub pk_t (k *. params_n) params_n) pos_list sign_list;
-	// TODO: heuristic parameter sets use poly_sub_reduce
-	poly_sub (index_poly w k) (index_poly w k) (index_poly tc k)
+	poly_sub_reduce (index_poly w k) (index_poly w k) (index_poly tc k)
     );
 
     params_SHAKE (smlen -. crypto_bytes) (sub sm crypto_bytes (smlen -. crypto_bytes)) crypto_hmbytes hm;

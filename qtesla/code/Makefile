@@ -2,7 +2,7 @@ FSTAR_HOME   ?= ../../../FStar
 KREMLIN_HOME ?= ../../../kremlin
 HACL_HOME    ?= ../..
 
-VARIANT      ?= III-size
+VARIANT      ?= p-I
 
 ifeq ($(VARIANT),I)
 else ifeq ($(VARIANT),III-size)
@@ -132,6 +132,7 @@ $(GENERATED_DIR)/Makefile.include: $(ALL_KRML_INPUTS) | .depend
 	-no-prefix 'Hacl.Impl.QTesla.Params' \
         -no-prefix 'Hacl.Impl.QTesla.Pack' \
         -no-prefix 'Hacl.Impl.QTesla.Constants' \
+        -no-prefix 'Hacl.Impl.QTesla.Poly' \
 	-no-prefix 'Hacl.SHA3' \
 	-no-prefix 'Hacl.Impl.SHA3' \
 	-bundle 'Hacl.Impl.QTesla=QTesla.Params,Hacl.Impl.QTesla.*' \

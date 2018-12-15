@@ -41,6 +41,7 @@ let params_r2_invn = I64.int_to_t (normalize_term 113307)
 let params_s_bits = size (normalize_term 10)
 let params_b_bits = size (normalize_term 20)
 let params_rejection = to_elem (normalize_term S.params_Le)
+let params_r = I64.int_to_t (normalize_term 1081347)
 
 inline_for_extraction noextract
 let params_SHAKE = SHA3.shake128_hacl

@@ -325,7 +325,7 @@ let encode_sig_ptSet buf i value =
 private inline_for_extraction noextract
 val encode_sig_tGet:
     z : poly
-  -> j : size_t{j <. params_n *. params_k *. elem_n /. size UI64.n /. size 8}
+  -> j : size_t{j <. params_n *. params_k *. size elem_n /. size UI64.n /. size 8}
   -> Stack UI32.t
     (requires fun h -> live h z)
     (ensures fun h0 _ h1 -> h0 == h1)
