@@ -64,19 +64,33 @@ secure_api/merkle_tree.build: providers.build
 
 # 2. Verification
 
+# $1: command
+# $2: readable name
+# $3: stem for the logs
+run-with-log = ( $1 ) > $3.out 2>&1 && echo $2 || ( \
+  echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"; \
+  echo -e "\033[31mFatal error while running\033[0m: $1"; \
+  echo -e "\033[36mFull log is in $3.out, see excerpt below\033[0m:"; \
+  echo "--------------------------------------------------------------------------------"; \
+  tail -n 20 $3.out; \
+  echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"; \
+)
+
 %.checked:
-	$(FSTAR) $< && \
-	touch $@
+	@$(call run-with-log,$(FSTAR) $< && touch $@,[VERIFY] $(notdir $*),$<.verify)
 
 # 3. Extraction. Note that all the C files are prefixed with Hacl_. Cleaner!
 
 .PRECIOUS: %.krml
 
 $(OUTPUT_DIR)/%.krml:
-	$(FSTAR) --codegen Kremlin \
-	  --extract_module $(basename $(notdir $(subst .checked,,$<))) \
-	  $(notdir $(subst .checked,,$<)) && \
-	touch $@
+	@$(call run-with-log, \
+	  $(FSTAR) --codegen Kremlin \
+	    --extract_module $(basename $(notdir $(subst .checked,,$<))) \
+	    $(notdir $(subst .checked,,$<)) && \
+	  touch $@,
+	  [EXTRACT] $(notdir $*),
+	  $(subst .checked,,$<).extract)
 
 COMPACT_FLAGS=-bundle Hacl.Hash.MD5+Hacl.Hash.Core.MD5+Hacl.Hash.SHA1+Hacl.Hash.Core.SHA1+Hacl.Hash.SHA2+Hacl.Hash.Core.SHA2+Hacl.Hash.Core.SHA2.Constants=Hacl.Hash.*[rename=Hacl_Hash] \
   -bundle Hacl.Impl.SHA3+Hacl.SHA3=[rename=Hacl_SHA3] \
