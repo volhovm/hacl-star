@@ -64,17 +64,27 @@ secure_api/merkle_tree.build: providers.build
 
 # 2. Verification
 
+SHELL = /bin/bash
+DATE := $(shell which gdate &>/dev/null && echo gdate || echo date)
+
 # $1: command
 # $2: readable name
 # $3: stem for the logs
-run-with-log = ( $1 ) > $3.out 2>&1 && echo $2 || ( \
-  echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"; \
-  echo -e "\033[31mFatal error while running\033[0m: $1"; \
-  echo -e "\033[36mFull log is in $3.out, see excerpt below\033[0m:"; \
-  echo "--------------------------------------------------------------------------------"; \
-  tail -n 20 $3.out; \
-  echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"; \
-)
+run-with-log = \
+  start=$$($(DATE) +%s%3N); \
+  ( $1 ) &> $3.out; \
+  ret=$$?; \
+  time="$$(($$($(DATE) +%s%3N) - $$start)) ms"; \
+  if [ $$ret -eq 0 ]; then \
+    echo "$2, $$time"; \
+  else \
+    echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"; \
+    echo -e "\033[31mFatal error while running\033[0m: $1"; \
+    echo -e "\033[31mFailed after\033[0m: $$time"; \
+    echo -e "\033[36mFull log is in $3.out, see excerpt below\033[0m:"; \
+    tail -n 20 $3.out; \
+    echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"; \
+  fi
 
 %.checked:
 	@$(call run-with-log,$(FSTAR) $< && touch $@,[VERIFY] $(notdir $*),$<.verify)
@@ -88,8 +98,7 @@ $(OUTPUT_DIR)/%.krml:
 	  $(FSTAR) --codegen Kremlin \
 	    --extract_module $(basename $(notdir $(subst .checked,,$<))) \
 	    $(notdir $(subst .checked,,$<)) && \
-	  touch $@,
-	  [EXTRACT] $(notdir $*),
+	  touch $@,[EXTRACT] $(notdir $*), \
 	  $(subst .checked,,$<).extract)
 
 COMPACT_FLAGS=-bundle Hacl.Hash.MD5+Hacl.Hash.Core.MD5+Hacl.Hash.SHA1+Hacl.Hash.Core.SHA1+Hacl.Hash.SHA2+Hacl.Hash.Core.SHA2+Hacl.Hash.Core.SHA2.Constants=Hacl.Hash.*[rename=Hacl_Hash] \

@@ -1383,4 +1383,3 @@ let test_one (v: vec) =
   hash a (Seq.seq_of_list plain) = Seq.seq_of_list tag
 
 let test () = List.Tot.for_all test_one test_vectors
-
