@@ -37,32 +37,7 @@ ci: all test
 %.build:
 	$(MAKE) -C $*
 
-# 0. Complete dependency graph for HACL*
-
-ROOTS = $(wildcard $(addsuffix /*.fsti,$(DIRS)) $(addsuffix /*.fst,$(DIRS)))
-
-include Makefile.common
-
-ifndef MAKE_RESTARTS
-.depend: .FORCE
-	@$(FSTAR_NO_FLAGS) --dep full $(ROOTS) --extract '* -Prims -LowStar -Lib.Buffer -Hacl -FStar +FStar.Endianness +FStar.Kremlin.Endianness' > $@
-
-.PHONY: .FORCE
-.FORCE:
-endif
-
-include .depend
-
-# 1. Manual, finely crafted dependency edges (see artistic rendition above).
-
-ALL_CHECKED_FILES	= $(addsuffix .checked,$(ALL_FST_FILES))
-SPEC_CHECKED_FILES	= $(filter $(HACL_HOME)/specs/%,$(ALL_CHECKED_FILES))
-
-vale.build: $(SPEC_CHECKED_FILES)
-providers.build: compile-compact vale.build
-secure_api/merkle_tree.build: providers.build
-
-# 2. Verification
+# -1. Helpers
 
 SHELL = /bin/bash
 DATE := $(shell which gdate &>/dev/null && echo gdate || echo date)
@@ -85,6 +60,35 @@ run-with-log = \
     tail -n 20 $3.out; \
     echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"; \
   fi
+
+# 0. Complete dependency graph for HACL*
+
+ROOTS = $(wildcard $(addsuffix /*.fsti,$(DIRS)) $(addsuffix /*.fst,$(DIRS)))
+
+include Makefile.common
+
+ifndef MAKE_RESTARTS
+.depend: .FORCE
+	@$(call run-with-log,\
+	  $(FSTAR_NO_FLAGS) --dep full $(ROOTS) --extract '* -Prims -LowStar -Lib.Buffer -Hacl -FStar +FStar.Endianness +FStar.Kremlin.Endianness' > $@ \
+	  ,[DEPEND],.depend)
+
+.PHONY: .FORCE
+.FORCE:
+endif
+
+include .depend
+
+# 1. Manual, finely crafted dependency edges (see artistic rendition above).
+
+ALL_CHECKED_FILES	= $(addsuffix .checked,$(ALL_FST_FILES))
+SPEC_CHECKED_FILES	= $(filter $(HACL_HOME)/specs/%,$(ALL_CHECKED_FILES))
+
+vale.build: $(SPEC_CHECKED_FILES)
+providers.build: compile-compact vale.build
+secure_api/merkle_tree.build: providers.build
+
+# 2. Verification
 
 %.checked:
 	@$(call run-with-log,$(FSTAR) $< && touch $@,[VERIFY] $(notdir $*),$<.verify)
