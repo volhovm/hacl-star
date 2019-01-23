@@ -46,6 +46,14 @@ val repeat_right:
   -> acc:a lo
   -> Tot (a hi) (decreases (hi - lo))
 
+val repeat_right_all_ml:
+    lo:nat
+  -> hi:nat{lo <= hi}
+  -> a:(i:nat{lo <= i /\ i <= hi} -> Type)
+  -> f:(i:nat{lo <= i /\ i < hi} -> a i -> FStar.All.ML (a (i + 1)))
+  -> acc:a lo
+  -> FStar.All.ML (a hi) (decreases (hi - lo))
+
 (** Splitting a repetition *)
 val repeat_right_plus:
     lo:nat
@@ -88,6 +96,13 @@ val repeat_gen:
   -> acc0:a 0
   -> a n
 
+val repeat_gen_all_ml:
+    n:nat
+  -> a:(i:nat{i <= n} -> Type)
+  -> f:(i:nat{i < n} -> a i -> FStar.All.ML (a (i + 1)))
+  -> acc0:a 0
+  -> FStar.All.ML (a n)
+
 (** Unfolding one iteration *)
 val unfold_repeat_gen:
     n:nat
@@ -107,6 +122,13 @@ val repeati:
   -> f:(i:nat{i < n} -> a -> a)
   -> acc0:a
   -> a
+
+val repeati_all_ml:
+    #a:Type
+  -> n:nat
+  -> f:(i:nat{i < n} -> a -> FStar.All.ML a)
+  -> acc0:a
+  -> FStar.All.ML a
 
 (** Unfolding one iteration *)
 val unfold_repeati:
@@ -169,9 +191,9 @@ val repeati_inductive_repeat_gen:
  -> x0:a{pred 0 x0}
  -> Lemma (repeati_inductive n pred f x0 == repeat_gen n (fun i -> x:a{pred i x}) f x0)
 
-type preserves_predicate (n:nat) 
-     (a:(i:nat{i <= n} -> Type)) 
-     (f:(i:nat{i < n} -> a i -> a (i + 1))) 
+type preserves_predicate (n:nat)
+     (a:(i:nat{i <= n} -> Type))
+     (f:(i:nat{i < n} -> a i -> a (i + 1)))
      (pred:(i:nat{i <= n} -> a i -> Tot Type))=
   forall (i:nat{i < n}) (x:a i). pred i x ==> pred (i + 1) (f i x)
 
@@ -184,3 +206,19 @@ val repeat_gen_inductive:
  -> Pure (a n)
    (requires preserves_predicate n a f pred /\ pred 0 x0)
    (ensures fun res -> pred n res /\ res == repeat_gen n a f x0)
+
+type preserves (#a:Type)
+  (#n:nat)
+  (f:(i:nat{i < n} -> a -> a))
+  (pred:(i:nat{i <= n} -> a -> Tot Type)) =
+  forall (i:nat{i < n}) (x:a). pred i x ==> pred (i + 1) (f i x)
+
+val repeati_inductive':
+  #a:Type
+  -> n:nat
+  -> pred:(i:nat{i <= n} -> a -> Type0)
+  -> f:(i:nat{i < n} -> a -> a)
+  -> x0:a
+  -> Pure a
+    (requires preserves #a #n f pred /\ pred 0 x0)
+    (ensures fun res -> pred n res /\ res == repeati n f x0)

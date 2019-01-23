@@ -14,9 +14,6 @@ open Lib.NatMod
 (* Point addition *)
 type aff_point = tuple2 elem elem           // Affine point
 type ext_point = tuple4 elem elem elem elem // Homogeneous extended coordinates
-let fsub (x:elem) (y:elem) = x -% y
-let fadd (x:elem) (y:elem) = x +% y
-let fmul (x:elem) (y:elem) = x *% y
 
 let modp_inv (x:elem) : Tot elem =
   x **% (prime - 2)
@@ -26,6 +23,8 @@ let d : elem = to_elem 370957059346694393431380835087545651895421138798432190163
 let q: n:nat{n < pow2 256} =
   assert_norm(pow2 252 + 27742317777372353535851937790883648493 < pow2 255 - 19);
   (pow2 252 + 27742317777372353535851937790883648493) // Group order
+
+let _:_:unit{max_input SHA2_512 > pow2 32} = assert_norm (max_input SHA2_512 > pow2 32)
 
 let sha512_modq (len:size_nat) (s:lbytes len) : n:nat{n < pow2 256} =
   (nat_from_bytes_le (hash512 s) % q)
