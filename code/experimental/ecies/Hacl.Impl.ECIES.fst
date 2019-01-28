@@ -38,19 +38,20 @@ let id_of_ciphersuite = u8 0
 ///
 
 inline_for_extraction
-let size_nonce = size Spec.ECIES.size_nonce
+let size_nonce = size (Spec.ECIES.size_nonce ciphersuite)
 
 inline_for_extraction
-let size_key = size Spec.ECIES.size_key
+let size_key = size (Spec.ECIES.size_key ciphersuite)
 
 inline_for_extraction
-let size_context = size Spec.ECIES.size_context
+let size_context = size 32
 
 inline_for_extraction
-let size_info = size Spec.ECIES.size_info
+let size_info = size 32
 
 inline_for_extraction
-let size_key_dh = size Spec.ECIES.size_key_dh
+let size_key_dh = size (Spec.ECIES.size_key_dh ciphersuite)
+
 
 ///
 /// Types
@@ -64,11 +65,11 @@ type key_p = lbuffer uint8 size_key
 /// Implementation
 ///
 
-let const_label_nonce: x:ilbuffer size_t (size size_label_nonce)){witnessed x Spec.ECIES.const_lable_nonce /\ recallable x} =
-  createL_global Spec.ECIES.list_label_nonce
+let const_label_nonce: x:ilbuffer size_t (size Spec.ECIES.size_label_nonce){witnessed x Spec.ECIES.label_nonce /\ recallable x} =
+  createL_global Spec.ECIES.label_nonce_list
 
-let const_label_key: x:ilbuffer size_t (size size_label_key)){witnessed x Spec.ECIES.const_lable_key /\ recallable x} =
-  createL_global Spec.ECIES.list_label_key
+let const_label_key: x:ilbuffer size_t (size Spec.ECIES.size_label_key){witnessed x Spec.ECIES.label_key /\ recallable x} =
+  createL_global Spec.ECIES.label_key_list
 
 
 
@@ -85,22 +86,22 @@ let encap output kpub context =
   push_frame ();
   let flag = sub output (size 0) (size 1) in
   let key = sub output (size 1) size_key in
-  let eph_kpub = sub output (1ul +. size_key) size_key_public in
-  let eph_kpriv = sub output (1ul +. size_key +. size_key_public) size_key_private in
+  let eph_kpub = sub output (1ul +. size_key) size_key_dh in
+  let eph_kpriv = sub output (1ul +. size_key +. size_key_dh) size_key_dh in
   let extracted = create size_key (u8 0) in
   let secret = create size_key (u8 0) in
-  let salt = create (2ul *. size_key_public) (u8 0) in
+  let salt = create (2ul *. size_key_dh) (u8 0) in
   let info = create size_info (u8 0) in
-  let res0 = crypto_random eph_kpriv size_key_private in
-  let res1 = secret_to_public eph_kpub eph_kpriv in
-  let res2 = DH.dh secret eph_kpriv kpub in
-  update_sub salt (size 0) size_key_public eph_kpub;
-  update_sub salt size_key_public size_key_public kpub;
-  HKDF.extract extracted salt (2ul *. size_key_public) secret size_secret;
+  let res0 = crypto_random eph_kpriv size_key_dh in
+  Hacl.Curve25519_64.ecdh res1 eph_kpub eph_kpriv;
+  Hacl.Curve25519_64.ecdh res2 secret eph_kpriv kpub;
+  update_sub salt (size 0) size_key_dh eph_kpub;
+  update_sub salt size_key_dh size_key_dh kpub;
+  Hacl.HKDF_SHA2_256.hkdf_extract extracted salt (2ul *. size_key_dh) secret size_key;
   info.(0ul) <- id_of_ciphersuite;
-  update_sub info (size 1) size_label_key const_label_key;
-  update_sub info size_label_key size_context context;
-  HKDF.expand key extracted size_secret info size_info size_key;
+  update_sub info (size 1) Spec.ECIES.size_label_key const_label_key;
+  update_sub info Spec.ECIES.size_label_key size_context context;
+  Hacl.HKDF_SHA2_256.hkdf_expand key extracted size_key info size_info size_key;
   if res0 && res1 && res2 then output.(0ul) <- (u8 0) else output.(0ul) <- (u8 1);
   pop_frame ()
 
@@ -171,7 +172,7 @@ val encrypt:
                  /\ disjoint output sk /\ disjoint output input /\ disjoint output aad))
   (ensures  (fun h0 _ h1 -> modifies1 output h0 h1))
 
-let encrypt output sk input len aad alen counter =
-  push_frame();
-  let ctr8 = create (numbytes U32) (u8 0) in
-  let key = sub sk (size 0) size_
+let encrypt output sk input len aad alen counter = admit()
+  (* push_frame(); *)
+  (* let ctr8 = create (numbytes U32) (u8 0) in *)
+  (* let key = sub sk (size 0) size_ *)
