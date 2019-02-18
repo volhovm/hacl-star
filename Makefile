@@ -194,7 +194,7 @@ endif
 ####################################################
 
 # Transforms any foo/bar/baz.qux into obj/baz.qux
-to-obj-dir = $(addprefix obj/,$(notdir $1))
+to-obj-dir = $(addprefix $(HACL_HOME)/obj/,$(notdir $1))
 
 # The set of .vaf files we want to translate to F*.
 VALE_ROOTS = $(wildcard $(addsuffix /*.vaf,$(VALE_DIRS)))
@@ -208,7 +208,7 @@ VALE_FSTS = $(call to-obj-dir,$(VAF_AS_FSTS))
 # The complete set of F* files, both hand-written and Vale-generated. Note that
 # this is only correct in the second stage of the build.
 FSTAR_ROOTS = $(wildcard $(addsuffix /*.fsti,$(DIRS)) $(addsuffix /*.fst,$(DIRS))) \
-  $(wildcard obj/*.fst) $(wildcard obj/*.fsti) # these two empty during the first stage
+  $(wildcard $(HACL_HOME)/obj/*.fst) $(wildcard $(HACL_HOME)/obj/*.fsti) # these two empty during the first stage
 
 # Convenience target. Remember to run make vale-fst first.
 verify: $(addsuffix .checked,$(FSTAR_ROOTS))
@@ -291,7 +291,7 @@ endif
 # Always pass Operator.vaf as an -include to Vale, except for the file itself.
 VALE_FLAGS = -include $(HACL_HOME)/vale/code/lib/util/Operator.vaf
 
-obj/Operator.fst: VALE_FLAGS=
+$(HACL_HOME)/obj/Operator.fst: VALE_FLAGS=
 
 %.fst:
 	$(call run-with-log,\
@@ -355,45 +355,45 @@ $(addsuffix .checked,$(VALE_FSTS)): \
   FSTAR_FLAGS=$(VALE_FSTAR_FLAGS) --use_two_phase_tc false
 
 # Then a series of individual overrides.
-obj/Interop.fst.checked: \
+$(HACL_HOME)/obj/Interop.fst.checked: \
   FSTAR_FLAGS=$(shell echo $(VALE_FSTAR_FLAGS_NOSMT) | \
     sed 's/--use_extracted_interfaces true//; \
       s/--z3cliopt smt.QI.EAGER_THRESHOLD=100//') \
       --smtencoding.elim_box true
 
-obj/BufferViewHelpers.fst.checked: \
+$(HACL_HOME)/obj/BufferViewHelpers.fst.checked: \
   FSTAR_FLAGS=$(shell echo $(VALE_FSTAR_FLAGS_NOSMT) | \
     sed 's/--z3cliopt smt.arith.nl=false//;')
 
-obj/Views.fst.checked: \
+$(HACL_HOME)/obj/Views.fst.checked: \
   FSTAR_FLAGS=$(shell echo $(VALE_FSTAR_FLAGS) | \
     sed 's/--smtencoding.nl_arith_repr wrapped/--smtencoding.nl_arith_repr native/;')
 
-objections/Collections.Lists.fst.checked: \
+$(HACL_HOME)/objections/Collections.Lists.fst.checked: \
   FSTAR_FLAGS=$(shell echo $(VALE_FSTAR_FLAGS) | \
     sed 's/--z3cliopt smt.QI.EAGER_THRESHOLD=100//')
 
-obj/X64.Bytes_Semantics.fst.checked: \
+$(HACL_HOME)/obj/X64.Bytes_Semantics.fst.checked: \
   FSTAR_FLAGS=$(shell echo $(VALE_FSTAR_FLAGS) | \
     sed 's/--smtencoding.nl_arith_repr wrapped//; \
       s/--smtencoding.nl_arith_repr native//')
 
-obj/X64.BufferViewStore.fst.checked: \
+$(HACL_HOME)/obj/X64.BufferViewStore.fst.checked: \
   FSTAR_FLAGS=$(VALE_FSTAR_FLAGS_NOSMT) --smtencoding.elim_box true
 
-obj/X64.Poly1305.Util.fst.checked: \
+$(HACL_HOME)/obj/X64.Poly1305.Util.fst.checked: \
   FSTAR_FLAGS=$(VALE_FSTAR_FLAGS_NOSMT)
 
-obj/X64.Poly1305.Util.fsti.checked: \
+$(HACL_HOME)/obj/X64.Poly1305.Util.fsti.checked: \
   FSTAR_FLAGS=$(VALE_FSTAR_FLAGS_NOSMT)
 
-obj/X64.Memory.fst.checked: \
+$(HACL_HOME)/obj/X64.Memory.fst.checked: \
   FSTAR_FLAGS=$(shell echo $(VALE_FSTAR_FLAGS_NOSMT) | \
     sed 's/--use_extracted_interfaces true//; \
       s/--z3cliopt smt.arith.nl=false//') \
       --smtencoding.elim_box true
 
-obj/X64.Memory_Sems.fst.checked: \
+$(HACL_HOME)/obj/X64.Memory_Sems.fst.checked: \
   FSTAR_FLAGS=$(shell echo $(VALE_FSTAR_FLAGS_NOSMT) | \
     sed 's/--use_extracted_interfaces true//; \
       s/--z3cliopt smt.arith.nl=false//') \
@@ -435,7 +435,7 @@ ifneq (,$(MIN_TEST))
 min-test_: $(call only-for, $(addprefix $(HACL_HOME)/vale/,\
   code/arch/% code/lib/% code/crypto/poly1305/% \
   code/thirdPartyPorts/OpenSSL/poly1305/% specs/%)) \
-  obj/Hacl.Hash.MD.fst.checked
+  $(HACL_HOME)/obj/Hacl.Hash.MD.fst.checked
 	@echo $(FSTAR_ROOTS)
 	@echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"
 	@echo $(filter $(addprefix $(HACL_HOME)/vale/,\
@@ -447,7 +447,7 @@ min-test_: $(call only-for, $(addprefix $(HACL_HOME)/vale/,\
 	@echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"
 
 $(call only-for,$(HACL_HOME)/vale/code/arch/x64/interop/%) \
-obj/X64.Vale.InsSha.fst.checked: \
+$(HACL_HOME)/obj/X64.Vale.InsSha.fst.checked: \
   FSTAR_FLAGS=--admit_smt_queries true
 endif
 
@@ -472,13 +472,13 @@ endif
 # Warning 26: unused variable
 OCAMLOPT = ocamlfind opt -package fstarlib -linkpkg -g -I obj -w -8-20-26
 
-.PRECIOUS: obj/%.cmx
-obj/%.cmx: obj/%.ml
+.PRECIOUS: $(HACL_HOME)/obj/%.cmx
+$(HACL_HOME)/obj/%.cmx: $(HACL_HOME)/obj/%.ml
 	$(call run-with-log,\
 	  $(OCAMLOPT) -c $< -o $@ \
 	  ,[OCAMLOPT-CMX] $(notdir $*),$(call to-obj-dir,$@))
 
-obj/%.ml:
+$(HACL_HOME)/obj/%.ml:
 	$(call run-with-log,\
 	  $(FSTAR) $(notdir $(subst .checked,,$<)) --codegen OCaml \
 	    --extract_module $(subst .fst.checked,,$(notdir $<)) \
@@ -487,33 +487,33 @@ obj/%.ml:
 dist/vale:
 	mkdir -p $@
 
-dist/vale/%-x86_64-mingw.S: obj/vale-%.exe | dist/vale
+dist/vale/%-x86_64-mingw.S: $(HACL_HOME)/obj/vale-%.exe | dist/vale
 	$< GCC Win > $@
 	$(SED) 's/_stdcall//' -i $@
 
-dist/vale/%-x86_64-msvc.asm: obj/vale-%.exe | dist/vale
+dist/vale/%-x86_64-msvc.asm: $(HACL_HOME)/obj/vale-%.exe | dist/vale
 	$< MASM Win > $@
 	$(SED) 's/_stdcall//' -i $@
 
-dist/vale/%-x86_64-linux.S: obj/vale-%.exe | dist/vale
+dist/vale/%-x86_64-linux.S: $(HACL_HOME)/obj/vale-%.exe | dist/vale
 	$< GCC Linux > $@
 	$(SED) 's/_stdcall//' -i $@
 
-dist/vale/%-x86_64-darwin.S: obj/vale-%.exe | dist/vale
+dist/vale/%-x86_64-darwin.S: $(HACL_HOME)/obj/vale-%.exe | dist/vale
 	$< GCC MacOS > $@
 	$(SED) 's/_stdcall//' -i $@
 
-obj/vale-cpuid.exe: vale/code/lib/util/x64/CpuidMain.ml
-obj/vale-aesgcm.exe: vale/code/crypto/aes/x64/Main.ml
-obj/vale-sha256.exe: vale/code/crypto/sha/ShaMain.ml
-obj/vale-curve25519.exe: vale/code/crypto/ecc/curve25519/Main25519.ml
+$(HACL_HOME)/obj/vale-cpuid.exe: vale/code/lib/util/x64/CpuidMain.ml
+$(HACL_HOME)/obj/vale-aesgcm.exe: vale/code/crypto/aes/x64/Main.ml
+$(HACL_HOME)/obj/vale-sha256.exe: vale/code/crypto/sha/ShaMain.ml
+$(HACL_HOME)/obj/vale-curve25519.exe: vale/code/crypto/ecc/curve25519/Main25519.ml
 
-obj/CmdLineParser.ml: vale/code/lib/util/CmdLineParser.ml
+$(HACL_HOME)/obj/CmdLineParser.ml: vale/code/lib/util/CmdLineParser.ml
 	cp $< $@
 
-obj/CmdLineParser.cmx: $(ALL_CMX_FILES)
+$(HACL_HOME)/obj/CmdLineParser.cmx: $(ALL_CMX_FILES)
 
-obj/vale-%.exe: $(ALL_CMX_FILES) obj/CmdLineParser.cmx
+$(HACL_HOME)/obj/vale-%.exe: $(ALL_CMX_FILES) $(HACL_HOME)/obj/CmdLineParser.cmx
 	$(call run-with-log,\
 	  $(OCAMLOPT) $^ -o $@ \
 	  ,[OCAMLOPT-EXE] $(notdir $*),$@)
@@ -535,7 +535,7 @@ vale-asm: $(VALE_ASMS)
 
 .PRECIOUS: %.krml
 
-obj/%.krml:
+$(HACL_HOME)/obj/%.krml:
 	$(call run-with-log,\
 	  $(FSTAR) --codegen Kremlin \
 	    --extract_module $(basename $(notdir $(subst .checked,,$<))) \
