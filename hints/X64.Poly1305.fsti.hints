@@ -16,7 +16,7 @@
         "unit_typing"
       ],
       0,
-      "c2cc61eaab79a0ca039135a562514b6a"
+      "3c9269fa3a7d7842e7faccd46bcfb775"
     ],
     [
       "X64.Poly1305.va_ens_poly1305",
@@ -34,7 +34,7 @@
         "unit_typing"
       ],
       0,
-      "2363f073e35685b61a610e3b2379ffa2"
+      "2c96ead4cf6d0b428b2f9d8dbe3e48f4"
     ],
     [
       "X64.Poly1305.va_lemma_poly1305",
@@ -61,7 +61,7 @@
         "typing_tok_X64.Machine_s.Rdi@tok"
       ],
       0,
-      "d33c75735be13bda8509180d8e5b1c0a"
+      "c34fd015d4fd1368d898501067842289"
     ],
     [
       "X64.Poly1305.va_wp_poly1305",
@@ -82,7 +82,7 @@
         "typing_X64.Vale.Decls.va_if", "unit_typing"
       ],
       0,
-      "0f34efd79f3b8502fa9675a91032ff8f"
+      "b3f8678151954535e4aa2cc6ea8199dd"
     ],
     [
       "X64.Poly1305.va_wpProof_poly1305",
@@ -94,7 +94,7 @@
         "refinement_interpretation_Tm_refine_8d65e998a07dd53ec478e27017d9dba5"
       ],
       0,
-      "6d211bd8e1844ebaf3b5e92f29ba60e1"
+      "725263a3055ad88f87b00ae6086329f2"
     ]
   ]
 ]
