@@ -22,6 +22,7 @@ test/hash/sha256
 test/hmac/ml/*
 test/hmac/hmac_sha256
 test/bench.txt
+test/test-vectors/generated/*
 
 pneutube/tube-star.exe
 pneutube/tube-star.exe.dSYM/

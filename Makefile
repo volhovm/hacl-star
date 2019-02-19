@@ -1,231 +1,141 @@
-#
-# Main HACL* Makefile
-#
+print-%: ; @echo $* is $($*)
 
-.PHONY: display verify test providers clean dependencies
+# ROOTS = $(wildcard $(addsuffix /*.fsti,$(DIRS)) $(addsuffix /*.fst,$(DIRS)))
 
-all: display
+test: test-c test-ml
+test-c: test-c-Hacl_Test_SHA3 test-c-Hacl_Test_CSHAKE
+test-ml: $(subst .,_,$(patsubst %.fst,test-ml-%,$(notdir $(wildcard specs/tests/*.fst))))
 
-display:
-	@echo "HACL* Makefile:"
-	@echo "If you want to run and test the C library:"
-	@echo "- 'make build' will use CMake to generate static and shared libraries for snapshots/hacl-c (no verification)"
-	@echo "- 'make build-make' will use Makefiles to do the same thing (no verification)"
-	@echo "- 'make unit-tests' will run tests on the library built from the hacl-c snapshot (no verification)"
-	@echo "- 'make clean-build' will clean 'build' artifacts"
-	@echo ""
-	@echo "If you want to verify the F* code and regenerate the C library:"
-	@echo "- 'make prepare' will try to install F* and Kremlin (still has some prerequisites)"
-	@echo "- 'make verify' will run F* verification on all specs, code and secure-api directories"
-	@echo "- 'make extract' will generate all the C code into a snapshot and test it (no verification)"
-	@echo "- 'make test-all' will generate and test everything (no verification)"
-	@echo "- 'make world' will run everything (except make prepare)"
-	@echo "- 'make clean' will remove all artifacts created by other targets"
-	@echo ""
-	@echo "Specialized targets for Experts:"
-	@echo "- 'make verify-ct' will run F* verification of the code for the secret independance"
-	@echo "- 'make verify-specs' will run F* verification on the specifications"
-	@echo "- 'make verify-code' will run F* verification on the code against the specification"
-	@echo "- 'make verify-secure_api' will run F* verification of the secure_api directory"
-	@echo "- 'make extract-specs' will generate OCaml code for the specifications"
-	@echo "- 'make extract-all' will give you all versions of the C snapshots available"
-	@echo "- 'make extract-production' will remove and regenerate all C production snapshots available"
-	@echo "- 'make extract-experimental' will generate C code for experimental primitives"
-	@echo "- 'make build-experimental' will use CMake to generate experimental libraries with experimental features (no verification)"
+ROOTS = ./code/sha3/Hacl.Test.SHA3.fst \
+    ./code/sha3/Hacl.Test.CSHAKE.fst \
+	./specs/tests/Spec.SHA3.Test.fst \
+    ./lib/Lib.PrintBuffer.fsti \
+    ./lib/Lib.RandomBuffer.fsti \
+    # ./code/experimental/curve25519/Hacl.Curve25519_51.fst
 
 
-#
-# Includes
-#
-ifneq ($(FSTAR_HOME),)
-include Makefile.include
+include Makefile.common
+
+ifndef MAKE_RESTARTS
+.depend: .FORCE
+	@$(FSTAR_NO_FLAGS) --dep full $(ROOTS) > $@
+.PHONY: .FORCE
+.FORCE:
 endif
 
-include Makefile.build
-include Makefile.prepare
+include .depend
+
+SPEC_FILES          = $(addprefix $(HACL_HOME)/specs/Spec., SHA3.fst)
+SPEC_CHECKED_FILES	= $(addsuffix .checked, $(SPEC_FILES))
+
+%.checked:
+	$(FSTAR) $< && \
+	touch $@
+
+.PRECIOUS: %.krml
+
+$(OUTPUT_DIR)/%.krml:
+	$(FSTAR) --codegen Kremlin \
+	  --extract_module $(basename $(notdir $(subst .checked,,$<))) \
+	  $(notdir $(subst .checked,,$<)) && \
+	touch $@
+
+COMPACT_FLAGS=-bundle Hacl.Impl.SHA3+Hacl.SHA3=[rename=Hacl_SHA3] \
+   -bundle Prims \
+   -bundle LowStar.* \
+   -bundle C,C.String,C.Loops,Spec.Loops,C.Endianness,FStar.*[rename=Hacl_Kremlib] \
+   -bundle 'Test.*,WindowsHack' \
+   -minimal \
+   -add-include '"kremlin/internal/types.h"' \
+   -add-include '"kremlin/internal/target.h"' \
+   -add-include '"kremlin/c_endianness.h"' \
+   -add-include '<string.h>' \
+   -fno-shadow -fcurly-braces
+
+ HAND_WRITTEN_C	= Lib.PrintBuffer Lib.RandomBuffer
+ HAND_WRITTEN_FILES = $(wildcard $(LIB_DIR)/c/*.c)
+ DEFAULT_FLAGS	= $(addprefix -library ,$(HAND_WRITTEN_C)) \
+   -bundle Lib.*[rename=Hacl_Lib] -bundle Hacl.Test.*
+
+dist/compact/Makefile.basic: EXTRA=$(COMPACT_FLAGS)
+
+.PRECIOUS: dist/compact/Makefile.basic
+dist/%/Makefile.basic: $(ALL_KRML_FILES) dist/headers/Makefile.basic $(HAND_WRITTEN_FILES) # | old-extract-c
+	mkdir -p $(dir $@)
+	cp $(HAND_WRITTEN_FILES) dist/headers/*.h $(dir $@)
+	$(KRML) $(DEFAULT_FLAGS) $(EXTRA) \
+	  -tmpdir $(dir $@) -skip-compilation \
+	  -bundle Spec.*[rename=Hacl_Spec] $(filter %.krml,$^) \
+	  -ccopt -Wno-unused \
+	  -warn-error @4 \
+	  -fparentheses \
+	  $(notdir $(HAND_WRITTEN_FILES)) \
+	  -o libhacl.a
 
 
-#
-# Verification
-#
+# Auto-generates headers for the hand-written C files. If a signature changes on
+# the F* side, hopefully this will ensure the C file breaks. Note that there's
+# no conflict between the headers because this generates
+# Lib_Foobar while the run above generates a single Hacl_Lib.
+dist/headers/Makefile.basic: $(ALL_KRML_FILES)
+	$(KRML) \
+	  -tmpdir $(dir $@) -skip-compilation \
+	  $(patsubst %,-bundle %=,$(HAND_WRITTEN_C)) \
+	  $(patsubst %,-library %,$(HAND_WRITTEN_C)) \
+	  -minimal -add-include '"kremlib.h"' \
+	  -bundle '\*,WindowsBug' $^
 
-.verify-banner:
-	@echo $(CYAN)"# Verification of the HACL*"$(NORMAL)
+# Auto-generates a single C test file.
+.PRECIOUS: dist/test/c/%.c
+dist/test/c/%.c: $(ALL_KRML_FILES)
+	$(KRML) \
+	  -tmpdir $(dir $@) -skip-compilation \
+	  -no-prefix $(subst _,.,$*) \
+	  -library Hacl,Lib \
+	  -fparentheses -fcurly-braces -fno-shadow \
+	  -minimal -add-include '"kremlib.h"' \
+	  -bundle '*[rename=$*]' $^
 
-verify-ct:
-	$(MAKE) -C code ct
-
-verify-specs: specs.dir-verify
-verify-code: code.dir-verify
-verify-secure_api: secure_api.dir-verify
-
-
-verify: .verify-banner verify-ct verify-specs verify-code verify-secure_api
-	@echo $(CYAN)"\nDone ! Please check the verification output"$(NORMAL)
-
-verify-nss:
-	@echo $(CYAN)"# Verification of the HACL* algorithms used by NSS"$(NORMAL)
-	# Verify spec, code and ct
-	$(MAKE) ct -C code/curve25519
-	$(MAKE) verify -C code/curve25519
-	$(MAKE) Spec.Curve25519.fst-verify -C specs
-	$(MAKE) ct -C code/salsa-family
-	$(MAKE) verify -C code/salsa-family
-	$(MAKE) Spec.Chacha20.fst-verify -C specs
-	$(MAKE) ct -C code/poly1305
-	$(MAKE) verify -C code/poly1305
-	$(MAKE) Spec.Poly1305.fst-verify -C specs
-	$(MAKE) ct -C code/poly1305_32
-	$(MAKE) verify -C code/poly1305_32
+compile-%: dist/%/Makefile.basic
+	$(MAKE) -C $(dir $<) -f $(notdir $<)
 
 
-#
-# Code generation
-#
+# C tests
+.PRECIOUS: dist/test/c/%.exe
+dist/test/c/%.exe: dist/test/c/%.c compile-generic
+	# Linking with full kremlib since tests may use TestLib, etc.
+	$(CC) -Wall -Wextra -Werror -Wno-unused-parameter $< -o $@ dist/generic/libhacl.a \
+	  -I $(dir $@) -I $(KREMLIN_HOME)/include \
+	  $(KREMLIN_HOME)/kremlib/dist/generic/libkremlib.a
 
-.extract-banner:
-	@echo $(CYAN)"# Generation of the HACL* verified C code"$(NORMAL)
-	@echo $(CYAN)" (This is not running formal verification)"$(NORMAL)
+test-c-%: dist/test/c/%.exe
+	$<
 
-extract: .extract-banner
-	$(MAKE) extract-production
-	@echo $(CYAN)"\nDone ! Generated code for HACL* can be found in 'snapshots/hacl-c'."$(NORMAL)
-	@echo $(CYAN)"Done ! Generated code for NSS can be found in 'snapshots/nss'."$(NORMAL)
+# Generated test vectors
+.PRECIOUS: dist/test/vectors/%.c
+dist/test/vectors/%.c: $(ALL_KRML_FILES)
+	mkdir -p $(dir $@)
+	cp $(HACL_HOME)/test/test-vectors/generated/c/$*.c $(dir $@)/
 
-extract-specs:
-	$(MAKE) -C specs
+.gen_tests:
+	$(MAKE) -C test/test-vectors .gen-tests
 
-extract-all:
-	$(MAKE) snapshots-intermediates
-	$(MAKE) snapshots-production
+.PRECIOUS: dist/test/vectors/%.exe
+dist/test/vectors/%.exe: dist/test/vectors/%.c compile-generic compile-test
+	$(CC) -Wall -Wextra -Werror -Wno-unused-parameter $< -o $@ dist/generic/libhacl.a \
+	  -I $(dir $@) -I dist/test -I $(KREMLIN_HOME)/include \
+	  $(KREMLIN_HOME)/kremlib/dist/generic/libkremlib.a
 
-extract-production:
-	$(MAKE) snapshots-remove-production
-	$(MAKE) snapshots-production
+test-vectors-%: dist/test/vectors/%.exe
+	$<
 
-extract-experimental: extract-c-code-experimental
+test-vectors: $(patsubst %.c,test-vectors-%,$(notdir $(wildcard test/test-vectors/generated/c/*.c)))
 
-#
-# Compilation of the library
-#
+clean-test:
+	rm -rf dist/test/vectors
+	rm -rf test/test-vectors/generated
+	rm -f test/test-vectors/.gen-tests
 
-.build-banner:
-	@echo $(CYAN)"# Compiling the HACL* library"$(NORMAL)
+clean: clean-test
+	rm -rf dist
 
-build-make:
-	$(MAKE) build/libhacl.so
-	$(MAKE) build/libhacl.a
-
-build-cmake:
-	mkdir -p build && cd build && cmake $(CMAKE_COMPILER_OPTION) .. && make
-
-build: clean-build
-	$(MAKE) build-cmake
-	@echo $(CYAN)"\nDone ! Generated libraries can be found in 'build'."$(NORMAL)
-
-#
-# Test specification and code
-#
-
-unit-tests:
-	@echo $(CYAN)"# Testing the HACL* shared library"$(NORMAL)
-	$(MAKE) -C snapshots/hacl-c unit-tests
-
-test-all:
-	@echo $(CYAN)"# Testing the HACL* code and specifications"$(NORMAL)
-	$(MAKE) -C test
-
-#
-# Providers
-#
-
-providers:
-	@echo $(CYAN)"# Verifying, Extracting and Testing the Providers"$(NORMAL)
-	$(MAKE) extract-c-code
-	$(MAKE) -C providers
-
-#
-# CI
-#
-
-CC = $(GCC)
-
-ci: .clean-banner .clean-git .clean-snapshots
-	$(MAKE) -C lib
-	$(MAKE) -C code/blake2 verify
-	$(MAKE) -C code/sha3
-	$(MAKE) -C frodo/spec
-	$(MAKE) -C frodo/code TARGET=
-	# $(MAKE) extract-specs
-	# $(MAKE) extract-all
-	# $(MAKE) -C code clean-c
-	# $(MAKE) -C code extract-c
-	# $(MAKE) -C providers/
-	# $(MAKE) -C providers/test
-	# $(MAKE) -C secure_api runtime_switch verify # test both extraction & verification
-	# $(MAKE) test-all
-	# $(MAKE) build-make
-	# $(MAKE) package
-
-#
-# Clean
-#
-
-.clean-banner:
-	@echo $(CYAN)"# Clean HACL*"$(NORMAL)
-
-.clean-git:
-	git reset HEAD --hard
-	git clean -xfd
-
-.clean-snapshots: snapshots-remove
-
-clean-base:
-	rm -rf *~ *.tar.gz *.zip
-	rm -rf snapshots/hacl-c/*.o
-	rm -rf snapshots/hacl-c/libhacl*
-
-clean-build:
-	rm -rf build
-	rm -rf build-experimental
-
-clean-package: clean-base clean-build
-
-clean: .clean-banner clean-base clean-build
-	$(MAKE) -C specs clean
-	$(MAKE) -C code clean
-	$(MAKE) -C secure_api clean
-	$(MAKE) -C apps clean
-	$(MAKE) -C test clean
-
-#
-# Packaging helper
-#
-
-.package-banner:
-	@echo $(CYAN)"# Packaging the HACL* generated code"$(NORMAL)
-	@echo $(CYAN)"  Make sure you have run verification before !"$(NORMAL)
-
-package: .package-banner
-	mkdir -p hacl
-	cp -r snapshots/hacl-c/* hacl
-	tar -zcvf hacl-star.tar.gz hacl
-	rm -rf hacl
-	@echo $(CYAN)"\nDone ! Generated archive is 'hacl-star.tar.gz'. !"$(NORMAL)
-
-#
-# Undocumented targets
-#
-
-build-experimental:
-	@echo $(CYAN)"# Compiling the HACL* library (with experimental features)"$(NORMAL)
-	mkdir -p build-experimental && cd build-experimental; \
-	cmake $(CMAKE_COMPILER_OPTION) -DExperimental=ON .. && make
-	@echo $(CYAN)"\nDone ! Generated libraries can be found in 'build-experimental'."$(NORMAL)
-
-hints: code.dir-hints secure_api.dir-hints specs.dir-hints
-
-
-# Colors
-NORMAL="\\033[0;39m"
-CYAN="\\033[1;36m"

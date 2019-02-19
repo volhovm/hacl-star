@@ -487,6 +487,7 @@ let lemma_carry_wide5_simplify inp c0 c1 c2 c3 c4 t0 t1 t2 t3 t4 =
     v t4 * pow51 * pow51 * pow51 * pow51)
    (v c4 * 19) prime
 
+#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0"
 val lemma_smul_felem5:
     #m1:scale64
   -> #m2:scale64_5

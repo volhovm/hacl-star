@@ -15,7 +15,7 @@ module P = NatPrime
 module S = Hacl.Spec.Curve25519.Field51.Definition
 module ST = FStar.HyperStack.ST
 
-#reset-options "--z3rlimit 20"
+#reset-options "--z3rlimit 200"
 
 let felem = lbuffer uint64 5ul
 let felem2 = lbuffer uint64 10ul
