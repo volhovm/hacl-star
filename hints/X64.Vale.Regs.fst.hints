@@ -19,7 +19,7 @@
         "fuel_guarded_inversion_X64.Machine_s.reg"
       ],
       0,
-      "9bf00852bdaff6af7c8d851f0376a645"
+      "1d63229180fc12372ff615027c60ff7c"
     ],
     [
       "X64.Vale.Regs.of_fun",
@@ -47,7 +47,7 @@
         "fuel_guarded_inversion_X64.Machine_s.reg"
       ],
       0,
-      "da798fb0f27edb7a005c9b242c0b58b2"
+      "34261880adff1bc218ed59035cdab7f6"
     ],
     [
       "X64.Vale.Regs.lemma_upd_eq",
@@ -75,7 +75,7 @@
         "typing_X64.Vale.Regs.reg_to_int"
       ],
       0,
-      "d80df7b058dd8ebd14afbc29e2b608cd"
+      "7816378e33e73ba7b9bc60f511d68506"
     ],
     [
       "X64.Vale.Regs.lemma_upd_ne",
@@ -104,7 +104,7 @@
         "typing_X64.Vale.Regs.reg_to_int"
       ],
       0,
-      "3abde5bfcb18bd73d20f7d8b2ff34ab4"
+      "3b18c9b242f8e9787fc11197136ad486"
     ],
     [
       "X64.Vale.Regs.lemma_equal_intro",
@@ -163,7 +163,7 @@
         "typing_tok_X64.Machine_s.Rsp@tok"
       ],
       0,
-      "b8fc155d3959cf1daef03647785f758a"
+      "3c962cbec9b5f7141c657037c6a4fc29"
     ],
     [
       "X64.Vale.Regs.lemma_equal_elim",
@@ -172,7 +172,7 @@
       0,
       [ "@query", "eq2-interp", "equation_X64.Vale.Regs.equal" ],
       0,
-      "4c050006c0caa625d0223f0b47629700"
+      "df143fbf4802033be437c84e44ead934"
     ],
     [
       "X64.Vale.Regs.lemma_eta",
@@ -201,7 +201,7 @@
         "lemma_X64.Vale.Regs.lemma_equal_elim", "typing_X64.Vale.Regs.eta"
       ],
       0,
-      "62bd394a0832a1dfb235eaaa6f3d7408"
+      "fedcd7af168221df24e068f90f91da24"
     ]
   ]
 ]

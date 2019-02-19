@@ -14,7 +14,7 @@
         "fuel_guarded_inversion_X64.Machine_s.maddr"
       ],
       0,
-      "7674ed789e8acb4f031f1c95b93fda12"
+      "e15f697e554d109ccd9f09a5373e8892"
     ],
     [
       "X64.Vale.State.to_nat64",
@@ -28,7 +28,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "fa876a5d3a7a4ba85d50b48e4f249ee4"
+      "626619df2e661c2aa633e59de46c5224"
     ],
     [
       "X64.Vale.State.eval_operand",
@@ -43,7 +43,7 @@
         "fuel_guarded_inversion_X64.Machine_s.operand"
       ],
       0,
-      "9534f75e433b15203ca17c1e67e80bbe"
+      "9482a3b74fc7d5b6aece1a56c786a708"
     ],
     [
       "X64.Vale.State.update_operand",
@@ -58,7 +58,7 @@
         "fuel_guarded_inversion_X64.Machine_s.operand"
       ],
       0,
-      "f29f58e705865500f923ee42d5ffc382"
+      "673518dc3d9d49ea0ff6eadeda8139ca"
     ],
     [
       "X64.Vale.State.valid_operand",
@@ -73,7 +73,7 @@
         "fuel_guarded_inversion_X64.Machine_s.operand"
       ],
       0,
-      "34dc43ab27901777301993d20903733d"
+      "9c35857cea484dee356d83f81e4b7b7c"
     ]
   ]
 ]
