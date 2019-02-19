@@ -131,7 +131,7 @@ let chacha20_encrypt_block (st0:state) (incr:counter) (b:block) : Tot block =
   
 let chacha20_encrypt_last
   (st0: state)
-  (incr: counter)
+ (incr: counter)
   (len: size_nat{len < size_block})
   (b: lbytes len) :
   Tot (lbytes len) =

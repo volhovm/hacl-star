@@ -183,7 +183,7 @@ let chacha20_update ctx len out text =
     (fun i -> chacha20_encrypt_last ctx rem (sub out (i *! 64ul) rem) i (sub text (i *! 64ul) rem));
   pop_frame()
 
-  inline_for_extraction
+inline_for_extraction
 val chacha20_encrypt: len:size_t -> out:lbuffer uint8 len -> text:lbuffer uint8 len -> key:lbuffer uint8 32ul -> n:lbuffer uint8 12ul -> ctr:size_t -> ST unit
 		  (requires (fun h -> live h key /\ live h n /\ live h text /\ live h out /\ eq_or_disjoint text out /\ v ctr + v len / 64 <= max_size_t ))
 		  (ensures (fun h0 _ h1 -> modifies (loc out) h0 h1 /\

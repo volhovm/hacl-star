@@ -400,6 +400,18 @@ let mapT #t #a #b clen out f inp =
     (fun h -> let in_seq = as_seq h inp in Seq.map_inner f in_seq)
     (fun i -> out.(i) <- f inp.(i))
 
+inline_for_extraction
+let map2T #t #a1 #a2 #b clen out f inp1 inp2 =
+  let h0 = ST.get () in
+  [@inline_let]
+  let spec (h:mem) = Seq.map2_inner #a1 #a2 #b #(v clen) f (as_seq h inp1) (as_seq h inp2) in
+  fill h0 clen out spec
+    (fun i ->
+      let h1 = ST.get () in
+      lemma_eq_disjoint #t clen clen out inp1 i h0 h1;
+      lemma_eq_disjoint #t clen clen out inp2 i h0 h1;
+      f inp1.(i) inp2.(i))
+
 let mapiT #t #a #b clen out f inp =
   let h0 = ST.get () in
   fill h0 clen out
@@ -411,3 +423,92 @@ let mapi #a #b h0 clen out spec_f f inp =
   fill h0 clen out
     (fun h -> let in_seq = as_seq h inp in Seq.mapi_inner (spec_f h0) in_seq)
     (fun i -> let xi = inp.(i) in out.(i) <- f i xi)
+
+#set-options "--z3rlimit 1000 --max_fuel 3"
+let map_blocks_multi #t #a h0 len blocksize inp output spec_f impl_f = 
+  let nb = len /. blocksize in
+  let h0 = ST.get() in
+  assert(Sequence.length (as_seq h0 inp) == v len);
+  assert(v len == v nb * v blocksize);
+  [@inline_let]
+  let a_spec = Sequence.fixed_a unit in
+  [@inline_let]
+  let refl h i = () in
+  [@inline_let]
+  let footprint (i:size_nat {i <= v  nb}) : GTot (l:B.loc{B.loc_disjoint l (loc output) /\
+    B.address_liveness_insensitive_locs `B.loc_includes` l}) = B.loc_none in
+  [@inline_let]
+  let spec h : GTot (i:size_nat{i < v nb} -> unit -> unit & Seq.lseq a (v blocksize)) = 
+    let iseq = as_seq h inp in
+    Sequence.map_blocks_inner (v blocksize) iseq (spec_f h) in
+  fill_blocks #a h0 blocksize nb output a_spec refl footprint spec impl_f;
+  let h1 = ST.get() in
+  assert (let s, o = Sequence.generate_blocks (v blocksize) (v nb) a_spec (spec h0) (refl h0 0) in as_seq h1 (gsub output 0ul (nb *! blocksize)) == o);
+  assert_norm (
+    Sequence.map_blocks_multi (v blocksize) (length inp / v blocksize) (as_seq h0 inp) (spec_f h0) ==
+    norm [delta] Sequence.map_blocks_multi (v blocksize) (length inp / v blocksize) (as_seq h0 inp) (spec_f h0));
+  admit()
+
+let map_blocks #t #a h0 len blocksize inp output spec_f spec_l impl_f impl_l =
+  let nb = len /. blocksize in
+  let rem = len %. blocksize in
+  let ob = sub output 0ul (nb *! blocksize) in
+  let h0 = ST.get() in
+  assert(Sequence.length (as_seq h0 inp) == v len);
+  assert(v len == v nb * v blocksize + v rem);
+  [@inline_let]
+  let a_spec = Sequence.fixed_a unit in
+  [@inline_let]
+  let refl h i = () in
+  [@inline_let]
+  let footprint (i:size_nat {i <= v  nb}) : GTot (l:B.loc{B.loc_disjoint l (loc ob) /\
+			       B.address_liveness_insensitive_locs `B.loc_includes` l}) = B.loc_none in
+  [@inline_let]
+  let spec h : GTot (i:size_nat{i < v nb} -> unit -> unit & Seq.lseq a (v blocksize)) =
+    let iseq = as_seq h inp in
+    Sequence.map_blocks_inner (v blocksize) iseq (spec_f h) in
+  fill_blocks #a h0 blocksize nb ob a_spec refl footprint spec impl_f;
+  let h1 = ST.get() in
+  assert (let s, o = Sequence.generate_blocks (v blocksize) (v nb) a_spec (spec h0) (refl h0 0) in as_seq h1 (gsub output 0ul (nb *! blocksize)) == o);
+  assert_norm (
+    Sequence.map_blocks (v blocksize) (as_seq h0 inp) (spec_f h0) (spec_l h0) ==
+    norm [delta] Sequence.map_blocks (v blocksize) (as_seq h0 inp) (spec_f h0) (spec_l h0));
+  if (rem >. 0ul) then (
+    impl_l nb;
+    let h2 = ST.get() in
+    FStar.Seq.lemma_split
+      (as_seq h2 output)
+      (v nb * v blocksize);
+    assert (modifies (loc output) h0 h2);
+    assert (as_seq h0 (gsub inp (nb *! blocksize) rem) == Seq.slice (as_seq h0 inp) (v nb * v blocksize) (v len));
+    assert (as_seq h2 output  == FStar.Seq.append (as_seq h1 (gsub output 0ul (nb *! blocksize))) (spec_l h0 (v nb) (v rem) (as_seq h0 (gsub inp (nb *! blocksize) rem))));
+    assert (if (v rem > 0) then
+        as_seq h2 output  == FStar.Seq.append (as_seq h1 (gsub output 0ul (nb *! blocksize))) (spec_l h0 (v nb) (v rem) (Seq.slice (as_seq h0 inp) (v nb * v blocksize) (v len))) else
+        as_seq h2 output  == as_seq h1 (gsub output 0ul (nb *! blocksize)));
+    assert (
+        as_seq h2 output  ==
+	(if (v rem > 0) then
+	    FStar.Seq.append (as_seq h1 (gsub output 0ul (nb *! blocksize))) (spec_l h0 (v nb) (v rem) (Seq.slice (as_seq h0 inp) (v nb * v blocksize) (v len))) else
+            as_seq h1 (gsub output 0ul (nb *! blocksize))));
+(*    assert_norm (
+	   Sequence.map_blocks (v blocksize) (Sequence.to_seq (as_seq h0 inp)) (spec_f h0) (spec_l h0) ==
+	     (let _,r = Sequence.generate_blocks blocksize (v nb) a_spec (spec h0) (refl h0 0) in
+	      if (v rem > 0) then
+	         FStar.Seq.append r (spec_l h0 (v nb) (v rem) (FStar.Seq.slice inp (v nb * v blocksize) (v len)))
+	      else r));
+*)	admit()
+  )
+  else (
+    let h2 = ST.get() in
+    assert (modifies (loc output) h0 h2);
+    assert (Seq.equal (as_seq h1 output) (as_seq h1 (gsub output 0ul (nb *! blocksize))));
+    assert (if (v rem > 0) then
+        as_seq h2 output  == FStar.Seq.append (as_seq h1 (gsub output 0ul (nb *! blocksize))) (spec_l h0 (v nb) (v rem) (Seq.slice (as_seq h0 inp) (v nb * v blocksize) (v len))) else
+        as_seq h2 output  == as_seq h1 (gsub output 0ul (nb *! blocksize)));
+    assert (
+        as_seq h2 output  ==
+	(if (v rem > 0) then
+	    FStar.Seq.append (as_seq h1 (gsub output 0ul (nb *! blocksize))) (spec_l h0 (v nb) (v rem) (Seq.slice (as_seq h0 inp) (v nb * v blocksize) (v len))) else
+            as_seq h1 (gsub output 0ul (nb *! blocksize))));
+	admit()
+  )
