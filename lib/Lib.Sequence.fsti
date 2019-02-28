@@ -97,7 +97,7 @@ val eq_elim: #a:Type -> #len:size_nat -> s1:lseq a len -> s2:lseq a len ->
   [SMTPat (equal s1 s2)]
 
 (* Alias for creation from a list *)
-unfold let createL #a l = of_list #a l
+let createL #a l = of_list #a l
 
 (** Updating an element of a fixed-length Sequence *)
 val upd:
@@ -257,6 +257,15 @@ val for_all2:#a:Type -> #b:Type -> #len:size_nat
   -> s2:lseq b len ->
   Tot bool
 
+(* The following functions allow us to bridge between unbounded and bounded sequences *)
+val map_blocks:
+    #a:Type0
+  -> blocksize:size_nat{blocksize > 0}
+  -> inp:seq a
+  -> f:(i:nat{i < length inp / blocksize} -> lseq a blocksize -> lseq a blocksize)
+  -> g:(i:nat{i <= length inp / blocksize} -> len:size_nat{len < blocksize} -> s:lseq a len -> lseq a len) ->
+  Tot (out:seq a {length out == length inp})
+
 val repeati_blocks:
     #a:Type0
   -> #b:Type0
@@ -334,8 +343,8 @@ val lemma_repeat_blocks_multi:
 val generate_blocks:
     #t:Type0
   -> len:size_nat
-  -> n:nat
+  -> n:nat{n * len <= max_size_t}
   -> a:(i:nat{i <= n} -> Type)
-  -> f:(i:nat{i < n} -> a i -> a (i + 1) & s:seq t{length s == len})
+  -> f:(i:nat{i < n} -> a i -> a (i + 1) & lseq t len)
   -> init:a 0 ->
-  Tot (a n & s:seq t{ length s == n * len})
+  Tot (a n & lseq t (n * len))

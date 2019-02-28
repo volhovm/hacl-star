@@ -61,7 +61,7 @@ let lemma_concat3 #a len0 s0 len1 s1 len2 s2 s =
   FStar.Seq.Properties.lemma_split s (len0 + len1);
   FStar.Seq.Properties.lemma_split s' (len0 + len1)
 
-let createi_a (a:Type) (len:size_nat) (init:(i:nat{i < len} -> a)) (k:nat{k <= len}) =
+let createi_a (a:Type) (len:size_nat) (init:(i:nat{i < len} -> a)) (k:nat{k <= len}) = 
   lseq a k
 
 let createi_pred (a:Type) (len:size_nat) (init:(i:nat{i < len} -> a)) (k:nat{k <= len})
@@ -145,7 +145,6 @@ let seq_update_sub #a s start n x =
   Seq.lemma_eq_intro (Seq.slice o start (start + n)) x;
   o
 
-(*
 let map_blocks #a bs inp f g =
   let len = length inp in
   let nb = len / bs in
@@ -160,8 +159,6 @@ let map_blocks #a bs inp f g =
   if rem > 0 then
     seq_update_sub out (nb * bs) rem (g nb rem (seq_sub inp (nb * bs) rem))
   else out
-
-*)
 
 val repeati_blocks_f:
     #a:Type0
@@ -186,6 +183,21 @@ let repeati_blocks #a #b bs inp f g init =
   let last = seq_sub inp (nb * bs) rem in
   g nb rem last acc
 
+val repeat_blocks_f:
+    #a:Type0
+  -> #b:Type0
+  -> bs:size_nat{bs > 0}
+  -> inp:seq a
+  -> f:(lseq a bs -> b -> b)
+  -> nb:nat{nb == length inp / bs}
+  -> i:nat{i < nb}
+  -> acc:b
+  -> b
+let repeat_blocks_f #a #b bs inp f nb i acc =
+  assert ((i+1) * bs <= nb * bs);
+  let block = seq_sub inp (i * bs) bs in
+  f block acc
+
 let repeat_blocks #a #b bs inp f l init =
   let len = length inp in
   let nb = len / bs in
@@ -203,14 +215,13 @@ let repeat_blocks_multi #a #b bs inp f init =
 
 let lemma_repeat_blocks_multi #a #b bs inp f init = ()
 
-let generate_blocks_a (t:Type) (blocklen:size_nat) (n:nat) (a:(i:nat{i <= n} -> Type)) (i:nat{i <= n}) = a i & s:seq t{length s == i * blocklen}
-
-let generate_blocks_inner (t:Type) (blocklen:size_nat) (n:nat) (a:(i:nat{i <= n} -> Type)) (f:(i:nat{i < n} -> a i -> a (i + 1) & s:seq t{length s == blocklen})) (i:nat{i < n}) (acc:generate_blocks_a t blocklen n a i) : generate_blocks_a t blocklen n a (i + 1) =
-    let acc, o = acc in
-    let acc', block = f i acc in
-    let o' : s:seq t{length s == ((i + 1) * blocklen)} = Seq.append o block in
-    acc', o'
-
 let generate_blocks #t len n a f acc0 =
-  let a0  = (acc0, (Seq.empty <: s:seq t{length s == 0 * len}))  in
-  repeat_gen n (generate_blocks_a t len n a) (generate_blocks_inner t len n a f) a0
+  let a' (i:nat{i <= n}) = a i & lseq t (i * len) in
+  let f' (i:nat{i < n}) (ao:a' i) =
+    let acc, o = ao <: a i & lseq t (i * len) in
+    let acc', block = f i acc in
+    let o' : lseq t ((i + 1) * len) = o @| block in
+    acc', o'
+  in
+  let acc0' : a 0 & lseq t (0 * len) = acc0, Seq.empty in
+  repeat_gen n a' f' acc0'
