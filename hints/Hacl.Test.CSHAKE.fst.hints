@@ -121,7 +121,7 @@
         "typing_tok_Lib.Buffer.IMMUT@tok", "typing_tok_Lib.Buffer.MUT@tok"
       ],
       0,
-      "b6e8a1bd3637c7ca9e55ecc24cdc39fb"
+      "36655491ffe96428391f2eed4035fcb2"
     ],
     [
       "Hacl.Test.CSHAKE.u8",
@@ -142,7 +142,7 @@
         "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U8@tok"
       ],
       0,
-      "22114b17d9b640682528b953a05a3978"
+      "5ea408152a3360f6c8967ead29f55a32"
     ],
     [
       "Hacl.Test.CSHAKE.test1_plaintext",
@@ -197,7 +197,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "e83499f87e3f467f76c5f6ed740d51a7"
+      "86701e26962cf89f0b5e28a76c6d607c"
     ],
     [
       "Hacl.Test.CSHAKE.test1_expected",
@@ -263,7 +263,7 @@
         "typing_LowStar.ImmutableBuffer.immutable_preorder"
       ],
       0,
-      "23660fa63191c8aa3b1642ff0c0709ae"
+      "69fa0d998ec4dfe87403b374c823cc9b"
     ],
     [
       "Hacl.Test.CSHAKE.main",
@@ -320,7 +320,7 @@
         "typing_tok_C.EXIT_SUCCESS@tok"
       ],
       0,
-      "e40fe0a6626920ebf14e66c66755f490"
+      "2656b2d7037deb874077589981b815f6"
     ]
   ]
 ]

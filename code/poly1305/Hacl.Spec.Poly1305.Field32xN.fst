@@ -53,7 +53,7 @@ let ( <=* ) (x:nat5) (y:nat5) : Type =
   (x5 <= y5)
 
 assume val pow26: nat
-inline_for_extraction
+inline_for_extraction noextract
 let max26 = pow26 - 1
 
 assume val lemma_pow_32_26: _:unit{pow2 32 == 64 * pow26}
@@ -87,19 +87,19 @@ let as_pfelem5 (f:tup64_5) : pfelem =
 
 
 let lanes = w:width{w == 1 \/ w == 2 \/ w == 4}
-inline_for_extraction
+inline_for_extraction noextract
 let uint64xN (w:lanes) = vec_t U64 w
 
-inline_for_extraction
+inline_for_extraction noextract
 let zero (w:lanes) = vec_zero U64 w
-inline_for_extraction
+inline_for_extraction noextract
 let mask26 (w:lanes) = vec_load (u64 0x3ffffff) w
-inline_for_extraction
+inline_for_extraction noextract
 let mask14 (w:lanes) = vec_load (u64 0x3fff) w
 
-inline_for_extraction
+inline_for_extraction noextract
 let felem5 (w:lanes) = (uint64xN w & uint64xN w & uint64xN w & uint64xN w & uint64xN w)
-inline_for_extraction
+inline_for_extraction noextract
 let felem_wide5 (w:lanes) = felem5 w
 
 let felem_fits1 (#w:lanes) (x:uint64xN w) (m:scale32) =
@@ -445,7 +445,7 @@ let fmul_r2_normalize5 (a0, a1, a2, a3, a4) (r0, r1, r2, r3, r4) (r20, r21, r22,
   let o4 = vec_add_mod o4 (vec_interleave_high o4 o4) in
   carry_full_felem5 (o0, o1, o2, o3, o4)
 
-inline_for_extraction
+inline_for_extraction noextract
 val fmul_r4_normalize5:
     acc:felem5 4
   -> r:felem5 4

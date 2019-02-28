@@ -12,7 +12,7 @@
         "refinement_interpretation_Tm_refine_e36e7fa194162fb94cb448be97de0361"
       ],
       0,
-      "50b4332b49795a2d9da3fd246ad3ed2f"
+      "f5d47205fea59c55f156e27684066a5e"
     ],
     [
       "EverCrypt.Poly1305.poly1305",
@@ -21,7 +21,7 @@
       0,
       [ "@query" ],
       0,
-      "12b9ab2ca75cf21e113419490a042f16"
+      "f5ea6c5ed43ce2e8d127545c9467709c"
     ],
     [
       "EverCrypt.Poly1305.poly1305",
@@ -34,7 +34,7 @@
         "refinement_interpretation_Tm_refine_e36e7fa194162fb94cb448be97de0361"
       ],
       0,
-      "dd49dd2c69ffbb350132fe969bddf4cb"
+      "8751c6ad8e0dc02a023109aea7215f31"
     ]
   ]
 ]

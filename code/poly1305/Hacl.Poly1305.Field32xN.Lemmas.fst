@@ -1266,7 +1266,7 @@ let lemma_subtract_p5 f f' =
   then lemma_subtract_p5_0 f f'
   else lemma_subtract_p5_1 f f'
 
-inline_for_extraction
+inline_for_extraction noextract
 val subtract_p5_s:
     #w:lanes
   -> f:felem5 w{felem_fits5 f (1, 1, 1, 1, 1)}

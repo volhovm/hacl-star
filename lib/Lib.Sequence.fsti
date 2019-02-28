@@ -276,19 +276,16 @@ val repeati_blocks:
   -> init:b ->
   Tot b
 
-let repeat_blocks_f
-  (#a:Type0)
-  (#b:Type0)
-  (bs:size_nat{bs > 0})
-  (inp:seq a)
-  (f:(lseq a bs -> b -> b))
-  (nb:nat{nb == length inp / bs})
-  (i:nat{i < nb})
-  (acc:b) : b
- =
-  assert ((i+1) * bs <= nb * bs);
-  let block = Seq.slice inp (i * bs) (i * bs + bs) in
-  f block acc
+val repeat_blocks_f:
+    #a:Type0
+  -> #b:Type0
+  -> bs:size_nat{bs > 0}
+  -> inp:seq a
+  -> f:(lseq a bs -> b -> b)
+  -> nb:nat{nb == length inp / bs}
+  -> i:nat{i < nb}
+  -> acc:b
+  -> b
 
 val repeat_blocks:
     #a:Type0
@@ -348,3 +345,13 @@ val generate_blocks:
   -> f:(i:nat{i < n} -> a i -> a (i + 1) & lseq t len)
   -> init:a 0 ->
   Tot (a n & lseq t (n * len))
+
+(* The following functions allow us to bridge between unbounded and bounded sequences *)
+val map_blocks_multi:
+    #a:Type0
+  -> blocksize:size_nat{blocksize > 0}
+  -> n:size_nat{n > 0}
+  -> inp:seq a{length inp == n * blocksize}
+  -> f:(i:nat{i < length inp / blocksize} -> lseq a blocksize -> lseq a blocksize) ->
+  Tot (out:seq a {length out == length inp})
+

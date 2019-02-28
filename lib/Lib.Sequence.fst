@@ -183,16 +183,6 @@ let repeati_blocks #a #b bs inp f g init =
   let last = seq_sub inp (nb * bs) rem in
   g nb rem last acc
 
-val repeat_blocks_f:
-    #a:Type0
-  -> #b:Type0
-  -> bs:size_nat{bs > 0}
-  -> inp:seq a
-  -> f:(lseq a bs -> b -> b)
-  -> nb:nat{nb == length inp / bs}
-  -> i:nat{i < nb}
-  -> acc:b
-  -> b
 let repeat_blocks_f #a #b bs inp f nb i acc =
   assert ((i+1) * bs <= nb * bs);
   let block = seq_sub inp (i * bs) bs in
@@ -225,3 +215,18 @@ let generate_blocks #t len n a f acc0 =
   in
   let acc0' : a 0 & lseq t (0 * len) = acc0, Seq.empty in
   repeat_gen n a' f' acc0'
+
+
+(* Are these legacy? *)
+let fixed_a a i = a
+let map_blocks_inner #a (bs:size_nat{bs > 0}) (inp:seq a) (f:(i:nat{i < length inp / bs} -> lseq a bs -> lseq a bs)) (i:nat{i < length inp / bs}) () =
+  (), f i (Seq.slice inp (i*bs) ((i+1)*bs))
+#set-options "--z3rlimit 200 --max_ifuel 2"
+
+let map_blocks_multi #a blocksize nb inp f =
+  assert (length inp == nb * blocksize);
+  assert (length inp / blocksize == nb * blocksize / blocksize);
+  Math.Lemmas.multiple_division_lemma nb blocksize;
+  assert (length inp / blocksize == nb);
+  admit ();
+  snd (generate_blocks #a blocksize nb (fixed_a unit) (map_blocks_inner blocksize inp f) ())

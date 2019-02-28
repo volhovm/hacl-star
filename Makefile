@@ -656,6 +656,9 @@ old-%:
 	  KOPTS=-verbose $(MAKE) -C code/old -f Makefile.old $* \
 	  ,[OLD-MAKE $*],obj/old-$*)
 
+# Hacl_Chacha20 / AEAD_Poly1305_64 / Hacl_Chacha20Poly1305 go together.
+# Note: no symbol collision between Hacl_Chacha20 (old) and the new Hacl
+# Chacha20.
 HACL_OLD_FILES=\
   code/old/experimental/aesgcm/aesgcm-c/Hacl_AES.c \
   code/old/curve25519/x25519-c/Hacl_Curve25519.c \
