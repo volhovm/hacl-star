@@ -8,7 +8,7 @@ module U128 = FStar.UInt128
 module Cast = FStar.Int.Cast.Full
 module Constants = Spec.SHA2.Constants
 module Helpers = Spec.Hash.Definitions
-module Endianness = FStar.Kremlin.Endianness
+module Endianness = FStar.Endianness
 module Math = FStar.Math.Lemmas
 module Helpers = Spec.Hash.Definitions
 
@@ -37,24 +37,24 @@ val store_len: a:hash_alg -> len:len_t a -> b:B.buffer U8.t ->
     (ensures (fun h0 _ h1 ->
       M.(modifies (loc_buffer b) h0 h1) /\ (
       match a with
-      | MD5 -> B.as_seq h1 b == Endianness.n_to_le (len_len a) (len_v a len)
-      | _ -> B.as_seq h1 b == Endianness.n_to_be (len_len a) (len_v a len))))
+      | MD5 -> B.as_seq h1 b == Endianness.n_to_le (len_length a) (len_v a len)
+      | _ -> B.as_seq h1 b == Endianness.n_to_be (len_length a) (len_v a len))))
 
 inline_for_extraction
 let store_len a len b =
   match a with
   | MD5 ->
-      C.Endianness.store64_le b len;
+      LowStar.Endianness.store64_le b 0ul len;
       let h = ST.get () in
-      Endianness.n_to_le_le_to_n 8ul (B.as_seq h b)
+      Endianness.n_to_le_le_to_n 8 (B.as_seq h b)
   | SHA1 | SHA2_224 | SHA2_256 ->
-      C.Endianness.store64_be b len;
+      LowStar.Endianness.store64_be b 0ul len;
       let h = ST.get () in
-      Endianness.n_to_be_be_to_n 8ul (B.as_seq h b)
+      Endianness.n_to_be_be_to_n 8 (B.as_seq h b)
   | SHA2_384 | SHA2_512 ->
-      C.Endianness.store128_be b len;
+      LowStar.Endianness.store128_be b 0ul len;
       let h = ST.get () in
-      Endianness.n_to_be_be_to_n 16ul (B.as_seq h b)
+      Endianness.n_to_be_be_to_n 16 (B.as_seq h b)
 
 #set-options "--z3rlimit 20"
 
@@ -169,8 +169,8 @@ let pad_3 (a: hash_alg) (len: len_t a) (dst: B.buffer U8.t):
       B.(modifies (loc_buffer dst) h0 h1) /\
       S.equal (B.as_seq h1 dst)
         (match a with
-        | MD5 -> Endianness.n_to_le (len_len a) FStar.Mul.(len_v a len * 8)
-        | _ -> Endianness.n_to_be (len_len a) FStar.Mul.(len_v a len * 8))))
+        | MD5 -> Endianness.n_to_le (len_length a) FStar.Mul.(len_v a len * 8)
+        | _ -> Endianness.n_to_be (len_length a) FStar.Mul.(len_v a len * 8))))
 =
   begin match a with
   | MD5 | SHA1 | SHA2_224 | SHA2_256 ->
@@ -257,7 +257,7 @@ let finish a s dst =
     | MD5 ->
         let dst0 = B.sub dst 0ul U32.(4ul *^ i) in
         let dsti = B.sub dst U32.(4ul *^ i) 4ul in
-        C.Endianness.store32_le dsti s.(i);
+        LowStar.Endianness.store32_le dsti 0ul s.(i);
         let h2 = ST.get () in
         Endianness.le_of_seq_uint32_base (S.slice (B.as_seq h2 s) (U32.v i) (U32.v i + 1)) (B.as_seq h2 dsti);
         Endianness.le_of_seq_uint32_append (S.slice (B.as_seq h2 s) 0 (U32.v i))
@@ -265,7 +265,7 @@ let finish a s dst =
     | SHA1 | SHA2_224 | SHA2_256 ->
         let dst0 = B.sub dst 0ul U32.(4ul *^ i) in
         let dsti = B.sub dst U32.(4ul *^ i) 4ul in
-        C.Endianness.store32_be dsti s.(i);
+        LowStar.Endianness.store32_be dsti 0ul s.(i);
         let h2 = ST.get () in
         Endianness.be_of_seq_uint32_base (S.slice (B.as_seq h2 s) (U32.v i) (U32.v i + 1)) (B.as_seq h2 dsti);
         Endianness.be_of_seq_uint32_append (S.slice (B.as_seq h2 s) 0 (U32.v i))
@@ -273,7 +273,7 @@ let finish a s dst =
     | SHA2_384 | SHA2_512 ->
         let dst0 = B.sub dst 0ul U32.(8ul *^ i) in
         let dsti = B.sub dst U32.(8ul *^ i) 8ul in
-        C.Endianness.store64_be dsti s.(i);
+        LowStar.Endianness.store64_be dsti 0ul s.(i);
         let h2 = ST.get () in
         Endianness.be_of_seq_uint64_base (S.slice (B.as_seq h2 s) (U32.v i) (U32.v i + 1)) (B.as_seq h2 dsti);
         Endianness.be_of_seq_uint64_append (S.slice (B.as_seq h2 s) 0 (U32.v i))

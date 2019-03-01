@@ -2,7 +2,7 @@ module Spec.Hash.PadFinish
 
 module U32 = FStar.UInt32
 module U64 = FStar.UInt64
-module E = FStar.Kremlin.Endianness
+module E = FStar.Endianness
 module S = FStar.Seq
 
 open Spec.Hash.Lemmas0
@@ -25,8 +25,8 @@ let pad (a:hash_alg)
   max_input_size_len a;
   let encodedlen =
     match a with
-    | MD5 -> E.n_to_le (len_len a) (total_len * 8)
-    | _ -> E.n_to_be (len_len a) (total_len * 8)
+    | MD5 -> E.n_to_le (len_length a) (total_len * 8)
+    | _ -> E.n_to_be (len_length a) (total_len * 8)
   in
   S.(firstbyte @| zeros @| encodedlen)
 
