@@ -6,10 +6,11 @@ open FStar.HyperStack.All
 
 open FStar.HyperStack
 open FStar.Buffer
+open Hacl.UInt8
 
 #reset-options "--max_fuel 0 --z3rlimit 20"
 
-let hint8_p = buffer Hacl.UInt8.t
+let hint8_p = FStar.Buffer.buffer Hacl.UInt8.t
 
 inline_for_extraction
 let op_String_Access (h:HyperStack.mem) (b:hint8_p{live h b}) =

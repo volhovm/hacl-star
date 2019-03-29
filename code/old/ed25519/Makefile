@@ -95,7 +95,7 @@ TODO=
 
 ED25519_FILES=$(ED25519_SPECIFIC) $(BIGNUM)
 
-FSTAR_INCLUDES+=--include $(HACL_HOME)/code/bignum --include $(HACL_HOME)/code/curve25519 --include $(HACL_HOME)/code/hash
+FSTAR_INCLUDES+=--include $(HACL_HOME)/code/old/bignum --include $(HACL_HOME)/code/old/curve25519 --include $(HACL_HOME)/code/old/hash --include $(HACL_HOME)/lib
 
 # Parameter for interactive mode
 %.fst-in:

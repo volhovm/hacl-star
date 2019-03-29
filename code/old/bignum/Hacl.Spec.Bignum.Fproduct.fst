@@ -197,7 +197,7 @@ let lemma_carry_wide_step_2_1 s1' s0' s1 s0 i =
   Math.Lemmas.distributivity_add_right (pow2 (limb_size * i)) (pow2 limb_size * (s0 / pow2 limb_size)) (s0 % pow2 limb_size)
 
 
-#reset-options "--z3rlimit 100 --max_fuel 0 --max_ifuel 0"
+#reset-options "--z3rlimit 1000 --max_fuel 0 --max_ifuel 0"
 
 val lemma_carry_wide_step_2: s:seqelem_wide -> i:nat{i < len - 1 /\ carry_wide_pre s i
   /\ (forall (j:nat). {:pattern (w (Seq.index s j))} j < i ==> w (Seq.index s j) < pow2 limb_size)} ->

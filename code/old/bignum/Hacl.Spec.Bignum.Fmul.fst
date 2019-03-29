@@ -91,6 +91,8 @@ val lemma_mul_shift_reduce_spec_1_1:
     /\ seval i % prime = (pow2 ((len-ctr)*limb_size) * seval i0) % prime
     /\ seval_wide o % prime = (seval i0 * seval_ i2 (len-ctr)) % prime))
   (ensures (seval_wide o' % prime = (seval i0 * seval_ i2 (len-ctr+1)) % prime))
+
+#reset-options "--z3refresh --z3rlimit 10000 --initial_fuel 0 --max_fuel 0 --initial_ifuel 0 --max_ifuel 0"
 let lemma_mul_shift_reduce_spec_1_1 o' o i0 i i2 ij ctr =
   let so' = seval_wide o' % prime in
   Math.Lemmas.lemma_mod_plus_distr_l (seval_wide o) (seval i * ij) prime;

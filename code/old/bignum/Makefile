@@ -17,15 +17,17 @@ BIGNUM_FILES= \
 	Hacl.Bignum.Fproduct.fst \
 	Hacl.Bignum.Fmul.fst \
 	Hacl.Bignum.fst
-#	Hacl.Bignum.Constants.fsti \
-	Hacl.Bignum.Parameters.fsti \
-	Hacl.Bignum.Modulo.fsti \
-	Hacl.Bignum.Crecip.fsti \
+
+BIGNUM_INTERFACES = \
+	interfaces/Hacl.Bignum.Constants.fsti \
+	interfaces/Hacl.Bignum.Parameters.fsti \
+	interfaces/Hacl.Bignum.Modulo.fsti \
+	interfaces/Hacl.Bignum.Crecip.fsti \
 
 FSTAR_INCLUDES+=--include interfaces --include ../lib
 
 ct: $(addsuffix -lax, $(BIGNUM_FILES))
-verify: $(addsuffix -verify, $(BIGNUM_FILES))
+verify: $(addsuffix -verify, $(BIGNUM_FILES)) $(addsuffix -verify, $(BIGNUM_INTERFACES))
 hints: $(addsuffix .hints, $(BIGNUM_FILES))
 test:
 

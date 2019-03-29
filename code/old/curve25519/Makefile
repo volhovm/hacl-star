@@ -51,7 +51,7 @@ SLOW=
 
 X25519_FILES=$(BIGNUM) $(X25519_SPECIFIC)
 
-FSTAR_INCLUDES+=--include ../bignum
+FSTAR_INCLUDES+=--include ../lib --include ../bignum 
 
 # Parameters for interactive mode
 %.fst-in:

@@ -9,6 +9,14 @@ open FStar.UInt8
 open Spec.Lib
 open Spec.Curve25519
 
+val fpow: a:elem -> b:pos -> Tot (res:elem) (decreases b)
+let rec fpow a b =
+  if b = 1 then a
+  else
+    if b % 2 = 0 then fpow (a *@ a) (b / 2)
+    else a *@ (fpow (a *@ a) (b / 2))
+
+let ( ** ) = fpow
 
 #reset-options "--max_fuel 0 --z3rlimit 20"
 
