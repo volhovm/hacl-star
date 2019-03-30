@@ -8,7 +8,7 @@
       0,
       [ "@query" ],
       0,
-      "8d37a9608b6aa425ea7e8bb678c3eaaa"
+      "5b978e216b5c6b3129d81fea877d501e"
     ],
     [
       "Fmul_stdcalls.fmul",
@@ -182,11 +182,10 @@
         "typing_tok_Interop.Types.TUInt64@tok",
         "typing_tok_X64.Machine_s.R8@tok", "typing_tok_X64.Machine_s.R9@tok",
         "typing_tok_X64.Machine_s.Rcx@tok",
-        "typing_tok_X64.Machine_s.Rdi@tok",
         "typing_tok_X64.Machine_s.Rdx@tok"
       ],
       0,
-      "9baadd1c76b34b429db5fb484543cc57"
+      "cf043fc4d13f9fdca3e48fdcfe2dd4f4"
     ],
     [
       "Fmul_stdcalls.fmul2",
@@ -230,7 +229,7 @@
         "typing_LowStar.Monotonic.Buffer.len"
       ],
       0,
-      "acc39f21235e556111e1ffbb7ab3f22e"
+      "e26e0c657a4dace406c7c531e18f0b11"
     ],
     [
       "Fmul_stdcalls.fmul2",
@@ -435,7 +434,7 @@
         "typing_tok_X64.Machine_s.Rsi@tok"
       ],
       0,
-      "7539ae1d3569f97d28a6008231507c6b"
+      "94a6238abf0858ec64293983128990d7"
     ],
     [
       "Fmul_stdcalls.fmul1",
@@ -620,7 +619,7 @@
         "typing_tok_X64.Machine_s.Rsi@tok"
       ],
       0,
-      "a2d29c56c815680e1ba751ed75a8758a"
+      "1eefecc80e66124db00e501e2f735c65"
     ]
   ]
 ]

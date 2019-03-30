@@ -33,7 +33,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "3485c6ea16d78299099d2517868f99cc"
+      "92665650135cf616ce762e37e3fe1fc8"
     ],
     [
       "Poly_stdcalls.math_aux",
@@ -60,7 +60,7 @@
         "typing_tok_Interop.Types.TUInt8@tok"
       ],
       0,
-      "c8e90c97b18d09744d335e4a58fc730e"
+      "08d251bf66a1a86090864fe7722d186e"
     ],
     [
       "Poly_stdcalls.poly1305",
@@ -112,7 +112,7 @@
         "typing_tok_Interop.Types.TUInt8@tok"
       ],
       0,
-      "8a1b3d12aa02eb98a04898a963cd2c4f"
+      "5d1ee6d87edbe283040e455dbdd9e462"
     ]
   ]
 ]

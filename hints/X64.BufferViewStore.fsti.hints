@@ -57,7 +57,7 @@
         "typing_Interop.Types.down_view"
       ],
       0,
-      "ba9a7b1d76738266e1889c07edcfae50"
+      "1b0115cabef041c21d4bbf60d72c2109"
     ],
     [
       "X64.BufferViewStore.bv_upd_update_heap128",
@@ -103,7 +103,7 @@
         "typing_Interop.Types.down_view", "typing_Types_s.quad32"
       ],
       0,
-      "999b3ae362c197fed631485cbe05dabf"
+      "61bb15265e57e63b4996f348f732181e"
     ]
   ]
 ]

@@ -11,7 +11,7 @@
         "assumption_Hacl.Impl.Curve25519.Fields.field_spec__uu___haseq"
       ],
       0,
-      "4c66d07baf1348d54568657a12268a86"
+      "60a143073c60360b33db6d76314704dd"
     ],
     [
       "Hacl.Impl.Curve25519.Generic.secret_to_public",
@@ -23,7 +23,7 @@
         "assumption_Hacl.Impl.Curve25519.Fields.field_spec__uu___haseq"
       ],
       0,
-      "839eabb47cb2072c4f6d1646df477fe1"
+      "a48253942964c71c5efa50e52d5561ae"
     ]
   ]
 ]
