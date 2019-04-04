@@ -7,19 +7,23 @@ open Hacl.Spec.Curve25519.Field64.Definition
 open Hacl.Spec.P256.Definitions
 open Hacl.Spec.Curve25519.Field64.Core
 open Hacl.Spec.P256.Lemmas
-
 open FStar.Mul
+
 
 inline_for_extraction noextract
 val lt_u64:a:uint64 -> b:uint64 -> Tot bool
+
 let lt_u64 a b =
   let open Lib.RawIntTypes in
   FStar.UInt64.(u64_to_UInt64 a <^ u64_to_UInt64 b)
 
+
 inline_for_extraction noextract
 val gt: a: uint64 -> b: uint64 -> Tot uint64
+
 let gt a b = 
   if lt_u64 b a then u64 1 else u64 0
+
 
 let eq_u64 a b =
   let open Lib.RawIntTypes in
@@ -34,7 +38,6 @@ val eq_pow64_u64: a: uint64 -> Tot (r: bool {uint_v a == pow2 64 -1 ==> r == tru
 let eq_pow64_u64 a = 
   let b = u64 (normalize_term(pow2 64 - 1)) in 
   eq_u64 a b 
-
 
 
 val cmovznz: cin : uint64{uint_v cin <=1} ->  x: uint64 -> y: uint64   -> 
@@ -107,7 +110,6 @@ let felem_sub arg1 arg2 =
   let (c1, r1) = add4 prime_temp r in 
     lemma_add4_zero prime_temp r;
     lemma_sub_add arg1 arg2 prime_temp r;
-
   r1
 
 let get_high_part a = 
@@ -117,8 +119,7 @@ val lemma_small_get_high_part: a: uint64 {uint_v a < pow2 32} -> Lemma (let r = 
 
 let lemma_small_get_high_part a = ()
 
-let get_low_part a = 
-  to_u32 a
+let get_low_part a = to_u32 a
 
 val store_high_u: src: uint32 -> element: uint64  -> Tot uint64
 
@@ -147,17 +148,7 @@ let reduction_prime_2prime a =
   let p256 =  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   assert_norm (as_nat4 p256 == prime);
   let (x16, reduced_result) = sub4 a p256 in 
-  
-  assert(if uint_v x16 = 1 then as_nat4 a < as_nat4 p256 else True);
- 
-  let final_result = cmovznz4 x16 reduced_result a in
-  assert(if uint_v x16 = 1 then as_nat4 final_result = as_nat4 a else as_nat4 final_result = as_nat4 a - prime);
-  assert(as_nat4 final_result % prime  = as_nat4 a % prime);
-
-  assert(as_nat4 final_result >= 0);
-  assert(as_nat4 final_result < prime);
-
-  final_result
+  cmovznz4 x16 reduced_result a
 
 val reduction_prime_2prime_with_carry: carry: uint64{uint_v carry <= 1} -> a: felem4{as_nat4 a + uint_v carry * pow2 256 < 2 * prime} -> Tot (r: felem4 {as_nat4 r == (as_nat4 a + uint_v carry * pow2 256) % prime})
 
@@ -167,25 +158,20 @@ let reduction_prime_2prime_with_carry carry a =
   assert_norm (as_nat4 p256 == prime);
   let (x16, r) = sub4 a p256 in 
   let (result, c) = subborrow carry (u64 0) x16  in  
-   (* assert(if D.as_nat4 a < prime then uint_v x16 = 1 else uint_v x16 = 0);*)
+    assert(if as_nat4 a < prime then uint_v x16 = 1 else uint_v x16 = 0);
     lemma_nat_4 a;
 
-    (*assert(if uint_v x16 = 0 then D.as_nat4 a - prime = D.as_nat4 r else True);
-
-    assert(D.as_nat4 a < pow2 256);*)
-   (* assert_norm (prime < pow2 256);*)
-    (*assert(D.as_nat4 a + pow2 256 > prime);
-
+    assert(if uint_v x16 = 0 then as_nat4 a - prime = as_nat4 r else True);
+    assert(as_nat4 a < pow2 256);
+    assert_norm (prime < pow2 256);
+    assert(as_nat4 a + pow2 256 > prime);
     assert(if uint_v c = 0 then uint_v carry = uint_v x16 else uint_v carry < uint_v x16);
-    assert(if uint_v c = 0 then uint_v carry = 0 && uint_v x16 = 0 \/ uint_v carry = 1 && uint_v x16 = 1 else uint_v carry = 0 && uint_v x16 = 1);*)
+    assert(if uint_v c = 0 then uint_v carry = 0 && uint_v x16 = 0 \/ uint_v carry = 1 && uint_v x16 = 1 else uint_v carry = 0 && uint_v x16 = 1);
 
-  let result = cmovznz4 c r a in (*
-    assert(if uint_v carry = 1 && uint_v x16 = 1 then D.as_nat4 result = (D.as_nat4 a + uint_v carry * pow2 256) % prime else True);
-
-    assert(if uint_v carry = 1 && uint_v x16 = 0 then D.as_nat4 result = (D.as_nat4 a + uint_v carry * pow2 256) % prime else True);
-
-  assert(if uint_v carry = 0 && uint_v x16 = 1 then D.as_nat4 result = (D.as_nat4 a + uint_v carry * pow2 256) % prime else True);*)
-  
+  let result = cmovznz4 c r a in 
+    assert(if uint_v carry = 1 && uint_v x16 = 1 then as_nat4 result = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
+    assert(if uint_v carry = 1 && uint_v x16 = 0 then as_nat4 result = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
+  assert(if uint_v carry = 0 && uint_v x16 = 1 then as_nat4 result = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
   result
 
 
@@ -195,13 +181,12 @@ let shift_carry x cin =
   add (Lib.IntTypes.shift_left x (size 1)) cin
 
 
-assume val lemma_get_number: a: nat {a < pow2 64} -> Lemma 
-(
+val lemma_get_number: a: nat {a < pow2 64} -> Lemma (
 	let mask = 0x7fffffffffffffff in 
 	let carry= if a> mask then 1 else 0 in 
+	(a * 2) = (a * 2) % pow2 64 + carry * pow2 64)	
 
-	(a * 2) = (a * 2) % pow2 64 + carry * pow2 64
-)	
+let lemma_get_number a = ()
 
 val shift_left_lemma: a0: nat {a0 < pow2 64} -> a1: nat {a1 < pow2 64} -> a2: nat {a2 < pow2 64} -> a3: nat {a3 < pow2 64 /\
 a0 + a1 * pow2 64 + a2 * pow2 128 + a3 * pow2 192 < prime} -> Lemma (let input = a0 + a1 * pow2 64 + a2 * pow2 128 + a3 * pow2 192 in 
@@ -241,44 +226,7 @@ let shift_left_lemma a0 a1 a2 a3 =
 
   assert_norm (pow2 64 * pow2 64 = pow2 128);
   assert_norm (pow2 64 * pow2 128 = pow2 192);
-  assert_norm (pow2 64 * pow2 192 = pow2 256);
-
- (* assert(input * 2 = 2 * a0 + 2 * a1 * pow2 64 + 2 * a2 * pow2 128 + 2 * a3 * pow2 192);*)
-  (*assert(2 * a0 = a0_u + carry0 * pow2 64);
-  assert(2 * a1 = a1_u - carry0 + carry1 * pow2 64);
-  assert(2 * a2 = a2_u - carry1 + carry2 * pow2 64);
-  assert(2 * a3 = a3_u - carry2 + carry3 * pow2 64);*)
-
- (*assert(input * 2 = (a0_u + carry0 * pow2 64) + (a1_u - carry0 + carry1 * pow2 64) * pow2 64 +
- (a2_u - carry1 + carry2 * pow2 64) * pow2 128 +  (a3_u - carry2 + carry3 * pow2 64) * pow2 192);
-
- assert(input * 2 =  a0_u + carry0 * pow2 64 + 
- a1_u * pow2 64 - carry0 * pow2 64 + carry1 * pow2 64 * pow2 64 +
- a2_u * pow2 128 - carry1 * pow2 128 + carry2 * pow2 64 * pow2 128 + 
- a3_u * pow2 192 - carry2 * pow2 192 + carry3 * pow2 64 * pow2 192);*)
-
-(*assert(carry0 * pow2 64 - carry0 * pow2 64 = 0);
-
-assert(input * 2 =  a0_u +
- a1_u * pow2 64  + carry1 * pow2 64 * pow2 64 +
- a2_u * pow2 128 - carry1 * pow2 128 + carry2 * pow2 64 * pow2 128 + 
- a3_u * pow2 192 - carry2 * pow2 192 + carry3 * pow2 64 * pow2 192);*)
-
-(*assert(carry1 * pow2 64 * pow2 64 - carry1 * pow2 128 = 0);
-
-assert(input * 2 =  a0_u +
- a1_u * pow2 64 +
- a2_u * pow2 128 + carry2 * pow2 64 * pow2 128 + 
- a3_u * pow2 192 - carry2 * pow2 192 + carry3 * pow2 64 * pow2 192);*)
-
-(*assert(carry2 * pow2 64 * pow2 128 - carry2 * pow2 192 = 0);*)
-
-(*assert(input * 2 =  a0_u +
- a1_u * pow2 64 +
- a2_u * pow2 128 +
- a3_u * pow2 192 + carry3 * pow2 64 * pow2 192);*)
-
-(*assert(input * 2 < 2 * prime)*) ()
+  assert_norm (pow2 64 * pow2 192 = pow2 256)
 
 #reset-options "--z3rlimit 500"
 
@@ -291,31 +239,18 @@ let shift_left_felem input =
   let carry3 = gt a3 mask in 
 
   let a0_updated = shift_carry a0 (u64 0) in 
-    (*assert(uint_v a0_updated = (uint_v a0 * 2) % pow2 64);*)
   let a1_updated = shift_carry a1 carry0 in 
-    (*assert(uint_v a1_updated = (uint_v a1 * 2) % pow2 64 + uint_v carry0);*)
   let a2_updated = shift_carry a2 carry1 in 
-    (*assert(uint_v a2_updated = (uint_v a2 * 2) % pow2 64 + uint_v carry1);*)
   let a3_updated = shift_carry a3 carry2 in 
-    (*assert(uint_v a3_updated = (uint_v a3 * 2) % pow2 64 + uint_v carry2);*)
 
   assert_norm(pow2 64 * pow2 64 = pow2 128);
   assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
 
   shift_left_lemma (uint_v a0) (uint_v a1) (uint_v a2) (uint_v a3); 
-
   assert(as_nat4 input * 2 = uint_v a0_updated + uint_v a1_updated * pow2 64 + uint_v a2_updated * pow2 128 + uint_v  a3_updated * pow2 192 + uint_v carry3 * pow2 256);
-  
- (*assert(uint_v a0_updated + uint_v a1_updated * pow2 64 + uint_v a2_updated * pow2 128 + uint_v  a3_updated * pow2 192 + uint_v carry3 * pow2 256 < 2 * prime); *)
-
-(*assert(as_nat4 (a0_updated, a1_updated, a2_updated, a3_updated) = uint_v a0_updated + uint_v a1_updated * pow2 64 + uint_v a2_updated * pow2 64 * pow2 64 + uint_v a3_updated * pow2 64 * pow2 64 * pow2 64); *)
-
   assert_norm(uint_v a2_updated * pow2 64 * pow2 64 == uint_v a2_updated * pow2 128);
   assert_norm(uint_v a3_updated * pow2 64 * pow2 64 * pow2 64 == uint_v a3_updated * pow2 192);
-  
-  let result = reduction_prime_2prime_with_carry carry3 (a0_updated, a1_updated, a2_updated, a3_updated) in 
-  
-  result
+  reduction_prime_2prime_with_carry carry3 (a0_updated, a1_updated, a2_updated, a3_updated)
 
 let upload_prime () = 
   let p256 = (u64 (0xffffffffffffffff), u64 (0x00000000ffffffff), u64 (0), u64 (0xffffffff00000001)) in
@@ -358,6 +293,7 @@ val add8: a: felem8 -> b: felem8 -> Pure (uint64 & felem8)
   (requires True) 
   (ensures fun (c, r) -> uint_v c <= 1 /\  wide_as_nat4 a + wide_as_nat4 b = wide_as_nat4 r + uint_v c * pow2 512)
 
+
 let add8 a b = 
     assert_norm(pow2 64 * pow2 64 = pow2 128);
     assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
@@ -374,7 +310,11 @@ let add8 a b =
   let o6, c6 = addcarry c5 a6 b6 in 
   let o7, c7 = addcarry c6 a7 b7 in 
   let (o0, o1, o2, o3) = r in 
-  
+
+  assert(wide_as_nat4 a + wide_as_nat4 b = 
+   v o0 + v o1 * pow2 64 +  v o2 * pow2 (2 * 64) + v o3 * pow2 (3 * 64) + 
+   v o4 * pow2 (4 * 64) + v o5 * pow2 (5 * 64) +  v o6 * pow2 (6 * 64) + v o7 * pow2 (7 * 64) + v c7 * pow2 512);
+
   let out = o0, o1, o2, o3, o4, o5, o6, o7 in 
   lemma_wide out;
   c7, out
@@ -382,7 +322,6 @@ let add8 a b =
 val add9: a: felem8 -> b: felem8 -> Pure (felem9)
   (requires True)
   (ensures fun r -> wide_as_nat4 a + wide_as_nat4 b = as_nat9 r)
-
 
 let add9 a b = 
     assert_norm(pow2 64 * pow2 64 = pow2 128);
@@ -400,7 +339,11 @@ let add9 a b =
   let o6, c6 = addcarry c5 a6 b6 in 
   let o7, c7 = addcarry c6 a7 b7 in 
   let (o0, o1, o2, o3) = r in 
-  
+
+  assert(wide_as_nat4 a + wide_as_nat4 b = 
+   v o0 + v o1 * pow2 64 +  v o2 * pow2 (2 * 64) + v o3 * pow2 (3 * 64) + 
+   v o4 * pow2 (4 * 64) + v o5 * pow2 (5 * 64) +  v o6 * pow2 (6 * 64) + v o7 * pow2 (7 * 64) + v c7 * pow2 512);
+
   let out = o0, o1, o2, o3, o4, o5, o6, o7 in 
   lemma_wide out;
   o0, o1, o2, o3, o4, o5, o6, o7,  c7
