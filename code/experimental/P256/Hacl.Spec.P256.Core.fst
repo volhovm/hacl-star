@@ -641,7 +641,7 @@ let isOne_tuple a =
     lemma_log_and1 r2 r3;
   let r = logand r01 r23 in 
     lemma_log_and1 r01 r23;
-  let f = eq_u64 r (u64 (pow2 64 - 1)) in  
+  let f = eq_u64 r (u64 0xffffffffffffffff) in  
    f
    
 
@@ -690,6 +690,7 @@ let isZero_tuple_u a =
   
 
 let isZero_tuple_b a = 
+  assert_norm (0xffffffffffffffff = pow2 64 - 1);
   let (a0, a1, a2, a3) = a in 
   let r0 = eq_mask a0 (u64 0) in 
   let r1 = eq_mask a1 (u64 0) in 
@@ -700,7 +701,7 @@ let isZero_tuple_b a =
   let r23 = logand r2 r3 in 
     lemma_log_and1 r2 r3;
   let r = logand r01 r23 in 
-    lemma_log_and1 r01 r23;
-  let f = eq_u64 r (u64 (pow2 64 - 1)) in  
+    lemma_log_and1 r01 r23;    
+  let f = eq_u64 r (u64 0xffffffffffffffff) in  
    f
    

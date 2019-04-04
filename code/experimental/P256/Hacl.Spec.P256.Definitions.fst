@@ -11,9 +11,13 @@ open Lib.Buffer
 
 open Hacl.Spec.Curve25519.Field64.Definition
 
+inline_for_extraction noextract
 let felem4 = uint64 * uint64 * uint64 * uint64
+inline_for_extraction noextract
 let felem8 = uint64 * uint64  * uint64  * uint64 * uint64 * uint64 * uint64 * uint64
+inline_for_extraction noextract
 let felem8_32 = uint32 * uint32 * uint32 * uint32 * uint32 * uint32 * uint32 * uint32
+inline_for_extraction noextract
 let felem9 = uint64 * uint64  * uint64  * uint64 * uint64 * uint64 * uint64 * uint64 * uint64
 
 noextract
@@ -25,7 +29,9 @@ let point_seq = Lib.Sequence.lseq uint64 12
 noextract
 let felem_seq = lseq uint64 4
 
+inline_for_extraction
 let felem = lbuffer uint64 (size 4)
+inline_for_extraction
 let longelem = lbuffer uint64 (size 8)
 
 noextract
@@ -40,6 +46,7 @@ let felem_seq_as_nat (a: felem_seq) : Tot nat  =
 
 open FStar.Mul
 
+noextract
 let prime:pos =
   assert_norm (pow2 256 - pow2 224 + pow2 192 + pow2 96 -1 > 0);
   pow2 256 - pow2 224 + pow2 192 + pow2 96 -1
@@ -51,12 +58,14 @@ let point_prime =  p: point_seq{let x = Lib.Sequence.sub p 0 4 in let y = Lib.Se
   felem_seq_as_nat x < prime /\ felem_seq_as_nat y < prime /\ felem_seq_as_nat z < prime} 
 
 
-
+inline_for_extraction
 type point = lbuffer uint64 (size 12)
 
 
 (* Montgomery multiplication parameters *)
+inline_for_extraction
 let s = 64ul
+inline_for_extraction
 let long = lbuffer uint64 (size 9)
 
 (*noextract
@@ -67,8 +76,8 @@ let as_nat4 f =
   v s3 * pow2 64 * pow2 64 * pow2 64
 
 *)
-val border_felem4: f: felem4 -> Lemma (as_nat4 f < pow2 256)
 
+val border_felem4: f: felem4 -> Lemma (as_nat4 f < pow2 256)
 let border_felem4 f = admit()
 
 (*noextract
