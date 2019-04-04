@@ -5,8 +5,8 @@ HACL_HOME    ?= ../..
 CACHE_DIR     = .cache
 OUTPUT_DIR    = .output
 HINT_DIR      = .hints
-GENERATED_DIR = sha3-c
-OUT_DIR	      = sha3-c
+GENERATED_DIR = p256-c
+OUT_DIR	      = p256-c
 
 .PHONY: all test stage1 stage2 clean clean-c distclean
 
@@ -93,6 +93,7 @@ $(GENERATED_DIR)/Makefile.include: $(ALL_KRML_FILES) | .depend
 	-no-prefix 'Hacl.Impl.P256' \
 	-bundle 'Lib.*' \
 	-bundle 'Spec.*' \
+	-bundle 'Hacl.Impl.P256=Hacl.Impl.P256,Hacl.Spec.P256.*,Hacl.Spec.Curve25519.*,Hacl.Impl.Curve25519.*' \
 	-library 'C,FStar' \
 	-drop 'LowStar,Spec,Prims,Lib,C.Loops.*,Hacl.Spec.P256.Lemmas' \
 	-add-include '"c/Lib_PrintBuffer.h"' \

@@ -200,7 +200,7 @@ let move_from_jacobian_coordinates_seq p q =
   (u1, u2, s1, s2)
 
   
-
+noextract
 val compute_common_params_point_add_seq: u1: felem_seq_prime -> u2: felem_seq_prime -> s1: felem_seq_prime -> s2: felem_seq_prime -> Tot (result: tuple4 felem_seq_prime felem_seq_prime felem_seq_prime felem_seq_prime{
   let h, r, uh, hCube = result in 
   let u1D = fromDomain_ (felem_seq_as_nat u1) in 

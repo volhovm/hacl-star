@@ -31,6 +31,24 @@ open FStar.Mul
 
 #set-options "--z3rlimit 500" 
 
+val p256_add: arg1: felem -> arg2: felem ->  out: felem -> 
+Stack unit 
+(requires (fun h0 ->  
+  (let arg1_as_seq = as_seq h0 arg1 in 
+  let arg2_as_seq = as_seq h0 arg2 in 
+  felem_seq_as_nat arg1_as_seq < prime /\
+  felem_seq_as_nat arg2_as_seq < prime /\
+  live h0 out /\ live h0 arg1 /\ live h0 arg2)))
+(ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
+  (*as_nat h1 out == (as_nat h0 arg1 + as_nat h0 arg2) % prime /\ *)
+  (let arg1_as_seq = as_seq h0 arg1 in 
+  let arg2_as_seq = as_seq h0 arg2 in 
+  as_nat h1 out < prime /\
+  as_seq h1 out == felem_add_seq arg1_as_seq arg2_as_seq
+)))
+
+
+
 let p256_add arg1 arg2 out = 
   let h0 = ST.get() in 
 
@@ -545,18 +563,7 @@ let point_double_compute_y3 p_y y3 x3 s m tempBuffer =
     Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer m sx3 msx3; 
     p256_sub msx3 eightYyyy y3
     
-val point_double: p: point -> result: point ->  tempBuffer: lbuffer uint64 (size 88) -> Stack unit
-  (requires fun h -> live h p /\ live h result /\ live h tempBuffer /\ 
-    disjoint p result /\ disjoint tempBuffer result /\ disjoint p tempBuffer /\ 
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime)
-  (ensures fun h0 _ h1 -> modifies2 tempBuffer result h0 h1 /\  
-    as_seq h1 result == point_double_seq (as_seq h0 p) /\
-    as_nat h1 (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h1 (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h1 (gsub p (size 4) (size 4)) < prime
-  )
+
     
 
 let point_double p result tempBuffer = 
@@ -851,7 +858,7 @@ let point_double_condition u1 u2 s1 s2 z1 z2 =
   let pointsInf = logand (lognot z1notZero) (lognot z2notZero) in 
   let onetwo = logand one two in 
   let result = logand onetwo pointsInf in 
-  eq_u64 result (u64 (pow2 64 -1 ))
+  eq_u64 result (u64 0xffffffffffffffff)
 
 val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1: felem -> u2: felem -> s1: felem -> s2: felem -> r: felem -> h: felem -> uh: felem -> hCube: felem -> tempBuffer28 : lbuffer uint64 (size 28) -> 
   Stack unit (requires fun h0 -> live h0 result /\ live h0 p /\ live h0 q /\ live h0 u1 /\ live h0 u2 /\ live h0 s1 /\ live h0 s2 /\ live h0 r /\ live h0 h /\ live h0 uh /\ live h0 hCube /\ live h0 tempBuffer28 /\
@@ -900,21 +907,6 @@ let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuff
   concat3 (size 4) x3_out (size 4) y3_out (size 4) z3_out result;
   let h3 = ST.get() in 
    assert(modifies1 result h2 h3)
-
-#reset-options
-
-val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
-   Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
-   LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc result; loc tempBuffer] /\
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime /\
-    as_nat h (gsub q (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub q (size 0) (size 4)) < prime /\  
-    as_nat h (gsub q (size 4) (size 4)) < prime 
-    )
-   (ensures fun h0 _ h1 -> modifies2 tempBuffer result h0 h1 /\ as_seq h1 result == point_add_seq (as_seq h0 p) (as_seq h0 q))
-
 
 #reset-options "--z3rlimit 200"
 

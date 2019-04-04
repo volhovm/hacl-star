@@ -29,19 +29,29 @@ open FStar.Math.Lemmas
 module B = LowStar.Buffer
 open FStar.Mul
 
-val p256_add: arg1: felem -> arg2: felem ->  out: felem -> 
-Stack unit 
-(requires (fun h0 ->  
-  (let arg1_as_seq = as_seq h0 arg1 in 
-  let arg2_as_seq = as_seq h0 arg2 in 
-  felem_seq_as_nat arg1_as_seq < prime /\
-  felem_seq_as_nat arg2_as_seq < prime /\
-  live h0 out /\ live h0 arg1 /\ live h0 arg2)))
-(ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
-  (*as_nat h1 out == (as_nat h0 arg1 + as_nat h0 arg2) % prime /\ *)
-  (let arg1_as_seq = as_seq h0 arg1 in 
-  let arg2_as_seq = as_seq h0 arg2 in 
-  as_nat h1 out < prime /\
-  as_seq h1 out == felem_add_seq arg1_as_seq arg2_as_seq
-)))
+val point_double: p: point -> result: point ->  tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h result /\ live h tempBuffer /\ 
+    disjoint p result /\ disjoint tempBuffer result /\ disjoint p tempBuffer /\ 
+    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime)
+  (ensures fun h0 _ h1 -> modifies2 tempBuffer result h0 h1 /\  
+    as_seq h1 result == point_double_seq (as_seq h0 p) /\
+    as_nat h1 (gsub p (size 8) (size 4)) < prime /\ 
+    as_nat h1 (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h1 (gsub p (size 4) (size 4)) < prime
+  )
 
+
+  
+val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
+   Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
+   LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc result; loc tempBuffer] /\
+    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime /\
+    as_nat h (gsub q (size 8) (size 4)) < prime /\ 
+    as_nat h (gsub q (size 0) (size 4)) < prime /\  
+    as_nat h (gsub q (size 4) (size 4)) < prime 
+    )
+   (ensures fun h0 _ h1 -> modifies2 tempBuffer result h0 h1 /\ as_seq h1 result == point_add_seq (as_seq h0 p) (as_seq h0 q))
