@@ -134,7 +134,13 @@ let store_low_u src element =
   let as_uint64 = to_u64 src in 
   logxor element as_uint64
 
-assume val lemma_xor_zero: low: uint64{uint_v (get_high_part low) ==  0} -> high: uint64{uint_v (get_low_part high) == 0} ->  Lemma (uint_v (logxor low high) = uint_v high * pow2 32 + uint_v low)
+val lemma_xor_zero: low: uint64{uint_v (get_high_part low) ==  0} -> high: uint64{uint_v (get_low_part high) == 0} ->  Lemma (uint_v (logxor low high) = uint_v high * pow2 32 + uint_v low)
+
+let lemma_xor_zero low high = 
+  assert(uint_v low = uint_v (get_low_part low));
+  assert(uint_v high = uint_v (get_high_part high) * pow2 32);
+  admit()
+
 
 let store_high_low_u high low = 
   let as_uint64_high = to_u64 high in 
@@ -370,6 +376,7 @@ let shortened_mul a b =
    assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
   f0, f1, f2, f3, c, (u64 0), (u64 0), u64(0)  
 
+
 val mod_64: a: felem8 -> Tot (r: uint64 {wide_as_nat4 a % pow2 64 = uint_v r})
 
 let mod_64 a = 
@@ -387,6 +394,8 @@ val shift_8: a: felem8 -> Tot (r: felem8 {wide_as_nat4 a / pow2 64 = wide_as_nat
 let shift_8 a = 
   let (a0, a1, a2, a3, a4, a5, a6, a7) = a in 
   (a1, a2, a3, a4, a5, a6, a7, (u64 0))
+
+#reset-options "--z3rlimit 1000"  
 
 val lemma_less_than_primes : a: nat {a < prime} -> b: nat {b < prime} -> Lemma (ensures (
   let s = 64 in 
@@ -416,9 +425,35 @@ val lemma_less_than_primes : a: nat {a < prime} -> b: nat {b < prime} -> Lemma (
   let tU = t3 / pow2 s in 
   tU < 2 * prime))
 
-let lemma_less_than_primes a b = ()
+let lemma_less_than_primes a b = 
+  let s = 64 in 
+  let t = a * b in 
+  assert(t < prime * prime);
 
+  let t1 = t % pow2 s in 
+  let t2 = t1 * prime in 
+  let t3 = t + t2 in 
+  let tU = t3 / pow2 s in 
  
+  let t = tU in 
+  let t1 = t % pow2 s in 
+  let t2 = t1 * prime in 
+  let t3 = t + t2 in 
+  let tU = t3 / pow2 s in 
+
+  let t = tU in 
+  let t1 = t % pow2 s in 
+  let t2 = t1 * prime in 
+  let t3 = t + t2 in 
+  let tU = t3 / pow2 s in 
+
+  let t = tU in 
+  let t1 = t % pow2 s in  
+  let t2 = t1 * prime in 
+  let t3 = t + t2 in 
+  let tU = t3 / pow2 s in 
+  assert(tU < 2 * prime)
+
 val montgomery_multiplication_one_round_proof: t: felem8 {wide_as_nat4 t < pow2 449} -> 
   result: felem8 {wide_as_nat4 result = (wide_as_nat4 t + (wide_as_nat4 t % pow2 64) * prime) / pow2 64} ->
   co: nat{ co % prime == wide_as_nat4 t % prime} -> Lemma (
@@ -454,6 +489,7 @@ let montgomery_multiplication_one_round t =
     lemma_div_lt (wide_as_nat4 t3) 513 64;
   result
 
+#reset-options "--z3refresh" 
 
 let montgomery_multiplication a b = 
   let (a0, a1, a2, a3) = a in 
@@ -473,30 +509,24 @@ let montgomery_multiplication a b =
   let t2 = shortened_mul primeU t1 in 
   let t3 = add9 t t2 in 
   let t_state0 = shift_9 t3 in  
-    (*lemma_div_lt (as_nat9 t3) 513 64;
+    lemma_div_lt (as_nat9 t3) 513 64;
     
     mult_one_round (wide_as_nat4 t) (as_nat4 a * as_nat4 b);
     lemma_mul_nat (as_nat4 a) (as_nat4 b) (modp_inv2 (pow2 64));
-    [@inline_let]
-    let co = as_nat4 a * as_nat4 b * modp_inv2 (pow2 64) in *)
+
   let t_state1 = montgomery_multiplication_one_round t_state0 in
-    (*montgomery_multiplication_one_round_proof t_state0 t_state1 co;
+    montgomery_multiplication_one_round_proof t_state0 t_state1 (as_nat4 a * as_nat4 b * modp_inv2 (pow2 64));
     lemma_mul_nat4 (as_nat4 a) (as_nat4 b) (modp_inv2 (pow2 64)) (modp_inv2(pow2 64));
-        [@inline_let]
-    let co:nat = as_nat4 a * as_nat4 b * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) in *)
   let t_state2 = montgomery_multiplication_one_round t_state1 in 
-    (*montgomery_multiplication_one_round_proof t_state1 t_state2 co;
+    montgomery_multiplication_one_round_proof t_state1 t_state2 (as_nat4 a * as_nat4 b * modp_inv2 (pow2 64) * modp_inv2 (pow2 64));
     lemma_mul_nat5 (as_nat4 a) (as_nat4 b) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64));
-        [@inline_let]
-    let co: nat = as_nat4 a * as_nat4 b * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) * modp_inv2(pow2 64) in *)
   let t_state3 = montgomery_multiplication_one_round t_state2 in 
-    (*montgomery_multiplication_one_round_proof t_state2 t_state3 co;
+    montgomery_multiplication_one_round_proof t_state2 t_state3 (as_nat4 a * as_nat4 b * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) * modp_inv2(pow2 64));
     lemma_decrease_pow (as_nat4 a * as_nat4 b);
     lemma_less_than_primes (as_nat4 a) (as_nat4 b);
-    assert(wide_as_nat4 t_state3 < 2 * prime);*)
+    assert(wide_as_nat4 t_state3 < 2 * prime);
   let (t0, t1, t2, t3, t4, t5, t6, t7) = t_state3 in 
-    (*lemma_prime_as_wild_nat t_state3;*)
-
+    lemma_prime_as_wild_nat t_state3;
   let r = reduction_prime_2prime_with_carry t4 (t0, t1, t2, t3) in 
   r
 
@@ -505,47 +535,49 @@ let cube_tuple a =
   let squared = montgomery_multiplication a a in 
   let cube = montgomery_multiplication squared a in 
     lemma_mul_nat (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256));
-           (* [@inline_let]
-  let a_temp:nat =as_nat4 a * as_nat4 a * modp_inv2(pow2 256) in *)
     lemma_mul_nat2   (as_nat4 a) (modp_inv2 (pow2 256));
-            (*[@inline_let]
-  let b_temp:nat = as_nat4 a * modp_inv2 (pow2 256) in 
-    lemma_brackets (a_temp % prime) (as_nat4 a) (modp_inv2 (pow2 256));
-    lemma_mod_mul_distr_l a_temp (as_nat4 a * modp_inv2 (pow2 256)) prime;
+    lemma_brackets ((as_nat4 a * as_nat4 a * modp_inv2(pow2 256)) % prime) (as_nat4 a) (modp_inv2 (pow2 256));
+    lemma_mod_mul_distr_l (as_nat4 a * as_nat4 a * modp_inv2(pow2 256)) (as_nat4 a * modp_inv2 (pow2 256)) prime;
     lemma_brackets5 (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (as_nat4 a) (modp_inv2 (pow2 256));
-            [@inline_let]
-  let a_temp = as_nat4 a in 
-          [@inline_let]
-  let b_temp = modp_inv2 (pow2 256) in 
-    lemma_distr_mult a_temp a_temp b_temp a_temp b_temp;*)
-    cube
+    lemma_distr_mult (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (as_nat4 a) (modp_inv2 (pow2 256));
+    cube 
 
 
 let quatre_tuple a = 
   let squared = montgomery_multiplication a a in 
   let power4 = montgomery_multiplication squared squared in 
-        (*[@inline_let]
-    let a_temp = as_nat4 a * as_nat4 a * modp_inv2 (pow2 256) in 
-    lemma_brackets (a_temp % prime) (a_temp % prime) (modp_inv2 (pow2 256));
-    lemma_mod_mul_distr_l a_temp ((a_temp % prime) * modp_inv2 (pow2 256)) prime;
-    lemma_brackets a_temp (a_temp % prime) (modp_inv2 (pow2 256));
-    lemma_distr_mult3 a_temp (a_temp % prime) (modp_inv2 (pow2 256));
-    lemma_brackets_l a_temp (modp_inv2 (pow2 256)) (a_temp % prime);
-    lemma_mod_mul_distr_r (a_temp * modp_inv2 (pow2 256)) a_temp prime;
-    lemma_brackets_l a_temp (modp_inv2 (pow2 256)) a_temp;
-    lemma_distr_mult3 a_temp (modp_inv2 (pow2 256)) a_temp;
-
+    lemma_brackets ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime) (modp_inv2 (pow2 256));
+    lemma_mod_mul_distr_l (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) (((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime) * modp_inv2 (pow2 256)) prime;
+    lemma_brackets (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime) (modp_inv2 (pow2 256));
+    lemma_distr_mult3 (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime) (modp_inv2 (pow2 256));
+    lemma_brackets_l (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) (modp_inv2 (pow2 256)) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime);
+    lemma_mod_mul_distr_r ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) * modp_inv2 (pow2 256)) (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) prime;
+    lemma_brackets_l (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256))(modp_inv2 (pow2 256)) (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256));
+    lemma_distr_mult3 (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) (modp_inv2 (pow2 256)) (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256));
     lemma_twice_brackets (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (modp_inv2 (pow2 256));
-
     lemma_distr_mult7  (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (modp_inv2 (pow2 256));
-*)
   power4
+
+val lemma_three: a: nat -> Lemma (a * 2 + a == 3 * a)
+let lemma_three a = ()
+
+val lemma_four: a: nat -> Lemma ((a * 2) * 2 == 4 * a)
+let lemma_four a = ()
+
+val lemma_eight: a: nat -> Lemma  ((a * 4) * 2 == 8 * a)
+let lemma_eight a = ()
+
+val lemma_minus_three: a: nat -> Lemma (0 - 3 * a == (-3) * a)
+let lemma_minus_three a = ()
 
 
 let multByThree_tuple a = 
+  let open FStar.Tactics in 
+  let open FStar.Tactics.Canon in 
     let multByTwo = shift_left_felem a in 
     let byThree = felem_add multByTwo a in 
     lemma_mod_plus_distr_l (as_nat4 a * 2) (as_nat4 a) prime;
+    lemma_three (as_nat4 a);
     byThree
 
 
@@ -553,12 +585,14 @@ let multByFour_tuple a =
   let multByTwo = shift_left_felem a in 
   let multByFour = shift_left_felem multByTwo in 
     lemma_mod_mul_distr_l (as_nat4 a * 2) 2 prime;
+    lemma_four (as_nat4 a);
   multByFour
 
 let multByEight_tuple a = 
   let multByFour = multByFour_tuple a in 
   let multByEight = shift_left_felem multByFour in 
     lemma_mod_mul_distr_l (as_nat4 a * 4) 2 prime;
+    lemma_eight (as_nat4 a);
   multByEight
 
 let multByMinusThree_tuple a = 
@@ -566,7 +600,8 @@ let multByMinusThree_tuple a =
   let zero = (u64 (0), u64(0), u64(0), u64(0)) in 
     assert_norm (as_nat4 zero = 0);
   let minusThree = felem_sub zero byThree in 
-    lemma_mod_mul_distr_r (-1) (as_nat4 a * 3) prime;
+  lemma_mod_sub_distr 0 (as_nat4 a * 3) prime;
+  lemma_minus_three (as_nat4 a);
   minusThree
 
  
@@ -586,24 +621,27 @@ let isOne_tuple a =
     lemma_log_and1 r01 r23;
   let f = eq_u64 r (u64 0xffffffffffffffff) in  
    f
-   
+
 
 
 let equalFelem a b = 
     let (a_0, a_1, a_2, a_3) = a in 
     let (b_0, b_1, b_2, b_3) = b in 
     let r_0 = eq_mask a_0 b_0 in 
-      assert(uint_v a_0 == uint_v b_0 ==> uint_v r_0 == pow2 64 - 1);
+      eq_mask_lemma a_0 b_0;
     let r_1 = eq_mask a_1 b_1 in 
+      eq_mask_lemma a_1 b_1;
     let r_2 = eq_mask a_2 b_2 in 
+      eq_mask_lemma a_2 b_2;
     let r_3 = eq_mask a_3 b_3 in 
+      eq_mask_lemma a_3 b_3;
     let r01 = logand r_0 r_1 in 
-      lemma_log_and1 r_0 r_1;
+      logand_lemma r_0 r_1;
     let r23 = logand r_2 r_3 in 
-      lemma_log_and1 r_2 r_3;
+      logand_lemma r_2 r_3;
     let r = logand r01 r23 in 
-      lemma_log_and1 r01 r23;
-      assert(uint_v a_0 = uint_v b_0 && uint_v a_1 = uint_v b_1 && uint_v a_2 = uint_v b_2 && uint_v a_3 = uint_v b_3 <==> uint_v r == pow2 64 - 1);
+      logand_lemma r01 r23;
+      lemma_equality a b; 
       r
 
 

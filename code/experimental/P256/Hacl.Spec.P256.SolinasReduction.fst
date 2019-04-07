@@ -339,11 +339,12 @@ let fast_reduction_upload_zero_buffer input =
   assert_norm (pow2 (5 * 32) * pow2 (2 * 32) = pow2 (7 * 32));
   (b0, b1, b2, b3)
 
+
 val fast_reduction_upload_first_buffer: input: felem8_32 -> Tot (r: felem4 
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
   let (r0, r1, r2, r3) = r in 
-  D.as_nat4 r == (uint_v c11 * pow2 (3 * 32) + uint_v c12 * pow2 (4 * 32) + uint_v c13 * pow2 (5 * 32) + uint_v c14 * pow2 (6 * 32) + uint_v c15 * pow2 (7 * 32))})
+  D.as_nat4 r == (uint_v c11 * pow2 (3 * 32) + uint_v c12 * pow2 (4 * 32) + uint_v c13 * pow2 (5 * 32) + uint_v c14 * pow2 (6 * 32) + uint_v c15 * pow2 (7 * 32)) % prime})
 
 let fast_reduction_upload_first_buffer input = 
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
@@ -356,6 +357,8 @@ let fast_reduction_upload_first_buffer input =
   assert_norm (pow2 (3 * 32) * pow2 (2 * 32) = pow2 (5 * 32));
   assert_norm (pow2 (4 * 32) * pow2 (2 * 32) = pow2 (6 * 32));
   assert_norm (pow2 (5 * 32) * pow2 (2 * 32) = pow2 (7 * 32));
+  let r = reduction_prime_2prime (b0, b1, b2, b3) in 
+  admit();
  (b0, b1, b2, b3)
   
 
@@ -364,7 +367,7 @@ val fast_reduction_upload_second_buffer: input: felem8_32 -> Tot (r: felem4
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
   let (r0, r1, r2, r3) = r in 
-  D.as_nat4 r = uint_v c12 * pow2 (3 * 32) + uint_v c13 * pow2 (4 * 32) + uint_v c14 * pow2 (5* 32) + uint_v c15 * pow2 (6 * 32)})
+  D.as_nat4 r = (uint_v c12 * pow2 (3 * 32) + uint_v c13 * pow2 (4 * 32) + uint_v c14 * pow2 (5* 32) + uint_v c15 * pow2 (6 * 32)) % prime})
 
 let fast_reduction_upload_second_buffer input = 
     let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
@@ -502,20 +505,6 @@ let fast_reduction_upload_eighth_buffer input =
     (b0, b1, b2, b3)
 
 
-private 
-val lemma_mod_add_distr (a:int) (b:int) (n:pos) : Lemma ((a + b % n) % n = (a + b) % n)
-let lemma_mod_add_distr (a:int) (b:int) (n:pos) =
-  lemma_div_mod b n;
-  lemma_mod_plus (a + (b % n)) (b / n) n
-
-private
-val lemma_mod_sub_distr (a:int) (b:int) (n:pos) : Lemma ((a - b % n) % n = (a - b) % n)
-let lemma_mod_sub_distr (a:int) (b:int) (n:pos) =
-  lemma_div_mod b n;
-  distributivity_sub_left 0 (b / n) n;
-  lemma_mod_plus (a - (b % n)) (-(b / n)) n 
-
-
 private val lemma_mod_twice : a:int -> p:pos -> Lemma ((a % p) % p == a % p)
 private let lemma_mod_twice a p = lemma_mod_mod (a % p) a p
 
@@ -577,11 +566,11 @@ val lemma_equivalence_eight_parts:
 let lemma_equivalence_eight_parts c0 c1 c2 c3 c4 c5 c6 c7 c8 d0 d1 d2 d3 d4 d5 d6 d7 d8 a = ()
 
 
-val sometimes_fstar_could_not_prove_strange_things: 
+val sometimes_fstar_could_not_prove_strange_things:
   c0_n : nat -> c1_n: nat -> c2_n: nat -> c3_n: nat -> c4_n : nat -> c5_n : nat -> c6_n: nat -> c7_n: nat -> c8_n: nat -> c9_n : nat -> c10_n: nat -> c11_n: nat -> c12_n: nat -> c13_n: nat -> c14_n: nat -> c15_n: nat -> 
   r0:nat{r0 = c0_n + c1_n * pow2 (1 * 32) + c2_n * pow2 (2 * 32) + c3_n * pow2 (3 * 32) + c4_n * pow2 (4 * 32) + c5_n * pow2 (5 * 32) + c6_n * pow2 (6 * 32) + c7_n * pow2 (7 * 32)} ->
-  r1:nat{r1 = c11_n * pow2 (3 * 32) + c12_n * pow2 (4 * 32) + c13_n * pow2 (5 * 32) +  c14_n * pow2 (6 * 32) + c15_n * pow2 (7 * 32)} -> 
-  r2:nat{r2 = c12_n * pow2 (3 * 32) + c13_n * pow2 (4 * 32) + c14_n * pow2 (5* 32) + c15_n * pow2 (6 * 32)} ->  
+  r1:nat{r1 = (c11_n * pow2 (3 * 32) + c12_n * pow2 (4 * 32) + c13_n * pow2 (5 * 32) +  c14_n * pow2 (6 * 32) + c15_n * pow2 (7 * 32)) % prime} -> 
+  r2:nat{r2 = (c12_n * pow2 (3 * 32) + c13_n * pow2 (4 * 32) + c14_n * pow2 (5* 32) + c15_n * pow2 (6 * 32)) % prime} ->  
   r3:nat{r3 = c8_n + c9_n * pow2 32 + c10_n * pow2 (2 * 32) + c14_n * pow2 (6 * 32) + c15_n * pow2 (7 * 32)} -> 
   r4:nat{r4 = c9_n + c10_n * pow2 32 + c11_n * pow2 (2 * 32) + c13_n * pow2 (3 * 32) + c14_n * pow2 (4 * 32) + c15_n * pow2 (5 * 32) + c13_n * pow2 (6 * 32) + c8_n * pow2 (7 * 32)} -> 
   r5:nat{r5 = c11_n + c12_n * pow2 32 + c13_n * pow2 (2 * 32) + c8_n * pow2 (6 * 32) + c10_n * pow2 (7 * 32)} -> 
@@ -601,6 +590,9 @@ val sometimes_fstar_could_not_prove_strange_things:
 
 
 let sometimes_fstar_could_not_prove_strange_things c0_n c1_n c2_n c3_n c4_n c5_n c6_n c7_n c8_n c9_n c10_n c11_n c12_n c13_n c14_n c15_n r0 r1 r2 r3 r4 r5 r6 r7 r8 resultBefore = 
+  let r1_ = c11_n * pow2 (3 * 32) + c12_n * pow2 (4 * 32) + c13_n * pow2 (5 * 32) +  c14_n * pow2 (6 * 32) + c15_n * pow2 (7 * 32) in 
+  let r2_ = c12_n * pow2 (3 * 32) + c13_n * pow2 (4 * 32) + c14_n * pow2 (5* 32) + c15_n * pow2 (6 * 32) in 
+
   let p0 = c0_n + c1_n * pow2 (1 * 32) + c2_n * pow2 (2 * 32) + c3_n * pow2 (3 * 32) + c4_n * pow2 (4 * 32) + c5_n * pow2 (5 * 32) + c6_n * pow2 (6 * 32) + c7_n * pow2 (7 * 32) in 
   let p1 = 2 * (c11_n * pow2 (3 * 32) + c12_n * pow2 (4 * 32) + c13_n * pow2 (5 * 32) +  c14_n * pow2 (6 * 32) + c15_n * pow2 (7 * 32)) in
   let p2 = 2 * (c12_n * pow2 (3 * 32) + c13_n * pow2 (4 * 32) + c14_n * pow2 (5* 32) + c15_n * pow2 (6 * 32)) in 
@@ -610,13 +602,21 @@ let sometimes_fstar_could_not_prove_strange_things c0_n c1_n c2_n c3_n c4_n c5_n
   let p6 = c12_n + c13_n * pow2 32 + c14_n * pow2 (2 * 32) + c15_n * pow2 (3 * 32) + c9_n * pow2 (6 * 32) + c11_n * pow2 (7 * 32)  in 
   let p7 = c13_n + c14_n * pow2 32 + c15_n * pow2 (2 * 32) + c8_n * pow2 (3* 32) + c9_n * pow2 (4 * 32) + c10_n * pow2 (5 * 32) + c12_n * pow2 (7 * 32)  in 
   let p8 = c14_n + c15_n * pow2 32 + c9_n * pow2 (3 * 32) + c10_n * pow2 (4* 32) + c11_n * pow2 (5 * 32) + c13_n * pow2 (7 * 32) in 
-  
-  lemma_equivalence_eight_parts r0 (2 * r1) (2*r2) r3 r4 r5 r6 r7 r8 p0 p1 p2 p3 p4 p5 p6 p7 p8 resultBefore;
+
+  lemma_mod_add_distr (r0 + 2 * (r1_ % prime)  + r3 + r4 - r5 - r6 - r7- r8) (2 * (r2_ % prime)) prime;
+  lemma_mod_mul_distr_r 2 r2_ prime;
+  lemma_mod_add_distr (r0 + 2 * (r1_ % prime)  + r3 + r4 - r5 - r6 - r7- r8) (2 * r2_) prime;
+
+  lemma_mod_add_distr (r0 + 2 * r2_  + r3 + r4 - r5 - r6 - r7- r8) (2 * (r1_ % prime)) prime;
+  lemma_mod_mul_distr_r 2 r1_ prime;
+  lemma_mod_add_distr (r0 + 2 * r2_  + r3 + r4 - r5 - r6 - r7- r8) (2 * r1_) prime;
+
+  lemma_equivalence_eight_parts r0 (2 * r1_) (2*r2_) r3 r4 r5 r6 r7 r8 p0 p1 p2 p3 p4 p5 p6 p7 p8 resultBefore;
   
   mult_two_replace c11_n c12_n c13_n c14_n c15_n;
   mult_two_replace_4 c12_n c13_n c14_n c15_n
   
-#reset-options " --z3rlimit 200"
+#reset-options " --z3rlimit 500"
 
 let solinas_reduction f = 
   let (f0, f1, f2, f3, f4, f5, f6, f7)  = f in
@@ -628,8 +628,8 @@ let solinas_reduction f =
     assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (7 * 64));
 
     assert(D.wide_as_nat4 f = uint_v f0 + uint_v f1 * pow2 64 + uint_v f2 * pow2 (2 * 64) + uint_v f3 * pow2 (3 * 64) + 
-    uint_v f4 * pow2 (4 * 64) + uint_v  f5 * pow2 (5 * 64) + uint_v f6*pow2 (6 * 64) + uint_v f7 * pow2 (7 * 64));
-    
+    uint_v f4 * pow2 (4 * 64) + uint_v  f5 * pow2 (5 * 64) + uint_v f6*pow2 (6 * 64) + uint_v f7 * pow2 (7 * 64)); 
+
   let c0 = get_low_part f0 in 
   [@inline_let]
     let c0_n: nat = uint_v c0 in 
@@ -678,7 +678,7 @@ let solinas_reduction f =
     let (c14_n:nat{c14_n < pow2 32}) = uint_v c14 in 
   let c15 = get_high_part f7 in
   [@inline_let]
-    let (c15_n:nat{c15_n < pow2 32}) = uint_v c15 in 
+    let (c15_n:nat{c15_n < pow2 32}) = uint_v c15 in
 
   assert_norm (pow2 (1 * 32) * pow2 (2 * 32) = pow2 (3 * 32));
   assert_norm (pow2 (2 * 32) * pow2 (2 * 32) = pow2 (4 * 32));
@@ -692,8 +692,7 @@ let solinas_reduction f =
   assert_norm (pow2 (10 * 32) * pow2 (2 * 32) = pow2 (12 * 32));
   assert_norm (pow2 (11 * 32) * pow2 (2 * 32) = pow2 (13 * 32));
   assert_norm (pow2 (12 * 32) * pow2 (2 * 32) = pow2 (14 * 32));
-  assert_norm (pow2 (13 * 32) * pow2 (2 * 32) = pow2 (15 * 32));
-
+  assert_norm (pow2 (13 * 32) * pow2 (2 * 32) = pow2 (15 * 32)); 
 
   assert(D.wide_as_nat4 f =  (c0_n + c1_n * pow2 32 + c2_n * pow2 (2 * 32) + c3_n * pow2 (3 * 32) + c4_n * pow2 (4 * 32) + c5_n * pow2 (5 * 32) + c6_n * pow2 (6 * 32) + c7_n * pow2 (7 * 32) + c8_n * pow2 256 + c9_n * pow2 288 + c10_n * pow2 (10 * 32)  + c11_n * pow2 (11 * 32) + c12_n * pow2 (12 * 32) + c13_n* pow2 (13 * 32) + c14_n * pow2 (14 * 32) + c15_n * pow2 (15 * 32)));
 
@@ -705,10 +704,10 @@ let solinas_reduction f =
   let state1 = fast_reduction_upload_first_buffer c_high in 
   let state2 = fast_reduction_upload_second_buffer c_high in 
   let state3 = fast_reduction_upload_third_buffer c_high in 
-      let state3_red = reduction_prime_2prime state3 in  
+      let state3_red = reduction_prime_2prime state3 in 
   let state4 = fast_reduction_upload_forth_buffer c_high in 
       let state4_red = reduction_prime_2prime state4 in 
-  let state5 = fast_reduction_upload_fifth_buffer c_high in 
+  let state5 = fast_reduction_upload_fifth_buffer c_high in
       let state5_red = reduction_prime_2prime state5 in     
   let state6 = fast_reduction_upload_sixth_buffer c_high in 
     let state6_red = reduction_prime_2prime state6 in 
@@ -718,7 +717,9 @@ let solinas_reduction f =
       let state8_red = reduction_prime_2prime state8 in 
 
   let state1_2 = shift_left_felem state1 in 
+    lemma_mod_mul_distr_l (uint_v c11 * pow2 (3 * 32) + uint_v c12 * pow2 (4 * 32) + uint_v c13 * pow2 (5 * 32) + uint_v c14 * pow2 (6 * 32) + uint_v c15 * pow2 (7 * 32)) 2 prime;
   let state2_2 = shift_left_felem state2 in 
+      lemma_mod_mul_distr_l  (uint_v c12 * pow2 (3 * 32) + uint_v c13 * pow2 (4 * 32) + uint_v c14 * pow2 (5* 32) + uint_v c15 * pow2 (6 * 32)) 2 prime;
 
   let r0 = felem_add state0_red state1_2 in 
     lemma_mod_add_distr (D.as_nat4 state1_2) (D.as_nat4 state0) prime;
@@ -736,28 +737,11 @@ let solinas_reduction f =
   let result = felem_sub r0 state8_red in 
     lemma_mod_sub_distr (D.as_nat4 r0) (D.as_nat4 state8) prime;
 
-    assert(D.as_nat4 result = ((((((((((D.as_nat4 state0 + (D.as_nat4 state1 * 2) % prime) % prime + (D.as_nat4 state2 * 2) % prime) % prime + D.as_nat4 state3) % prime) + D.as_nat4 state4) % prime - D.as_nat4 state5) % prime) - D.as_nat4 state6) % prime - D.as_nat4 state7) % prime - D.as_nat4 state8) % prime);
+    reduce_brackets (D.as_nat4 state0) (D.as_nat4 state1) (D.as_nat4 state2) (D.as_nat4 state3) (D.as_nat4 state4) (D.as_nat4 state5) (D.as_nat4 state6) (D.as_nat4 state7) (D.as_nat4 state8); 
 
-    reduce_brackets (D.as_nat4 state0) (D.as_nat4 state1) (D.as_nat4 state2) (D.as_nat4 state3) (D.as_nat4 state4) (D.as_nat4 state5) (D.as_nat4 state6) (D.as_nat4 state7) (D.as_nat4 state8);
-    
-  (*assert(D.as_nat4 result = (D.as_nat4 state0 + 2 * D.as_nat4 state1 + 2 * D.as_nat4 state2 + D.as_nat4 state3 + D.as_nat4 state4 - D.as_nat4 state5 - D.as_nat4 state6 - D.as_nat4 state7 - D.as_nat4 state8) % prime);*)
+  sometimes_fstar_could_not_prove_strange_things c0_n c1_n c2_n c3_n c4_n c5_n c6_n c7_n c8_n c9_n c10_n c11_n c12_n c13_n c14_n c15_n (D.as_nat4 state0) (D.as_nat4 state1) (D.as_nat4 state2) (D.as_nat4 state3) (D.as_nat4 state4) (D.as_nat4 state5) (D.as_nat4 state6) (D.as_nat4 state7) (D.as_nat4 state8) (D.as_nat4 result); 
 
-
-  sometimes_fstar_could_not_prove_strange_things c0_n c1_n c2_n c3_n c4_n c5_n c6_n c7_n c8_n c9_n c10_n c11_n c12_n c13_n c14_n c15_n (D.as_nat4 state0) (D.as_nat4 state1) (D.as_nat4 state2) (D.as_nat4 state3) (D.as_nat4 state4) (D.as_nat4 state5) (D.as_nat4 state6) (D.as_nat4 state7) (D.as_nat4 state8) (D.as_nat4 result);
-
-  (*assert(D.as_nat4 result = (
-  c0_n + c1_n * pow2 32 + c2_n * pow2 (2 * 32) + c3_n * pow2 (3 * 32) + c4_n * pow2 (4 * 32) + c5_n * pow2 (5 * 32) + c6_n * pow2 (6 * 32) + c7_n * pow2 (7 * 32) + 
-  2 * c11_n * pow2 (3 * 32) + 2 * c12_n * pow2 (4 * 32) + 2 * c13_n * pow2 (5* 32) + 2* c14_n * pow2 (6 * 32) + 2 * c15_n * pow2 (7 * 32) + 
-  2 * c12_n * pow2 (3 * 32) + 2 * c13_n * pow2 (4 * 32) + 2 * c14_n * pow2 (5* 32) + 2* c15_n * pow2 (6 * 32) + c8_n + c9_n * pow2 32 + c10_n * pow2 (2 * 32) + c14_n * pow2 (6 * 32) +  c15_n * pow2 (7 * 32) + 
-  c9_n + c10_n * pow2 32 + c11_n * pow2 (2 * 32) + c13_n * pow2 (3 * 32) + c14_n * pow2 (4 * 32) + c15_n * pow2 (5 * 32) + c13_n * pow2 (6 * 32) + c8_n * pow2 (7 * 32) 
-  - c11_n - c12_n * pow2 32 - c13_n * pow2 (2 * 32) - c8_n * pow2 (6 * 32) - c10_n * pow2 (7 * 32) 
-  - c12_n - c13_n * pow2 32 - c14_n * pow2 (2 * 32) - c15_n * pow2 (3 * 32) - c9_n * pow2 (6 * 32) - c11_n * pow2 (7 * 32)
-  - c13_n - c14_n * pow2 32 - c15_n * pow2 (2 * 32) - c8_n * pow2 (3* 32) - c9_n * pow2 (4 * 32) - c10_n * pow2 (5 * 32) - c12_n * pow2 (7 * 32)
-  - c14_n - c15_n * pow2 32 - c9_n * pow2 (3 * 32) - c10_n * pow2 (4* 32) - c11_n * pow2 (5 * 32) - c13_n * pow2 (7 * 32)) % prime);*)
-
- [@inline_let]
- let bn = 
- c0_n + c1_n * pow2 32 + c2_n * pow2 (2 * 32) + c3_n * pow2 (3 * 32) + c4_n * pow2 (4 * 32) + c5_n * pow2 (5 * 32) + c6_n * pow2 (6 * 32) + c7_n * pow2 (7 * 32) +
+solaris_reduction c0_n c1_n c2_n c3_n c4_n c5_n c6_n c7_n c8_n c9_n c10_n c11_n c12_n c13_n c14_n c15_n ( c0_n + c1_n * pow2 32 + c2_n * pow2 (2 * 32) + c3_n * pow2 (3 * 32) + c4_n * pow2 (4 * 32) + c5_n * pow2 (5 * 32) + c6_n * pow2 (6 * 32) + c7_n * pow2 (7 * 32) +
  2 * c11_n * pow2 (3 * 32) + 2 * c12_n * pow2 (4 * 32) + 2 * c13_n * pow2 (5* 32) + 2* c14_n * pow2 (6 * 32) + 2 * c15_n * pow2 (7 * 32) + 
  2 * c12_n * pow2 (3 * 32) + 2 * c13_n * pow2 (4 * 32) + 2 * c14_n * pow2 (5* 32) + 2* c15_n * pow2 (6 * 32) +
  c8_n + c9_n * pow2 32 + c10_n * pow2 (2 * 32) + c14_n * pow2 (6 * 32) +  c15_n * pow2 (7 * 32) + 
@@ -765,8 +749,5 @@ let solinas_reduction f =
  - c11_n - c12_n * pow2 32 - c13_n * pow2 (2 * 32) - c8_n * pow2 (6 * 32) - c10_n * pow2 (7 * 32)
  - c12_n - c13_n * pow2 32 - c14_n * pow2 (2 * 32) - c15_n * pow2 (3 * 32) - c9_n * pow2 (6 * 32) - c11_n * pow2 (7 * 32)
  - c13_n - c14_n * pow2 32 - c15_n * pow2 (2 * 32) - c8_n * pow2 (3* 32) - c9_n * pow2 (4 * 32) - c10_n * pow2 (5 * 32) - c12_n * pow2 (7 * 32) 
- - c14_n - c15_n * pow2 32 - c9_n * pow2 (3 * 32) - c10_n * pow2 (4* 32) - c11_n * pow2 (5 * 32) - c13_n * pow2 (7 * 32) in 
-
-solaris_reduction c0_n c1_n c2_n c3_n c4_n c5_n c6_n c7_n c8_n c9_n c10_n c11_n c12_n c13_n c14_n c15_n bn;
-
+ - c14_n - c15_n * pow2 32 - c9_n * pow2 (3 * 32) - c10_n * pow2 (4* 32) - c11_n * pow2 (5 * 32) - c13_n * pow2 (7 * 32));
  result

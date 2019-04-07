@@ -182,8 +182,8 @@ let modulo_distributivity_mult_last_two a b c d e f = admit()
 
 #reset-options "--max_fuel 0 --z3rlimit 100" 
 
-private val lemma_mod_twice : a:int -> p:pos -> Lemma ((a % p) % p == a % p)
-private let lemma_mod_twice a p = lemma_mod_mod (a % p) a p
+val lemma_mod_twice : a:int -> p:pos -> Lemma ((a % p) % p == a % p)
+let lemma_mod_twice a p = lemma_mod_mod (a % p) a p
 
 val lemma_multiplication_to_same_number: a: nat -> b: nat ->c: nat ->  
   Lemma (requires (a % prime = b % prime)) (ensures ((a * c) % prime = (b * c) % prime))
@@ -384,3 +384,13 @@ let lemma_xor_copy_cond a b mask =
 val lognot_lemma: #t:inttype{~(U1? t)} -> a:uint_t t SEC -> Lemma
   (requires v a = 0 \/ v a = maxint t)
   (ensures (if v a = 0 then v (lognot a) == maxint t else v (lognot a) == 0)) 
+
+
+val lemma_equality: a: felem4 -> b: felem4 -> Lemma
+    (
+      let (a_0, a_1, a_2, a_3) = a in 
+      let (b_0, b_1, b_2, b_3) = b in 
+
+      if  (uint_v a_0 = uint_v b_0 && uint_v a_1 = uint_v b_1 && uint_v a_2 = uint_v b_2 && uint_v a_3 = uint_v b_3) then as_nat4 a == as_nat4 b else as_nat4 a <> as_nat4 b)
+
+let lemma_equality a b = ()

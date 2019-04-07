@@ -124,10 +124,6 @@ let solinas_fast_reduction_partially_opened c result =
   upd result (size 2) r2;
   upd result (size 3) r3
 
-val toDomain: value: felem -> result: felem ->  Stack unit 
-  (requires fun h ->  as_nat h value < prime /\ live h value /\live h result /\ disjoint result value)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = toDomain_ (as_nat h0 value))
-
 let toDomain value result = 
   let value0 = index value (size 0) in 
   let value1 = index value (size 1) in 
@@ -219,12 +215,6 @@ let multiplication_partially_opened a b result =
   upd result (size 1) r1;
   upd result (size 2) r2;
   upd result (size 3) r3
-
-val fromDomain: f: felem-> result: felem-> Stack unit
-  (requires fun h -> live h f /\ live h result /\ as_nat h f < prime)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime
-  /\ as_nat h1 result = fromDomain_ (as_nat h0 f))
-
 
 let fromDomain f result = 
   let one = ((u64 1), (u64 0), u64 0, u64 0) in 

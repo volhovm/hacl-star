@@ -29,6 +29,15 @@ open FStar.Math.Lemmas
 module B = LowStar.Buffer
 open FStar.Mul
 
+val toDomain: value: felem -> result: felem ->  Stack unit 
+  (requires fun h ->  as_nat h value < prime /\ live h value /\live h result /\ disjoint result value)
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = toDomain_ (as_nat h0 value))
+
+val fromDomain: f: felem-> result: felem-> Stack unit
+  (requires fun h -> live h f /\ live h result /\ as_nat h f < prime)
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime
+  /\ as_nat h1 result = fromDomain_ (as_nat h0 f))
+
 val point_double: p: point -> result: point ->  tempBuffer: lbuffer uint64 (size 88) -> Stack unit
   (requires fun h -> live h p /\ live h result /\ live h tempBuffer /\ 
     disjoint p result /\ disjoint tempBuffer result /\ disjoint p tempBuffer /\ 
