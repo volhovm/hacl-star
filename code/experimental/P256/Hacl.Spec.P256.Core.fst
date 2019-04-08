@@ -55,13 +55,12 @@ let cmovznz cin  x y  =
     log_or (logand y x2) (logand x (lognot (x2)));
     x3
 
+inline_for_extraction noextract
 val cmovznz4: cin: uint64{uint_v cin <=1} -> x: felem4 -> y: felem4 -> Pure (r: felem4)
 (requires True)
 (ensures fun r -> if uint_v cin = 0 then as_nat4 r == as_nat4 x else as_nat4 r == as_nat4 y)
 
-let cmovznz4 cin x y = 
-  let x0, x1, x2, x3 = x in 
-  let y0, y1, y2, y3 = y in 
+let cmovznz4 cin (x0, x1, x2, x3) (y0, y1, y2, y3) = 
   let r0 = cmovznz cin x0 y0 in 
   let r1 = cmovznz cin x1 y1 in 
   let r2 = cmovznz cin x2 y2 in 
@@ -474,6 +473,7 @@ let montgomery_multiplication_one_round_proof t result co =
     mult_one_round (wide_as_nat4 t) co
 
 
+inline_for_extraction noextract
 val montgomery_multiplication_one_round: t: felem8{wide_as_nat4 t < pow2 449} -> 
 Tot (result: felem8 { wide_as_nat4 result = (wide_as_nat4 t + (wide_as_nat4 t % pow2 64) * prime) / pow2 64 /\wide_as_nat4 result < pow2 449})
 
@@ -491,39 +491,36 @@ let montgomery_multiplication_one_round t =
 
 #reset-options "--z3refresh" 
 
-let montgomery_multiplication a b = 
-  let (a0, a1, a2, a3) = a in 
-  let (b0, b1, b2, b3) = b in 
-
+let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) = 
   let primeU = upload_prime () in 
   assert_norm(prime < pow2 256);
   assert_norm (pow2 256 * pow2 256 = pow2 512);
   assert_norm (pow2 320 + pow2 512 < pow2 513);
  
-  border_felem4 a;
-  border_felem4 b;
-  lemma_mult_lt_sqr (as_nat4 a) (as_nat4 b) (pow2 256);
+  border_felem4 (a0, a1, a2, a3) ;
+  border_felem4 (b0, b1, b2, b3) ;
+  lemma_mult_lt_sqr (as_nat4 (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3)) (pow2 256);
   
-  let t = mul4 a b in 
+  let t = mul4 (a0, a1, a2, a3)  (b0, b1, b2, b3) in 
   let t1 = mod_64 t in 
   let t2 = shortened_mul primeU t1 in 
   let t3 = add9 t t2 in 
   let t_state0 = shift_9 t3 in  
     lemma_div_lt (as_nat9 t3) 513 64;
     
-    mult_one_round (wide_as_nat4 t) (as_nat4 a * as_nat4 b);
-    lemma_mul_nat (as_nat4 a) (as_nat4 b) (modp_inv2 (pow2 64));
+    mult_one_round (wide_as_nat4 t) (as_nat4 (a0, a1, a2, a3) * as_nat4  (b0, b1, b2, b3) );
+    lemma_mul_nat (as_nat4  (a0, a1, a2, a3)) (as_nat4  (b0, b1, b2, b3)) (modp_inv2 (pow2 64));
 
   let t_state1 = montgomery_multiplication_one_round t_state0 in
-    montgomery_multiplication_one_round_proof t_state0 t_state1 (as_nat4 a * as_nat4 b * modp_inv2 (pow2 64));
-    lemma_mul_nat4 (as_nat4 a) (as_nat4 b) (modp_inv2 (pow2 64)) (modp_inv2(pow2 64));
+    montgomery_multiplication_one_round_proof t_state0 t_state1 (as_nat4  (a0, a1, a2, a3) * as_nat4 (b0, b1, b2, b3) * modp_inv2 (pow2 64));
+    lemma_mul_nat4 (as_nat4  (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3)) (modp_inv2 (pow2 64)) (modp_inv2(pow2 64));
   let t_state2 = montgomery_multiplication_one_round t_state1 in 
-    montgomery_multiplication_one_round_proof t_state1 t_state2 (as_nat4 a * as_nat4 b * modp_inv2 (pow2 64) * modp_inv2 (pow2 64));
-    lemma_mul_nat5 (as_nat4 a) (as_nat4 b) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64));
+    montgomery_multiplication_one_round_proof t_state1 t_state2 (as_nat4  (a0, a1, a2, a3) * as_nat4  (b0, b1, b2, b3) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64));
+    lemma_mul_nat5 (as_nat4  (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3)) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64));
   let t_state3 = montgomery_multiplication_one_round t_state2 in 
-    montgomery_multiplication_one_round_proof t_state2 t_state3 (as_nat4 a * as_nat4 b * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) * modp_inv2(pow2 64));
-    lemma_decrease_pow (as_nat4 a * as_nat4 b);
-    lemma_less_than_primes (as_nat4 a) (as_nat4 b);
+    montgomery_multiplication_one_round_proof t_state2 t_state3 (as_nat4 (a0, a1, a2, a3)* as_nat4 (b0, b1, b2, b3) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) * modp_inv2(pow2 64));
+    lemma_decrease_pow (as_nat4  (a0, a1, a2, a3) * as_nat4 (b0, b1, b2, b3));
+    lemma_less_than_primes (as_nat4  (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3));
     assert(wide_as_nat4 t_state3 < 2 * prime);
   let (t0, t1, t2, t3, t4, t5, t6, t7) = t_state3 in 
     lemma_prime_as_wild_nat t_state3;

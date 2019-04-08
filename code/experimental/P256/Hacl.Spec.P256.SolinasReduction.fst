@@ -319,7 +319,7 @@ c13_n * pow2 (3 * 32) + c14_n * pow2 (4 * 32) + c15_n * pow2 (5 * 32) + c13_n * 
   let w = w_result + c15_n * pow2 (15 * 32) in 
   assert(w % prime == n % prime)
 
-
+inline_for_extraction noextract
 val fast_reduction_upload_zero_buffer: input: felem8_32 -> Tot (r: felem4
 {
    let (c0, c1, c2, c3, c4, c5, c6, c7) = input in 
@@ -339,7 +339,7 @@ let fast_reduction_upload_zero_buffer input =
   assert_norm (pow2 (5 * 32) * pow2 (2 * 32) = pow2 (7 * 32));
   (b0, b1, b2, b3)
 
-
+inline_for_extraction noextract
 val fast_reduction_upload_first_buffer: input: felem8_32 -> Tot (r: felem4 
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
@@ -359,10 +359,10 @@ let fast_reduction_upload_first_buffer input =
   assert_norm (pow2 (5 * 32) * pow2 (2 * 32) = pow2 (7 * 32));
   let r = reduction_prime_2prime (b0, b1, b2, b3) in 
   admit();
- (b0, b1, b2, b3)
+  r
   
 
-  
+  inline_for_extraction noextract
 val fast_reduction_upload_second_buffer: input: felem8_32 -> Tot (r: felem4
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
@@ -381,7 +381,7 @@ let fast_reduction_upload_second_buffer input =
       assert_norm (pow2 (4 * 32) * pow2 (2 * 32) = pow2 (6 * 32));
     (b0, b1, b2, b3)
 
-
+inline_for_extraction noextract
 val fast_reduction_upload_third_buffer: input: felem8_32 -> Tot (r: felem4
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
@@ -402,7 +402,7 @@ let fast_reduction_upload_third_buffer input =
      assert_norm (pow2 (5 * 32) * pow2 (2 * 32) = pow2 (7 * 32));
    (b0, b1, b2, b3)
 
-
+inline_for_extraction noextract
 val fast_reduction_upload_forth_buffer: input: felem8_32 -> Tot (r: felem4
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
@@ -422,7 +422,7 @@ let fast_reduction_upload_forth_buffer input =
      assert_norm (pow2 (5 * 32) * pow2 (2 * 32) = pow2 (7 * 32));
     (b0, b1, b2, b3)
 
-
+inline_for_extraction noextract
 val fast_reduction_upload_fifth_buffer: input: felem8_32 -> Tot (r: felem4 
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
@@ -442,7 +442,7 @@ let fast_reduction_upload_fifth_buffer input =
      assert_norm (pow2 (5 * 32) * pow2 (2 * 32) = pow2 (7 * 32));
     (b0, b1, b2, b3)
 
-
+inline_for_extraction noextract
 val fast_reduction_upload_sixth_buffer: input: felem8_32 -> Tot (r: felem4
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
@@ -463,7 +463,7 @@ let fast_reduction_upload_sixth_buffer input =
      assert_norm (pow2 (5 * 32) * pow2 (2 * 32) = pow2 (7 * 32));
    (b0, b1, b2, b3)
 
-
+inline_for_extraction noextract
 val fast_reduction_upload_seventh_buffer: input: felem8_32 -> Tot (r: felem4
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
@@ -484,6 +484,7 @@ let fast_reduction_upload_seventh_buffer input =
      assert_norm (pow2 (5 * 32) * pow2 (2 * 32) = pow2 (7 * 32));
     (b0, b1, b2, b3)
 
+inline_for_extraction noextract
 val fast_reduction_upload_eighth_buffer: input: felem8_32 -> Tot (r: felem4
 {
   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 

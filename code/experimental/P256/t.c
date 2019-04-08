@@ -89,15 +89,76 @@ void testToDomain(uint64_t * basePoint)
    bool flag = true;
    for (int i = 0; i< 12; i++)
    {
-      flag = flag && (expectedResult[i] & basePointInDomain[i]);
+      flag = flag && ~(expectedResult[i] ^ basePointInDomain[i]);
    }
 
    if (flag)
       printf("%s\n", "The test is correct"); 
    else
-      printf("%s\n", "The test has not passed");
+      {
+         printf("%s\n", "The test has not passed");
+         printf("%s\n", "The expectedResult:");
+         print_uu_l(expectedResult, 12, false);
+         printf("%s\n", "The gotten result");
+         print_uu_l(basePointInDomain, 12, false);
+      }
 }
 
+void pointAddTest(uint64_t * pointA, uint64_t * pointB)
+{
+   uint64_t* resultPoint = (uint64_t *) malloc (sizeof (uint64_t) * 12);
+   uint64_t* tempBuffer = (uint64_t *) malloc (sizeof (uint64_t) * 117);
+
+   uint64_t * expectedResult = (uint64_t *) malloc (sizeof (uint64_t) * 12);
+   expectedResult[0] = 18104864246493347180uL;
+   expectedResult[1] = 16629180030495074693uL;
+   expectedResult[2] = 14481306550553801061uL;
+   expectedResult[3] = 6830804848925149764uL;
+
+   expectedResult[4] = 11131122737810853938uL;
+   expectedResult[5] = 15576456008133752893uL;
+   expectedResult[6] = 3984285777615168236uL;
+   expectedResult[7] = 9742521897846374270uL;
+ 
+   expectedResult[8] = 1uL;
+   expectedResult[9] = 0uL;
+   expectedResult[10] = 0uL;
+   expectedResult[11] = 0uL;
+   
+   pointToDomain(pointA, pointA);
+   pointToDomain(pointB, pointB);
+   point_add(pointA, pointB, resultPoint, tempBuffer);
+   norm(resultPoint, resultPoint, tempBuffer);
+
+   bool flag = true;
+   for (int i = 0; i< 12; i++)
+   {
+      flag = flag && ~(expectedResult[i] ^ resultPoint[i]);
+   }
+
+   if (flag)
+      printf("%s\n", "The test is correct"); 
+   else
+      {
+         printf("%s\n", "The test has not passed");
+         printf("%s\n", "The expectedResult:");
+         print_uu_l(expectedResult, 12, false);
+         printf("%s\n", "The gotten result");
+         print_uu_l(resultPoint, 12, false);
+      }
+   
+}
+
+void pointDoubleTest(uint64_t * pointA)
+{
+   uint64_t* resultPoint = (uint64_t *) malloc (sizeof (uint64_t) * 12);
+   uint64_t* tempBuffer = (uint64_t *) malloc (sizeof (uint64_t) * 117);
+   pointToDomain(pointA, pointA);
+   point_double(pointA, resultPoint, tempBuffer);
+   norm(resultPoint, resultPoint, tempBuffer);
+   print_uu_l(resultPoint, 12, false);
+   
+}
 
 int main()
 {
@@ -140,25 +201,12 @@ int main()
    q[10] = 0uL;
    q[11] = 0uL;
 
-   pointToDomain(basePoint, basePoint);
-   pointToDomain(q, q);
-   point_add(basePoint, q, resultPoint, tempBuffer);
-
-   // ?point_double(basePoint, resultPoint, tempBuffer);
-   norm(resultPoint, resultPoint, tempBuffer);
-   print_uu_l(resultPoint, 12, false);
-
-   /*Hacl_Impl_P256_pointToDomain(q, q);
+   testToDomain(basePoint);
    
-   Hacl_Impl_P256_point_double(basePoint, resultPoint, tempBuffer);
-   Hacl_Impl_P256_norm(resultPoint, resultPoint, tempBuffer);
-   print_uu_l(resultPoint, 12, false);
-
-   Hacl_Impl_P256_point_add(basePoint, q, resultPoint, tempBuffer);
-   Hacl_Impl_P256_norm(resultPoint, resultPoint, tempBuffer);
-*/
-   // print_uu_l(basePoint, 12, false); 
-
+   pointAddTest(basePoint, q);
+   pointDoubleTest(basePoint);
+  
+   
 }
 
 
